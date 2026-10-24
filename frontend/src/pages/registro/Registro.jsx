@@ -36,76 +36,67 @@ function Registro() {
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
 
-  
-const registrar = async (e) => {
-  e.preventDefault();
+  const registrar = async (e) => {
+    e.preventDefault();
 
-  setError("");
-  setExito("");
+    setError("");
+    setExito("");
 
-  if (password.length < 8) {
-    setError("La contraseña debe tener al menos 8 caracteres.");
-    return;
-  }
-
-  setCargando(true);
-
-  try {
-    let endpoint;
-    let datos;
-
-    if (rol === "estudiante") {
-      endpoint = "/auth/registro";
-
-      datos = {
-        nombre: nombre.trim(),
-        correo: correo.trim(),
-        password,
-        carrera: carrera.trim(),
-        semestre: null
-      };
-    } else {
-      endpoint = "/auth/registro-empresa";
-
-      datos = {
-        nombre: nombre.trim(),
-        correo: correo.trim(),
-        password,
-        nombre_empresa: institucion.trim(),
-        telefono: telefono.trim(),
-        sector: carrera.trim()
-      };
+    if (rol === "empresa") {
+      setError(
+        "El registro de empresas todavía no está disponible."
+      );
+      return;
     }
 
-    const respuesta = await apiRequest(endpoint, {
-      method: "POST",
-      body: JSON.stringify(datos)
-    });
+    if (password.length < 8) {
+      setError(
+        "La contraseña debe tener al menos 8 caracteres."
+      );
+      return;
+    }
 
-    setExito(respuesta.mensaje);
+    setCargando(true);
 
-    setNombre("");
-    setTelefono("");
-    setInstitucion("");
-    setCarrera("");
-    setCorreo("");
-    setPassword("");
+    try {
+      const respuesta = await apiRequest("/auth/registro", {
+        method: "POST",
+        body: JSON.stringify({
+          nombre: nombre.trim(),
+          correo: correo.trim(),
+          password,
+          carrera: carrera.trim(),
+          semestre: null,
+        }),
+      });
 
-    navigate("/login", {
-      state: {
-        mensaje: respuesta.mensaje
-      }
-    });
+      setExito(
+        respuesta.mensaje ||
+        "Estudiante registrado correctamente."
+      );
 
-  } catch (err) {
-    setError(
-      err.message || "No se pudo completar el registro"
-    );
-  } finally {
-    setCargando(false);
-  }
-};
+      setNombre("");
+      setTelefono("");
+      setInstitucion("");
+      setCarrera("");
+      setCorreo("");
+      setPassword("");
 
+      // Redirigir al login después del registro
+      navigate("/login", {
+        state: {
+          mensaje: "Cuenta creada correctamente. Inicia sesión."
+        }
+      });
+
+    } catch (err) {
+      setError(
+        err.message || "No se pudo completar el registro."
+      );
+    } finally {
+      setCargando(false);
+    }
+  };
 
   return (
     <AuthLayout>
