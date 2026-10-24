@@ -6,12 +6,16 @@ require("dotenv").config();
 const pool = require("./src/config/database");
 const authRoutes = require("./src/routes/authRoutes");
 
-// Crear aplicación Express
 const app = express();
 
-// Middlewares
+// CORS: permitir desarrollo local y Vercel
+const origenesPermitidos = [
+  "http://localhost:5173",
+  "https://bolsa-tec.vercel.app"
+];
+
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: origenesPermitidos,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
@@ -28,7 +32,7 @@ app.get("/", (req, res) => {
   });
 });
 
-// Prueba de conexión con PostgreSQL / Supabase
+// Prueba de conexión con Supabase
 app.get("/api/test-db", async (req, res) => {
   try {
     const result = await pool.query(
@@ -54,8 +58,8 @@ app.get("/api/test-db", async (req, res) => {
 // Puerto del servidor
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(
-    `Servidor de BolsaTec ejecutándose en http://localhost:${PORT}`
+    `Servidor de BolsaTec ejecutándose en puerto ${PORT}`
   );
 });
