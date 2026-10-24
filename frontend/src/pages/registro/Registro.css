@@ -180,3 +180,25 @@
     font-size: 26px;
   }
 }
+.registro-error {
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.registro-exito {
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.registro-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}

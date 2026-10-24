@@ -1,6 +1,8 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { apiRequest } from "../../services/api";
+
 import {
   GraduationCap,
   Building2,
@@ -18,13 +20,92 @@ import AuthLayout from "../../components/AuthLayout";
 import "./Registro.css";
 
 function Registro() {
+  const navigate = useNavigate();
+
   const [rol, setRol] = useState("estudiante");
   const [mostrarPassword, setMostrarPassword] = useState(false);
 
-  const registrar = (e) => {
-    e.preventDefault();
-    alert("Registro pendiente de conectar al backend");
-  };
+  const [nombre, setNombre] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [institucion, setInstitucion] = useState("");
+  const [carrera, setCarrera] = useState("");
+  const [correo, setCorreo] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState("");
+  const [exito, setExito] = useState("");
+
+  
+const registrar = async (e) => {
+  e.preventDefault();
+
+  setError("");
+  setExito("");
+
+  if (password.length < 8) {
+    setError("La contraseña debe tener al menos 8 caracteres.");
+    return;
+  }
+
+  setCargando(true);
+
+  try {
+    let endpoint;
+    let datos;
+
+    if (rol === "estudiante") {
+      endpoint = "/auth/registro";
+
+      datos = {
+        nombre: nombre.trim(),
+        correo: correo.trim(),
+        password,
+        carrera: carrera.trim(),
+        semestre: null
+      };
+    } else {
+      endpoint = "/auth/registro-empresa";
+
+      datos = {
+        nombre: nombre.trim(),
+        correo: correo.trim(),
+        password,
+        nombre_empresa: institucion.trim(),
+        telefono: telefono.trim(),
+        sector: carrera.trim()
+      };
+    }
+
+    const respuesta = await apiRequest(endpoint, {
+      method: "POST",
+      body: JSON.stringify(datos)
+    });
+
+    setExito(respuesta.mensaje);
+
+    setNombre("");
+    setTelefono("");
+    setInstitucion("");
+    setCarrera("");
+    setCorreo("");
+    setPassword("");
+
+    navigate("/login", {
+      state: {
+        mensaje: respuesta.mensaje
+      }
+    });
+
+  } catch (err) {
+    setError(
+      err.message || "No se pudo completar el registro"
+    );
+  } finally {
+    setCargando(false);
+  }
+};
+
 
   return (
     <AuthLayout>
@@ -43,7 +124,10 @@ function Registro() {
           <button
             type="button"
             className={rol === "estudiante" ? "active" : ""}
-            onClick={() => setRol("estudiante")}
+            onClick={() => {
+              setRol("estudiante");
+              setError("");
+            }}
           >
             <GraduationCap size={19} />
             Soy estudiante
@@ -52,7 +136,10 @@ function Registro() {
           <button
             type="button"
             className={rol === "empresa" ? "active" : ""}
-            onClick={() => setRol("empresa")}
+            onClick={() => {
+              setRol("empresa");
+              setError("");
+            }}
           >
             <Building2 size={19} />
             Soy empresa
@@ -72,14 +159,21 @@ function Registro() {
                 <UserRound size={19} />
                 <input
                   id="registro-nombre"
+                  type="text"
                   required
+                  maxLength={150}
                   placeholder="Ej. Andrea Martínez"
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
                 />
               </div>
             </div>
 
             <div className="registro-field">
-              <label htmlFor="registro-telefono">Teléfono</label>
+              <label htmlFor="registro-telefono">
+                Teléfono
+              </label>
+
               <div className="registro-input">
                 <Phone size={19} />
                 <input
@@ -87,6 +181,8 @@ function Registro() {
                   type="tel"
                   required
                   placeholder="Ej. 55 1234 5678"
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
                 />
               </div>
             </div>
@@ -104,12 +200,15 @@ function Registro() {
                 <Building2 size={19} />
                 <input
                   id="registro-institucion"
+                  type="text"
                   required
                   placeholder={
                     rol === "estudiante"
                       ? "Ej. Universidad Tecnológica"
                       : "Ej. TechCorp"
                   }
+                  value={institucion}
+                  onChange={(e) => setInstitucion(e.target.value)}
                 />
               </div>
             </div>
@@ -125,19 +224,24 @@ function Registro() {
                 <BriefcaseBusiness size={19} />
                 <input
                   id="registro-carrera"
+                  type="text"
                   required
                   placeholder={
                     rol === "estudiante"
                       ? "Ej. Ingeniería en sistemas"
                       : "Ej. Tecnología"
                   }
+                  value={carrera}
+                  onChange={(e) => setCarrera(e.target.value)}
                 />
               </div>
             </div>
           </div>
 
           <div className="registro-field">
-            <label htmlFor="registro-correo">Correo electrónico</label>
+            <label htmlFor="registro-correo">
+              Correo electrónico
+            </label>
 
             <div className="registro-input">
               <Mail size={19} />
@@ -146,30 +250,47 @@ function Registro() {
                 type="email"
                 required
                 placeholder="tu.nombre@tecnm.mx"
+                value={correo}
+                onChange={(e) => setCorreo(e.target.value)}
               />
             </div>
           </div>
 
           <div className="registro-field">
-            <label htmlFor="registro-password">Contraseña</label>
+            <label htmlFor="registro-password">
+              Contraseña
+            </label>
 
             <div className="registro-input">
               <LockKeyhole size={19} />
+
               <input
                 id="registro-password"
                 type={mostrarPassword ? "text" : "password"}
-                minLength={6}
+                minLength={8}
                 required
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 8 caracteres"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
 
               <button
                 type="button"
                 className="registro-eye"
-                aria-label={mostrarPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-                onClick={() => setMostrarPassword(!mostrarPassword)}
+                aria-label={
+                  mostrarPassword
+                    ? "Ocultar contraseña"
+                    : "Mostrar contraseña"
+                }
+                onClick={() =>
+                  setMostrarPassword(!mostrarPassword)
+                }
               >
-                {mostrarPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                {mostrarPassword ? (
+                  <EyeOff size={19} />
+                ) : (
+                  <Eye size={19} />
+                )}
               </button>
             </div>
           </div>
@@ -179,8 +300,24 @@ function Registro() {
             Acepto los términos y condiciones de BolsaTec
           </label>
 
-          <button type="submit" className="registro-submit">
-            Crear cuenta
+          {error && (
+            <p className="registro-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          {exito && (
+            <p className="registro-exito" role="status">
+              {exito}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            className="registro-submit"
+            disabled={cargando}
+          >
+            {cargando ? "Registrando..." : "Crear cuenta"}
             <ArrowRight size={19} />
           </button>
         </form>
