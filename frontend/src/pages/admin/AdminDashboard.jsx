@@ -1,6 +1,5 @@
 
 import { useEffect, useState } from "react";
-
 import {
   Users,
   Building2,
@@ -12,6 +11,8 @@ import {
 
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { sessionGet } from "../../services/session";
+import { apiRequest } from "../../services/api";
+import EstudiantesAdmin from "./EstudiantesAdmin";
 
 // ======================================
 // MENÚ DEL ADMINISTRADOR
@@ -48,10 +49,12 @@ function AdminDashboard() {
   const [error, setError] = useState("");
 
   // ======================================
-  // OBTENER ESTADÍSTICAS REALES
+  // OBTENER ESTADÍSTICAS DESDE SUPABASE
   // ======================================
 
   useEffect(() => {
+    let activo = true;
+
     const obtenerEstadisticas = async () => {
       try {
         setCargando(true);
@@ -65,13 +68,10 @@ function AdminDashboard() {
           );
         }
 
-        const API_URL = (
-          import.meta.env.VITE_API_URL ||
-          "http://localhost:3000"
-        ).replace(/\/$/, "");
-
-        const respuesta = await fetch(
-          `${API_URL}/api/admin/estadisticas`,
+        // apiRequest utiliza VITE_API_URL.
+        // La variable debe incluir /api al final.
+        const datos = await apiRequest(
+          "/admin/estadisticas",
           {
             method: "GET",
             headers: {
@@ -80,14 +80,7 @@ function AdminDashboard() {
           }
         );
 
-        const datos = await respuesta.json();
-
-        if (!respuesta.ok) {
-          throw new Error(
-            datos.mensaje ||
-            "No se pudieron obtener las estadísticas"
-          );
-        }
+        if (!activo) return;
 
         setResumen({
           usuarios: Number(datos.usuarios) || 0,
@@ -96,20 +89,30 @@ function AdminDashboard() {
           postulaciones: Number(datos.postulaciones) || 0,
         });
 
-      } catch (error) {
+      } catch (err) {
         console.error(
           "Error al obtener estadísticas:",
-          error
+          err
         );
 
-        setError(error.message);
-
+        if (activo) {
+          setError(
+            err.message ||
+            "No se pudieron obtener las estadísticas"
+          );
+        }
       } finally {
-        setCargando(false);
+        if (activo) {
+          setCargando(false);
+        }
       }
     };
 
     obtenerEstadisticas();
+
+    return () => {
+      activo = false;
+    };
   }, []);
 
   // ======================================
@@ -140,16 +143,10 @@ function AdminDashboard() {
   ];
 
   // ======================================
-  // SECCIONES ADMINISTRATIVAS
+  // INFORMACIÓN DE SECCIONES
   // ======================================
 
   const secciones = {
-    usuarios: {
-      titulo: "Administración de usuarios",
-      descripcion:
-        "Consulta los estudiantes, empresas y administradores registrados. Aquí podrás activar o desactivar cuentas.",
-    },
-
     empresas: {
       titulo: "Verificación de empresas",
       descripcion:
@@ -181,7 +178,18 @@ function AdminDashboard() {
 
   const mostrarSeccion = (seccion) => {
 
+    // ====================================
+    // CRUD DE ESTUDIANTES
+    // ====================================
+
+    if (seccion === "usuarios") {
+      return <EstudiantesAdmin />;
+    }
+
+    // ====================================
     // DASHBOARD PRINCIPAL
+    // ====================================
+
     if (seccion === "dashboard") {
       return (
         <>
@@ -194,7 +202,8 @@ function AdminDashboard() {
             <p>
               Bienvenido,{" "}
               {usuario?.nombre || "administrador"}.
-              {" "}Supervisa y administra la información
+              {" "}
+              Supervisa y administra la información
               general de la plataforma.
             </p>
           </div>
@@ -227,10 +236,13 @@ function AdminDashboard() {
             })}
           </div>
 
-          {/* MENSAJE DE ERROR */}
+          {/* ERROR AL CONSULTAR ESTADÍSTICAS */}
           {error && (
             <div className="bt-dashboard-panel">
-              <p style={{ color: "#DC2626" }}>
+              <p
+                role="alert"
+                style={{ color: "#DC2626" }}
+              >
                 Error al cargar estadísticas: {error}
               </p>
             </div>
@@ -259,18 +271,18 @@ function AdminDashboard() {
             <p>
               Las nuevas empresas se registran
               inicialmente como no verificadas.
-              Desde este módulo podremos revisar
-              sus datos antes de habilitar las
-              funciones que requieran verificación.
+              Desde este módulo podrás revisar
+              sus datos antes de habilitar
+              las funciones que requieran verificación.
             </p>
           </div>
         </>
       );
     }
 
-    // ======================================
+    // ====================================
     // RESTO DE SECCIONES
-    // ======================================
+    // ====================================
 
     const datos = secciones[seccion];
 
@@ -282,9 +294,7 @@ function AdminDashboard() {
       <div className="bt-dashboard-panel">
 
         <div className="bt-stat-icon">
-          {seccion === "usuarios" ? (
-            <Users size={23} />
-          ) : seccion === "empresas" ? (
+          {seccion === "empresas" ? (
             <Building2 size={23} />
           ) : seccion === "vacantes" ? (
             <BriefcaseBusiness size={23} />
@@ -300,9 +310,9 @@ function AdminDashboard() {
         <p>{datos.descripcion}</p>
 
         <p>
-          Las consultas y operaciones administrativas
-          se habilitarán cuando conectemos este módulo
-          con el backend y Supabase.
+          Este módulo está pendiente de conectar
+          con las operaciones correspondientes
+          del backend y Supabase.
         </p>
       </div>
     );
