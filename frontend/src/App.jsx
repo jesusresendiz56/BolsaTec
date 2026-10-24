@@ -1,21 +1,22 @@
+
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import Home from "./pages/Home/Home";
+import Login from "./pages/login/Login";
+import Registro from "./pages/registro/Registro";
+import TestConexion from "./components/TestConexion";
+
 function App() {
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-10 rounded-xl shadow-lg text-center">
-        <h1 className="text-4xl font-bold text-blue-600">
-          BolsaTec
-        </h1>
-
-        <p className="mt-4 text-gray-600">
-          React + Tailwind CSS funcionando correctamente
-        </p>
-
-        <button className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-          Comenzar
-        </button>
-      </div>
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/registro" element={<Registro />} />
+        <Route path="/test-conexion" element={<TestConexion />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;

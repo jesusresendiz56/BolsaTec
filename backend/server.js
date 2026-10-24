@@ -2,12 +2,23 @@ const express = require('express')
 const cors = require('cors')
 require('dotenv').config()
 const pool = require('./src/config/database')
+const authRoutes = require("./src/routes/authRoutes");
+
+app.use("/api/auth", authRoutes);
 
 const app = express()
 
 // Middlewares
-app.use(cors())
-app.use(express.json())
+app.use(cors({
+  origin: 'http://localhost:5173',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}))
+
+app.use(express.json());
+// Rutas de autenticación
+app.use("/api/auth", authRoutes);
+
 
 // Ruta principal
 app.get('/', (req, res) => {
