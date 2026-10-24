@@ -1,0 +1,282 @@
+
+.bt-empresas-admin {
+  width: 100%;
+  color: #1E293B;
+}
+
+.bt-em-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.bt-em-header h2 {
+  margin: 0 0 8px;
+  color: #0B2B33;
+  font-size: 24px;
+}
+
+.bt-em-header p {
+  margin: 0;
+  color: #64748B;
+  font-size: 14px;
+}
+
+.bt-em-primary,
+.bt-em-secondary {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bt-em-primary {
+  background: #0E7490;
+  color: white;
+  border: 1px solid #0E7490;
+}
+
+.bt-em-primary:hover {
+  background: #155E75;
+}
+
+.bt-em-secondary {
+  background: white;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+}
+
+.bt-em-toolbar {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.bt-em-search {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 10px;
+  padding: 0 14px;
+  border: 1px solid #CBD5E1;
+  border-radius: 9px;
+  background: white;
+}
+
+.bt-em-search input {
+  width: 100%;
+  padding: 12px 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #1E293B;
+}
+
+.bt-em-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #E2E8F0;
+  border-radius: 13px;
+  background: white;
+}
+
+.bt-em-table {
+  width: 100%;
+  min-width: 1080px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.bt-em-table th {
+  padding: 15px;
+  color: #475569;
+  background: #F8FAFC;
+  font-size: 12px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.bt-em-table td {
+  padding: 15px;
+  font-size: 13px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.bt-em-table tbody tr:hover {
+  background: #F8FAFC;
+}
+
+.bt-em-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.bt-em-badge.verificada,
+.bt-em-badge.activa {
+  color: #047857;
+  background: #D1FAE5;
+}
+
+.bt-em-badge.pendiente {
+  color: #92400E;
+  background: #FEF3C7;
+}
+
+.bt-em-badge.inactiva {
+  color: #B91C1C;
+  background: #FEE2E2;
+}
+
+.bt-em-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.bt-em-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  color: #0E7490;
+  background: #F1F5F9;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.bt-em-actions button:hover {
+  background: #CFFAFE;
+}
+
+.bt-em-actions .bt-em-danger-button {
+  color: #DC2626;
+}
+
+.bt-em-total {
+  margin-top: 14px;
+  color: #64748B;
+  font-size: 13px;
+}
+
+.bt-em-success,
+.bt-em-error {
+  padding: 12px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.bt-em-success {
+  color: #065F46;
+  background: #D1FAE5;
+}
+
+.bt-em-error {
+  color: #991B1B;
+  background: #FEE2E2;
+}
+
+.bt-em-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(11, 43, 51, 0.65);
+}
+
+.bt-em-modal {
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 26px;
+  border-radius: 15px;
+  background: white;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.bt-em-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.bt-em-modal-header h3 {
+  margin: 0;
+  color: #0B2B33;
+}
+
+.bt-em-modal-header button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.bt-em-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.bt-em-modal label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.bt-em-modal input,
+.bt-em-modal textarea {
+  width: 100%;
+  padding: 11px;
+  color: #1E293B;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.bt-em-modal input:focus,
+.bt-em-modal textarea:focus {
+  outline: 2px solid #0E7490;
+  outline-offset: 1px;
+}
+
+.bt-em-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.bt-em-primary:disabled,
+.bt-em-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+  .bt-em-header,
+  .bt-em-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bt-em-modal {
+    padding: 20px;
+  }
+}
+

@@ -13,6 +13,7 @@ import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { sessionGet } from "../../services/session";
 import { apiRequest } from "../../services/api";
 import EstudiantesAdmin from "./EstudiantesAdmin";
+import EmpresasAdmin from "./EmpresasAdmin";
 
 // ======================================
 // MENÚ DEL ADMINISTRADOR
@@ -177,6 +178,14 @@ function AdminDashboard() {
   // ======================================
 
   const mostrarSeccion = (seccion) => {
+
+ // ====================================
+    // CRUD DE EMPRESAS
+    // =======================================
+
+      if (seccion === "empresas") {
+    return <EmpresasAdmin />;
+  }
 
     // ====================================
     // CRUD DE ESTUDIANTES

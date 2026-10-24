@@ -17,6 +17,17 @@ const {
   eliminarEstudiante
 } = require("../controllers/adminEstudiantesController");
 
+
+const {
+  listarEmpresas,
+  obtenerEmpresa,
+  crearEmpresa,
+  actualizarEmpresa,
+  cambiarVerificacion,
+  cambiarEstadoEmpresa,
+  eliminarEmpresa
+} = require("../controllers/adminEmpresasController");
+
 const {
   obtenerEstadisticas,
   obtenerUsuarios,
@@ -40,6 +51,28 @@ router.patch(
 
 router.delete("/estudiantes/:id", eliminarEstudiante);
 
+
+// CRUD DE EMPRESAS
+
+router.get("/empresas", listarEmpresas);
+
+router.get("/empresas/:id", obtenerEmpresa);
+
+router.post("/empresas", crearEmpresa);
+
+router.put("/empresas/:id", actualizarEmpresa);
+
+router.patch(
+  "/empresas/:id/verificar",
+  cambiarVerificacion
+);
+
+router.patch(
+  "/empresas/:id/estado",
+  cambiarEstadoEmpresa
+);
+
+router.delete("/empresas/:id", eliminarEmpresa);
 
 // Proteger todas las rutas administrativas
 router.use(verificarToken, soloAdministrador);
