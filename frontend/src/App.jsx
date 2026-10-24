@@ -2,24 +2,31 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Páginas públicas
-import Home from "./pages/home/Home.jsx";
+import Home from "./pages/Home/Home";
 import Login from "./pages/login/Login";
 import Registro from "./pages/registro/Registro";
 
-// Login del administrador
+// Administrador
 import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 // Dashboards
 import EstudianteDashboard from "./pages/estudiante/EstudianteDashboard";
 import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
-import AdminDashboard from "./pages/admin/AdminDashboard";
 
 // Protección de rutas
-import ProtectedRoute from "./components/dashboard/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+// Botón global de modo oscuro
+import ThemeToggle from "./components/ThemeToggle";
 
 function App() {
   return (
     <BrowserRouter>
+
+      {/* BOTÓN DE MODO CLARO / OSCURO */}
+      <ThemeToggle />
+
       <Routes>
 
         {/* PÁGINAS PÚBLICAS */}

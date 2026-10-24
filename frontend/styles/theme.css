@@ -1,0 +1,131 @@
+
+:root {
+  color-scheme: light;
+
+  --bt-page: #F1F5F9;
+  --bt-surface: #FFFFFF;
+  --bt-surface-alt: #F8FAFC;
+  --bt-text: #1E293B;
+  --bt-muted: #64748B;
+  --bt-border: #E2E8F0;
+  --bt-input: #FFFFFF;
+  --bt-primary: #0E7490;
+  --bt-sidebar: #0B2B33;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bt-page: #0B1720;
+  --bt-surface: #142A35;
+  --bt-surface-alt: #193540;
+  --bt-text: #F1F5F9;
+  --bt-muted: #A8BBC7;
+  --bt-border: #294653;
+  --bt-input: #193540;
+  --bt-primary: #22A7C4;
+  --bt-sidebar: #071F27;
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] #root {
+  background: var(--bt-page);
+  color: var(--bt-text);
+}
+
+/* DASHBOARDS */
+
+[data-theme="dark"] .bt-dashboard-panel,
+[data-theme="dark"] .bt-dashboard-welcome,
+[data-theme="dark"] .bt-stat-card {
+  background: var(--bt-surface);
+  color: var(--bt-text);
+  border-color: var(--bt-border);
+}
+
+[data-theme="dark"] .bt-dashboard-panel h3,
+[data-theme="dark"] .bt-dashboard-welcome h2,
+[data-theme="dark"] .bt-stat-card strong {
+  color: var(--bt-text);
+}
+
+[data-theme="dark"] .bt-dashboard-panel p,
+[data-theme="dark"] .bt-dashboard-welcome p,
+[data-theme="dark"] .bt-stat-card p {
+  color: var(--bt-muted);
+}
+
+/* TABLAS Y CRUD */
+
+[data-theme="dark"] .bt-em-table-wrapper,
+[data-theme="dark"] .bt-em-modal {
+  background: var(--bt-surface);
+  color: var(--bt-text);
+  border-color: var(--bt-border);
+}
+
+[data-theme="dark"] .bt-em-table th {
+  background: var(--bt-surface-alt);
+  color: var(--bt-text);
+  border-color: var(--bt-border);
+}
+
+[data-theme="dark"] .bt-em-table td {
+  color: var(--bt-text);
+  border-color: var(--bt-border);
+}
+
+[data-theme="dark"] .bt-em-table tbody tr:hover {
+  background: var(--bt-surface-alt);
+}
+
+[data-theme="dark"] .bt-em-header h2,
+[data-theme="dark"] .bt-em-modal-header h3 {
+  color: var(--bt-text);
+}
+
+[data-theme="dark"] .bt-em-header p,
+[data-theme="dark"] .bt-em-total {
+  color: var(--bt-muted);
+}
+
+/* CAMPOS DE FORMULARIO */
+
+[data-theme="dark"] .bt-em-search,
+[data-theme="dark"] .bt-em-modal input,
+[data-theme="dark"] .bt-em-modal textarea,
+[data-theme="dark"] .bt-em-secondary {
+  background: var(--bt-input);
+  color: var(--bt-text);
+  border-color: var(--bt-border);
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: var(--bt-muted);
+}
+
+/* BOTONES DE ACCIONES */
+
+[data-theme="dark"] .bt-em-actions button {
+  background: var(--bt-surface-alt);
+  color: #67D5EA;
+}
+
+[data-theme="dark"] .bt-em-actions .bt-em-danger-button {
+  color: #F87171;
+}
+
+/* ELEMENTOS GENÉRICOS DE FORMULARIO */
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  color-scheme: dark;
+}
+
+[data-theme="dark"] input:focus-visible,
+[data-theme="dark"] textarea:focus-visible,
+[data-theme="dark"] select:focus-visible {
+  outline-color: #22A7C4;
+}

@@ -1,0 +1,47 @@
+
+.bt-global-theme-toggle {
+  position: fixed;
+  top: 17px;
+  right: 18px;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 43px;
+  height: 43px;
+
+  border-radius: 50%;
+  border: 1px solid #CBD5E1;
+
+  background: #FFFFFF;
+  color: #0B2B33;
+
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.bt-global-theme-toggle:hover {
+  background: #CFFAFE;
+}
+
+[data-theme="dark"] .bt-global-theme-toggle {
+  background: #193540;
+  color: #F8FAFC;
+  border-color: #365462;
+}
+
+[data-theme="dark"] .bt-global-theme-toggle:hover {
+  background: #245263;
+}
+
+@media (max-width: 600px) {
+  .bt-global-theme-toggle {
+    top: 12px;
+    right: 12px;
+    width: 39px;
+    height: 39px;
+  }
+}
