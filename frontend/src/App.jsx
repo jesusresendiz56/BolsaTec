@@ -4,7 +4,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home/Home";
 import Login from "./pages/login/Login";
 import Registro from "./pages/registro/Registro";
-import TestConexion from "./components/TestConexion";
+
+// Importar el login del administrador
+import AdminLogin from "./pages/admin/AdminLogin";
 
 function App() {
   return (
@@ -13,7 +15,12 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
-        <Route path="/test-conexion" element={<TestConexion />} />
+
+        {/* Nueva ruta del administrador */}
+        <Route
+          path="/admin/login"
+          element={<AdminLogin />}
+        />
       </Routes>
     </BrowserRouter>
   );
