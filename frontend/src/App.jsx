@@ -2,7 +2,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 // Páginas públicas
-import Home from "./pages/Home/Home";
+import Home from "./pages/home/Home.jsx";
 import Login from "./pages/login/Login";
 import Registro from "./pages/registro/Registro";
 
