@@ -5,6 +5,7 @@ require("dotenv").config();
 
 const pool = require("./src/config/database");
 const authRoutes = require("./src/routes/authRoutes");
+const adminRoutes = require("./src/routes/adminRoutes");
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use(express.json());
 
 // Rutas de autenticación
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Ruta principal
 app.get("/", (req, res) => {
