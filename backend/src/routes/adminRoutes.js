@@ -5,7 +5,7 @@ const router = express.Router();
 const {
   verificarToken,
   soloAdministrador
-} = require("../middlewares/authMiddleware");
+} = require("../middleware/authMiddleware");
 
 const {
   obtenerEstadisticas
