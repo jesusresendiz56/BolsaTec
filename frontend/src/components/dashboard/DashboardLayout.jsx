@@ -19,7 +19,9 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { sessionDestroy } from "../../services/session";
 import "./DashboardLayout.css";
+
 
 const iconos = {
   dashboard: LayoutDashboard,
@@ -51,17 +53,10 @@ function DashboardLayout({
 
 const cerrarSesion = () => {
   if (rol === "administrador") {
-    sessionStorage.removeItem("admin_token");
-    sessionStorage.removeItem("admin_usuario");
-
+    sessionDestroy("administrador");
     navigate("/admin/login", { replace: true });
   } else {
-    localStorage.removeItem("bolsatec_token");
-    localStorage.removeItem("bolsatec_usuario");
-
-    sessionStorage.removeItem("bolsatec_token");
-    sessionStorage.removeItem("bolsatec_usuario");
-
+    sessionDestroy("usuario");
     navigate("/login", { replace: true });
   }
 };

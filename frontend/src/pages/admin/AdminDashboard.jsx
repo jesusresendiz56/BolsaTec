@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
+import { sessionGet } from "../../services/session";
 
 const menu = [
   { id: "dashboard", nombre: "Dashboard", icono: "dashboard" },
@@ -30,7 +31,7 @@ function obtenerAdministrador() {
 }
 
 function AdminDashboard() {
-  const usuario = obtenerAdministrador();
+  const usuario = sessionGet("administrador")?.usuario;
 
   const estadisticas = [
     { titulo: "Usuarios registrados", icono: Users },

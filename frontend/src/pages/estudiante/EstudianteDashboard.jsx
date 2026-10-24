@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
+import { sessionGet } from "../../services/session";
 
 const menu = [
   { id: "dashboard", nombre: "Dashboard", icono: "dashboard" },
@@ -41,7 +42,7 @@ function obtenerUsuario() {
 }
 
 function EstudianteDashboard() {
-  const usuario = obtenerUsuario();
+  const usuario = sessionGet("estudiante")?.usuario;
   const [busqueda, setBusqueda] = useState("");
 
   const estadisticas = [

@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../services/api";
+import { sessionStart } from "../../services/session";
 
 import {
   GraduationCap,
@@ -27,88 +28,75 @@ function Login() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
 
-  const iniciarSesion = async (e) => {
-    e.preventDefault();
 
-    setError("");
-    setCargando(true);
+const iniciarSesion = async (e) => {
+  e.preventDefault();
 
-    try {
-      // Solicitud al backend de BolsaTec
-      const respuesta = await apiRequest("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({
-          correo: correo.trim(),
-          password,
-        }),
-      });
+  setError("");
+  setCargando(true);
 
-      const { token, usuario } = respuesta;
+  try {
+    // 1. Enviar credenciales al backend
+    const respuesta = await apiRequest("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({
+        correo: correo.trim(),
+        password,
+      }),
+    });
 
-      if (!token || !usuario?.rol) {
-        throw new Error(
-          "Respuesta de autenticación incompleta"
-        );
-      }
+    const { token, usuario } = respuesta;
 
-      // Comprobar que el rol seleccionado sea correcto
-      if (usuario.rol !== rol) {
-        throw new Error(
-          "El tipo de cuenta seleccionado no corresponde a tu usuario"
-        );
-      }
-
-      // Definir la ruta correspondiente
-      const rutasPorRol = {
-        estudiante: "/dashboard/estudiante",
-        empresa: "/dashboard/empresa",
-      };
-
-      const rutaDestino = rutasPorRol[usuario.rol];
-
-      if (!rutaDestino) {
-        throw new Error(
-          "El usuario no tiene acceso a este portal"
-        );
-      }
-
-      // Mantener la opción Recordarme
-      const almacenamiento = recordarme
-        ? localStorage
-        : sessionStorage;
-
-      // Limpiar sesiones anteriores
-      localStorage.removeItem("bolsatec_token");
-      localStorage.removeItem("bolsatec_usuario");
-
-      sessionStorage.removeItem("bolsatec_token");
-      sessionStorage.removeItem("bolsatec_usuario");
-
-      // Guardar la sesión
-      almacenamiento.setItem("bolsatec_token", token);
-      almacenamiento.setItem(
-        "bolsatec_usuario",
-        JSON.stringify(usuario)
+    // 2. Validar respuesta
+    if (!token || !usuario?.rol) {
+      throw new Error(
+        "Respuesta de autenticación incompleta"
       );
-
-      console.log("Inicio de sesión exitoso", {
-        id_usuario: usuario.id_usuario,
-        rol: usuario.rol,
-      });
-
-      // Redirección automática según el rol
-      navigate(rutaDestino, { replace: true });
-
-    } catch (err) {
-      console.error("Error al iniciar sesión:", err);
-
-      setError(
-        err.message || "No se pudo iniciar sesión"
-      );
-    } finally {
-      setCargando(false);
     }
-  };
+
+    // 3. Verificar el rol seleccionado
+    if (usuario.rol !== rol) {
+      throw new Error(
+        "El tipo de cuenta seleccionado no corresponde a tu usuario"
+      );
+    }
+
+    // 4. Determinar el dashboard
+    const rutasPorRol = {
+      estudiante: "/dashboard/estudiante",
+      empresa: "/dashboard/empresa",
+    };
+
+    const rutaDestino = rutasPorRol[usuario.rol];
+
+    if (!rutaDestino) {
+      throw new Error(
+        "El usuario no tiene acceso a este portal"
+      );
+    }
+
+    // 5. SESSION START
+    sessionStart(token, usuario, recordarme);
+
+    console.log("Sesión iniciada correctamente", {
+      id_usuario: usuario.id_usuario,
+      rol: usuario.rol,
+    });
+
+    // 6. Redirigir al dashboard
+    navigate(rutaDestino, { replace: true });
+
+  } catch (err) {
+    console.error("Error al iniciar sesión:", err);
+
+    setError(
+      err.message || "No se pudo iniciar sesión"
+    );
+  } finally {
+    setCargando(false);
+  }
+};
+
 
   return (
     <AuthLayout>

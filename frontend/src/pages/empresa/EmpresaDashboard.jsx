@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
+import { sessionGet } from "../../services/session";
 
 const menu = [
   { id: "dashboard", nombre: "Dashboard", icono: "dashboard" },
@@ -32,7 +33,7 @@ function obtenerUsuario() {
 }
 
 function EmpresaDashboard() {
-  const usuario = obtenerUsuario();
+  const usuario = sessionGet("empresa")?.usuario;
 
   const estadisticas = [
     { titulo: "Vacantes publicadas", icono: BriefcaseBusiness },

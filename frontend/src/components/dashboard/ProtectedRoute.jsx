@@ -1,41 +1,24 @@
 
 import { Navigate } from "react-router-dom";
+import { sessionGet } from "../../services/session";
 
 function ProtectedRoute({ rol, children }) {
-  const esAdmin = rol === "administrador";
+  const sesion = sessionGet(rol);
 
-  let token = null;
-  let usuarioGuardado = null;
+  const rutaLogin =
+    rol === "administrador"
+      ? "/admin/login"
+      : "/login";
 
-  if (esAdmin) {
-    token = sessionStorage.getItem("admin_token");
-    usuarioGuardado = sessionStorage.getItem("admin_usuario");
-  } else {
-    const almacenamiento = localStorage.getItem("bolsatec_token")
-      ? localStorage
-      : sessionStorage;
-
-    token = almacenamiento.getItem("bolsatec_token");
-    usuarioGuardado = almacenamiento.getItem("bolsatec_usuario");
-  }
-
-  const rutaLogin = esAdmin ? "/admin/login" : "/login";
-
-  if (!token || !usuarioGuardado) {
+  if (!sesion) {
     return <Navigate to={rutaLogin} replace />;
   }
 
-  try {
-    const usuario = JSON.parse(usuarioGuardado);
-
-    if (usuario.rol !== rol) {
-      return <Navigate to={rutaLogin} replace />;
-    }
-
-    return children;
-  } catch {
+  if (sesion.usuario.rol !== rol) {
     return <Navigate to={rutaLogin} replace />;
   }
+
+  return children;
 }
 
 export default ProtectedRoute;
