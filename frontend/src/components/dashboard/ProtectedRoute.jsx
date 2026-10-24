@@ -1,21 +1,21 @@
 
 import { Navigate } from "react-router-dom";
-import { sessionGet } from "../../services/session";
+import { sessionGet } from "../services/session";
 
 function ProtectedRoute({ rol, children }) {
   const sesion = sessionGet(rol);
 
-  const rutaLogin =
-    rol === "administrador"
-      ? "/admin/login"
-      : "/login";
-
-  if (!sesion) {
-    return <Navigate to={rutaLogin} replace />;
-  }
-
-  if (sesion.usuario.rol !== rol) {
-    return <Navigate to={rutaLogin} replace />;
+  if (!sesion?.token || sesion.usuario?.rol !== rol) {
+    return (
+      <Navigate
+        to={
+          rol === "administrador"
+            ? "/admin/login"
+            : "/login"
+        }
+        replace
+      />
+    );
   }
 
   return children;

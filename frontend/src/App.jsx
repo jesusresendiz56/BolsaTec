@@ -15,7 +15,7 @@ import EstudianteDashboard from "./pages/estudiante/EstudianteDashboard";
 import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
 
 // Protección de rutas
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/dashboard/ProtectedRoute";
 
 // Botón global de modo oscuro
 import ThemeToggle from "./components/ThemeToggle";
