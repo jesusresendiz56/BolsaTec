@@ -27,7 +27,6 @@ function Login() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
 
-  // Inicio de sesión conectado al backend
   const iniciarSesion = async (e) => {
     e.preventDefault();
 
@@ -35,6 +34,7 @@ function Login() {
     setCargando(true);
 
     try {
+      // Solicitud al backend de BolsaTec
       const respuesta = await apiRequest("/auth/login", {
         method: "POST",
         body: JSON.stringify({
@@ -51,23 +51,40 @@ function Login() {
         );
       }
 
-      // Verificar el rol seleccionado
+      // Comprobar que el rol seleccionado sea correcto
       if (usuario.rol !== rol) {
         throw new Error(
           "El tipo de cuenta seleccionado no corresponde a tu usuario"
         );
       }
 
-      // Guardar sesión provisionalmente
+      // Definir la ruta correspondiente
+      const rutasPorRol = {
+        estudiante: "/dashboard/estudiante",
+        empresa: "/dashboard/empresa",
+      };
+
+      const rutaDestino = rutasPorRol[usuario.rol];
+
+      if (!rutaDestino) {
+        throw new Error(
+          "El usuario no tiene acceso a este portal"
+        );
+      }
+
+      // Mantener la opción Recordarme
       const almacenamiento = recordarme
         ? localStorage
         : sessionStorage;
 
+      // Limpiar sesiones anteriores
       localStorage.removeItem("bolsatec_token");
       localStorage.removeItem("bolsatec_usuario");
+
       sessionStorage.removeItem("bolsatec_token");
       sessionStorage.removeItem("bolsatec_usuario");
 
+      // Guardar la sesión
       almacenamiento.setItem("bolsatec_token", token);
       almacenamiento.setItem(
         "bolsatec_usuario",
@@ -79,11 +96,12 @@ function Login() {
         rol: usuario.rol,
       });
 
-      // Redirección provisional
-      navigate("/");
+      // Redirección automática según el rol
+      navigate(rutaDestino, { replace: true });
 
     } catch (err) {
       console.error("Error al iniciar sesión:", err);
+
       setError(
         err.message || "No se pudo iniciar sesión"
       );
