@@ -345,3 +345,32 @@ html[data-theme="dark"] .bt-dashboard-welcome p,
 html[data-theme="dark"] .bt-stat-card p {
   color: #A8BBC7;
 }
+
+
+
+/* ======================================
+   NUEVO FONDO OSCURO GLOBAL
+====================================== */
+
+html[data-theme="dark"],
+html[data-theme="dark"] body,
+html[data-theme="dark"] #root {
+  background-color: #0D1117;
+  color: #E6EDF3;
+}
+
+/* Login y registro */
+html[data-theme="dark"] .auth-layout,
+html[data-theme="dark"] .auth-right,
+html[data-theme="dark"] .login-container {
+  background-color: #0D1117;
+}
+
+/* Tarjetas */
+html[data-theme="dark"] .bt-dashboard-panel,
+html[data-theme="dark"] .bt-dashboard-welcome,
+html[data-theme="dark"] .bt-stat-card {
+  background-color: #161B22;
+  border-color: #30363D;
+  color: #E6EDF3;
+}
