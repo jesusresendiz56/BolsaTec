@@ -129,3 +129,207 @@
 [data-theme="dark"] select:focus-visible {
   outline-color: #22A7C4;
 }
+
+
+/* ==========================================
+   BOLSATEC - MODO OSCURO
+   LOGIN Y REGISTRO
+========================================== */
+
+/* Contenedor general */
+html[data-theme="dark"] .auth-layout {
+  background: #0B1720;
+  color: #F1F5F9;
+}
+
+/* Panel izquierdo */
+html[data-theme="dark"] .auth-left {
+  background: #071F27;
+  color: #F1F5F9;
+}
+
+/* Panel derecho */
+html[data-theme="dark"] .auth-right {
+  background: #0B1720;
+  color: #F1F5F9;
+}
+
+/* Logotipo y títulos */
+html[data-theme="dark"] .auth-logo,
+html[data-theme="dark"] .auth-left h1,
+html[data-theme="dark"] .auth-feature h3 {
+  color: #F1F5F9;
+}
+
+/* Descripciones */
+html[data-theme="dark"] .auth-description,
+html[data-theme="dark"] .auth-feature p,
+html[data-theme="dark"] .auth-copyright {
+  color: #A8BBC7;
+}
+
+/* Tarjetas de características */
+html[data-theme="dark"] .auth-feature,
+html[data-theme="dark"] .auth-tag {
+  background: #142A35;
+  border-color: #294653;
+}
+
+/* Formulario de login */
+html[data-theme="dark"] .login-container {
+  background: #0B1720;
+  color: #F1F5F9;
+}
+
+html[data-theme="dark"] .login-container h1,
+html[data-theme="dark"] .login-field label {
+  color: #F1F5F9;
+}
+
+html[data-theme="dark"] .login-description {
+  color: #A8BBC7;
+}
+
+/* Campos de entrada */
+html[data-theme="dark"] .login-input {
+  background: #193540;
+  border-color: #294653;
+}
+
+html[data-theme="dark"] .login-input input {
+  background: transparent;
+  color: #F1F5F9;
+}
+
+html[data-theme="dark"] .login-input input::placeholder {
+  color: #A8BBC7;
+}
+
+/* Selección estudiante / empresa */
+html[data-theme="dark"] .login-roles {
+  background: #142A35;
+}
+
+html[data-theme="dark"] .login-roles button {
+  color: #A8BBC7;
+}
+
+html[data-theme="dark"] .login-roles button.active {
+  background: #0E7490;
+  color: #FFFFFF;
+}
+
+/* Opciones del formulario */
+html[data-theme="dark"] .login-remember,
+html[data-theme="dark"] .login-register {
+  color: #A8BBC7;
+}
+
+/* Registro: estilos generales */
+html[data-theme="dark"] .auth-right input,
+html[data-theme="dark"] .auth-right textarea,
+html[data-theme="dark"] .auth-right select {
+  color: #F1F5F9;
+}
+
+html[data-theme="dark"] .auth-right input::placeholder,
+html[data-theme="dark"] .auth-right textarea::placeholder {
+  color: #A8BBC7;
+}
+
+
+/* ==========================================
+   BOLSATEC - CORRECCIONES DEL TEMA GLOBAL
+========================================== */
+
+/* Fondo principal */
+html[data-theme="dark"],
+html[data-theme="dark"] body,
+html[data-theme="dark"] #root {
+  background-color: #0B1720;
+  color: #F1F5F9;
+  min-height: 100%;
+}
+
+/* LOGIN Y REGISTRO */
+
+/* Contenedores */
+html[data-theme="dark"] .auth-layout,
+html[data-theme="dark"] .auth-right,
+html[data-theme="dark"] .login-container {
+  background-color: #0B1720;
+  color: #F1F5F9;
+}
+
+/* El panel izquierdo conserva su identidad */
+html[data-theme="dark"] .auth-left {
+  background-color: #071F27;
+}
+
+/* Formularios */
+html[data-theme="dark"] .login-form,
+html[data-theme="dark"] .login-field,
+html[data-theme="dark"] .login-input {
+  color: #F1F5F9;
+}
+
+html[data-theme="dark"] .login-input {
+  background-color: #193540;
+  border-color: #294653;
+}
+
+html[data-theme="dark"] .login-input input {
+  background-color: transparent;
+  color: #F1F5F9;
+}
+
+/* Títulos */
+html[data-theme="dark"] .login-container h1,
+html[data-theme="dark"] .login-field label {
+  color: #F1F5F9;
+}
+
+/* Botones de selección de rol */
+html[data-theme="dark"] .login-roles {
+  background-color: #142A35;
+}
+
+html[data-theme="dark"] .login-roles button:not(.active) {
+  background-color: transparent;
+  color: #A8BBC7;
+}
+
+/* DASHBOARDS */
+
+/* Fondo de contenido */
+html[data-theme="dark"] .bt-dashboard-main,
+html[data-theme="dark"] .bt-dashboard-content,
+html[data-theme="dark"] .dashboard-main,
+html[data-theme="dark"] .dashboard-content {
+  background-color: #0B1720;
+  color: #F1F5F9;
+}
+
+/* Encabezado */
+html[data-theme="dark"] .bt-dashboard-header,
+html[data-theme="dark"] .dashboard-header {
+  background-color: #142A35;
+  color: #F1F5F9;
+  border-color: #294653;
+}
+
+/* Tarjetas */
+html[data-theme="dark"] .bt-dashboard-panel,
+html[data-theme="dark"] .bt-dashboard-welcome,
+html[data-theme="dark"] .bt-stat-card {
+  background-color: #142A35;
+  color: #F1F5F9;
+  border-color: #294653;
+}
+
+/* Textos secundarios */
+html[data-theme="dark"] .bt-dashboard-panel p,
+html[data-theme="dark"] .bt-dashboard-welcome p,
+html[data-theme="dark"] .bt-stat-card p {
+  color: #A8BBC7;
+}
