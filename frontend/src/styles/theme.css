@@ -16,16 +16,31 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --bt-page: #0B1720;
-  --bt-surface: #142A35;
-  --bt-surface-alt: #193540;
-  --bt-text: #F1F5F9;
-  --bt-muted: #A8BBC7;
-  --bt-border: #294653;
-  --bt-input: #193540;
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Fondo principal */
+  --bt-page: #0D1117;
+
+  /* Tarjetas y contenedores */
+  --bt-surface: #161B22;
+  --bt-surface-alt: #21262D;
+
+  /* Textos */
+  --bt-text: #E6EDF3;
+  --bt-muted: #8B949E;
+
+  /* Bordes */
+  --bt-border: #30363D;
+
+  /* Formularios */
+  --bt-input: #21262D;
+
+  /* Colores de BolsaTec */
   --bt-primary: #22A7C4;
-  --bt-sidebar: #071F27;
+  --bt-sidebar: #010409;
 }
+
 
 [data-theme="dark"] body,
 [data-theme="dark"] #root {
