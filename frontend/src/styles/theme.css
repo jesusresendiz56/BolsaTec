@@ -16,9 +16,6 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-:root[data-theme="dark"] {
-  color-scheme: dark;
-
   /* Fondo principal */
   --bt-page: #0D1117;
 
