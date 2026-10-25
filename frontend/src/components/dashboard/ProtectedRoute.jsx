@@ -1,6 +1,6 @@
 
 import { Navigate } from "react-router-dom";
-import { sessionGet } from "../services/session";
+import { sessionGet } from "../../services/session";
 
 function ProtectedRoute({ rol, children }) {
   const sesion = sessionGet(rol);
