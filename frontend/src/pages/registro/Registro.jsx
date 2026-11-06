@@ -36,18 +36,25 @@ function Registro() {
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
 
+  // ========================================
+  // CAMBIAR TIPO DE REGISTRO
+  // ========================================
+
+  const cambiarRol = (nuevoRol) => {
+    setRol(nuevoRol);
+    setError("");
+    setExito("");
+  };
+
+  // ========================================
+  // REGISTRAR ESTUDIANTE O EMPRESA
+  // ========================================
+
   const registrar = async (e) => {
     e.preventDefault();
 
     setError("");
     setExito("");
-
-    if (rol === "empresa") {
-      setError(
-        "El registro de empresas todavía no está disponible."
-      );
-      return;
-    }
 
     if (password.length < 8) {
       setError(
@@ -56,23 +63,61 @@ function Registro() {
       return;
     }
 
+    if (!nombre.trim() || !institucion.trim()) {
+      setError(
+        "Completa todos los campos obligatorios."
+      );
+      return;
+    }
+
     setCargando(true);
 
     try {
-      const respuesta = await apiRequest("/auth/registro", {
-        method: "POST",
-        body: JSON.stringify({
+      let ruta;
+      let datosRegistro;
+
+      if (rol === "estudiante") {
+        // ========================================
+        // REGISTRO DE ESTUDIANTE
+        // ========================================
+
+        ruta = "/auth/registro";
+
+        datosRegistro = {
           nombre: nombre.trim(),
-          correo: correo.trim(),
+          correo: correo.trim().toLowerCase(),
           password,
+          telefono: telefono.trim(),
+          institucion: institucion.trim(),
           carrera: carrera.trim(),
           semestre: null,
-        }),
+        };
+
+      } else {
+        // ========================================
+        // REGISTRO DE EMPRESA
+        // ========================================
+
+        ruta = "/auth/registro-empresa";
+
+        datosRegistro = {
+          nombre: nombre.trim(),
+          correo: correo.trim().toLowerCase(),
+          password,
+          telefono: telefono.trim(),
+          nombre_empresa: institucion.trim(),
+          sector: carrera.trim(),
+        };
+      }
+
+      const respuesta = await apiRequest(ruta, {
+        method: "POST",
+        body: JSON.stringify(datosRegistro),
       });
 
       setExito(
         respuesta.mensaje ||
-        "Estudiante registrado correctamente."
+          "Cuenta registrada correctamente."
       );
 
       setNombre("");
@@ -82,16 +127,19 @@ function Registro() {
       setCorreo("");
       setPassword("");
 
-      // Redirigir al login después del registro
       navigate("/login", {
         state: {
-          mensaje: "Cuenta creada correctamente. Inicia sesión."
-        }
+          mensaje:
+            rol === "empresa"
+              ? "Empresa registrada correctamente. Inicia sesión."
+              : "Estudiante registrado correctamente. Inicia sesión.",
+        },
       });
 
     } catch (err) {
       setError(
-        err.message || "No se pudo completar el registro."
+        err.message ||
+          "No se pudo completar el registro."
       );
     } finally {
       setCargando(false);
@@ -111,14 +159,16 @@ function Registro() {
           Completa tus datos y comienza a conectar.
         </p>
 
+        {/* SELECCIÓN DE ROL */}
+
         <div className="registro-roles">
           <button
             type="button"
-            className={rol === "estudiante" ? "active" : ""}
-            onClick={() => {
-              setRol("estudiante");
-              setError("");
-            }}
+            className={
+              rol === "estudiante" ? "active" : ""
+            }
+            onClick={() => cambiarRol("estudiante")}
+            disabled={cargando}
           >
             <GraduationCap size={19} />
             Soy estudiante
@@ -126,18 +176,24 @@ function Registro() {
 
           <button
             type="button"
-            className={rol === "empresa" ? "active" : ""}
-            onClick={() => {
-              setRol("empresa");
-              setError("");
-            }}
+            className={
+              rol === "empresa" ? "active" : ""
+            }
+            onClick={() => cambiarRol("empresa")}
+            disabled={cargando}
           >
             <Building2 size={19} />
             Soy empresa
           </button>
         </div>
 
-        <form className="registro-form" onSubmit={registrar}>
+        <form
+          className="registro-form"
+          onSubmit={registrar}
+        >
+
+          {/* NOMBRE Y TELÉFONO */}
+
           <div className="registro-row">
             <div className="registro-field">
               <label htmlFor="registro-nombre">
@@ -148,6 +204,7 @@ function Registro() {
 
               <div className="registro-input">
                 <UserRound size={19} />
+
                 <input
                   id="registro-nombre"
                   type="text"
@@ -155,7 +212,9 @@ function Registro() {
                   maxLength={150}
                   placeholder="Ej. Andrea Martínez"
                   value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
+                  onChange={(e) =>
+                    setNombre(e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -167,17 +226,22 @@ function Registro() {
 
               <div className="registro-input">
                 <Phone size={19} />
+
                 <input
                   id="registro-telefono"
                   type="tel"
                   required
                   placeholder="Ej. 55 1234 5678"
                   value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
+                  onChange={(e) =>
+                    setTelefono(e.target.value)
+                  }
                 />
               </div>
             </div>
           </div>
+
+          {/* INSTITUCIÓN O EMPRESA */}
 
           <div className="registro-row">
             <div className="registro-field">
@@ -189,6 +253,7 @@ function Registro() {
 
               <div className="registro-input">
                 <Building2 size={19} />
+
                 <input
                   id="registro-institucion"
                   type="text"
@@ -199,7 +264,9 @@ function Registro() {
                       : "Ej. TechCorp"
                   }
                   value={institucion}
-                  onChange={(e) => setInstitucion(e.target.value)}
+                  onChange={(e) =>
+                    setInstitucion(e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -213,6 +280,7 @@ function Registro() {
 
               <div className="registro-input">
                 <BriefcaseBusiness size={19} />
+
                 <input
                   id="registro-carrera"
                   type="text"
@@ -223,11 +291,15 @@ function Registro() {
                       : "Ej. Tecnología"
                   }
                   value={carrera}
-                  onChange={(e) => setCarrera(e.target.value)}
+                  onChange={(e) =>
+                    setCarrera(e.target.value)
+                  }
                 />
               </div>
             </div>
           </div>
+
+          {/* CORREO ELECTRÓNICO */}
 
           <div className="registro-field">
             <label htmlFor="registro-correo">
@@ -236,16 +308,21 @@ function Registro() {
 
             <div className="registro-input">
               <Mail size={19} />
+
               <input
                 id="registro-correo"
                 type="email"
                 required
-                placeholder="tu.nombre@tecnm.mx"
+                placeholder="correo@ejemplo.com"
                 value={correo}
-                onChange={(e) => setCorreo(e.target.value)}
+                onChange={(e) =>
+                  setCorreo(e.target.value)
+                }
               />
             </div>
           </div>
+
+          {/* CONTRASEÑA */}
 
           <div className="registro-field">
             <label htmlFor="registro-password">
@@ -257,12 +334,18 @@ function Registro() {
 
               <input
                 id="registro-password"
-                type={mostrarPassword ? "text" : "password"}
+                type={
+                  mostrarPassword
+                    ? "text"
+                    : "password"
+                }
                 minLength={8}
                 required
                 placeholder="Mínimo 8 caracteres"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) =>
+                  setPassword(e.target.value)
+                }
               />
 
               <button
@@ -274,7 +357,9 @@ function Registro() {
                     : "Mostrar contraseña"
                 }
                 onClick={() =>
-                  setMostrarPassword(!mostrarPassword)
+                  setMostrarPassword(
+                    !mostrarPassword
+                  )
                 }
               >
                 {mostrarPassword ? (
@@ -286,36 +371,57 @@ function Registro() {
             </div>
           </div>
 
+          {/* TÉRMINOS Y CONDICIONES */}
+
           <label className="registro-terms">
-            <input type="checkbox" required />
-            Acepto los términos y condiciones de BolsaTec
+            <input
+              type="checkbox"
+              required
+            />
+            Acepto los términos y condiciones
+            de BolsaTec
           </label>
 
+          {/* MENSAJES */}
+
           {error && (
-            <p className="registro-error" role="alert">
+            <p
+              className="registro-error"
+              role="alert"
+            >
               {error}
             </p>
           )}
 
           {exito && (
-            <p className="registro-exito" role="status">
+            <p
+              className="registro-exito"
+              role="status"
+            >
               {exito}
             </p>
           )}
+
+          {/* BOTÓN DE REGISTRO */}
 
           <button
             type="submit"
             className="registro-submit"
             disabled={cargando}
           >
-            {cargando ? "Registrando..." : "Crear cuenta"}
+            {cargando
+              ? "Registrando..."
+              : "Crear cuenta"}
+
             <ArrowRight size={19} />
           </button>
         </form>
 
         <p className="registro-login">
           ¿Ya tienes una cuenta?{" "}
-          <Link to="/login">Inicia sesión</Link>
+          <Link to="/login">
+            Inicia sesión
+          </Link>
         </p>
       </div>
     </AuthLayout>
