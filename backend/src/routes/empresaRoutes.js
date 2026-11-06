@@ -17,6 +17,16 @@ const {
   actualizarPerfil
 } = require("../controllers/empresaController");
 
+const {
+  obtenerCandidatos,
+  obtenerDetalleCandidato,
+  cambiarEstadoCandidato
+} = require("../controllers/candidatoController");
+
+// ========================================
+// PERMITIR ÚNICAMENTE EMPRESAS
+// ========================================
+
 const soloEmpresa = (req, res, next) => {
   if (req.usuario?.rol !== "empresa") {
     return res.status(403).json({
@@ -27,20 +37,49 @@ const soloEmpresa = (req, res, next) => {
   next();
 };
 
+// ========================================
+// PROTEGER TODAS LAS RUTAS
+// ========================================
+
 router.use(verificarToken, soloEmpresa);
 
-// Estadísticas
+// ========================================
+// ESTADÍSTICAS
+// ========================================
+
 router.get("/estadisticas", obtenerEstadisticas);
 
-// Perfil empresarial
+// ========================================
+// PERFIL EMPRESARIAL
+// ========================================
+
 router.get("/perfil", obtenerPerfil);
 router.put("/perfil", actualizarPerfil);
 
-// CRUD de vacantes
+// ========================================
+// CRUD DE VACANTES
+// ========================================
+
 router.get("/vacantes", obtenerVacantes);
 router.post("/vacantes", crearVacante);
 router.put("/vacantes/:id", editarVacante);
 router.patch("/vacantes/:id/estado", cambiarEstadoVacante);
 router.delete("/vacantes/:id", eliminarVacante);
+
+// ========================================
+// MÓDULO DE CANDIDATOS
+// ========================================
+
+// Consultar todos los candidatos de la empresa
+router.get("/candidatos", obtenerCandidatos);
+
+// Consultar detalle de una postulación
+router.get("/candidatos/:id", obtenerDetalleCandidato);
+
+// Actualizar estado de una postulación
+router.patch(
+  "/candidatos/:id/estado",
+  cambiarEstadoCandidato
+);
 
 module.exports = router;
