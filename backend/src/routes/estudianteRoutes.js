@@ -12,6 +12,13 @@ const {
   actualizarPerfil
 } = require("../controllers/estudianteController");
 
+const {
+  subirCurriculum,
+  obtenerCurriculum
+} = require("../controllers/curriculumController");
+
+const subirPDF = require("../middleware/uploadCurriculum");
+
 // ========================================
 // PERMITIR ÚNICAMENTE ESTUDIANTES
 // ========================================
@@ -44,5 +51,15 @@ router.get("/estadisticas", obtenerEstadisticas);
 
 router.get("/perfil", obtenerPerfil);
 router.put("/perfil", actualizarPerfil);
+
+// ========================================
+// CURRÍCULUM DEL ESTUDIANTE
+// ========================================
+
+// Subir o reemplazar currículum PDF
+router.post("/curriculum", subirPDF, subirCurriculum);
+
+// Consultar currículum PDF
+router.get("/curriculum", obtenerCurriculum);
 
 module.exports = router;
