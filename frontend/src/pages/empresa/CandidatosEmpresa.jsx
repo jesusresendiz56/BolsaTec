@@ -1,5 +1,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+
 import {
   Users,
   Search,
@@ -12,6 +13,7 @@ import {
   CalendarDays,
   CheckCircle2,
   AlertCircle,
+  FileText,
 } from "lucide-react";
 
 import { sessionGet } from "../../services/session";
@@ -60,6 +62,10 @@ const formatearFecha = (fecha) => {
   });
 };
 
+// ========================================
+// PETICIONES A LA API
+// ========================================
+
 async function solicitarAPI(ruta, opciones = {}) {
   const sesion = sessionGet("empresa");
 
@@ -89,6 +95,10 @@ async function solicitarAPI(ruta, opciones = {}) {
   return datos;
 }
 
+// ========================================
+// COMPONENTE PRINCIPAL
+// ========================================
+
 function CandidatosEmpresa({ onActualizar }) {
   const [candidatos, setCandidatos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
@@ -104,6 +114,14 @@ function CandidatosEmpresa({ onActualizar }) {
   const [estadoNuevo, setEstadoNuevo] = useState("");
   const [guardando, setGuardando] = useState(false);
 
+  // Estado para consultar currículums
+  const [abriendoCurriculum, setAbriendoCurriculum] =
+    useState(false);
+
+  // ========================================
+  // CONSULTAR CANDIDATOS
+  // ========================================
+
   const obtenerCandidatos = useCallback(async () => {
     try {
       setCargando(true);
@@ -114,7 +132,9 @@ function CandidatosEmpresa({ onActualizar }) {
       );
 
       setCandidatos(
-        Array.isArray(datos.candidatos) ? datos.candidatos : []
+        Array.isArray(datos.candidatos)
+          ? datos.candidatos
+          : []
       );
     } catch (err) {
       setError(err.message);
@@ -126,6 +146,10 @@ function CandidatosEmpresa({ onActualizar }) {
   useEffect(() => {
     obtenerCandidatos();
   }, [obtenerCandidatos]);
+
+  // ========================================
+  // OBTENER VACANTES CON CANDIDATOS
+  // ========================================
 
   const vacantes = useMemo(() => {
     const mapa = new Map();
@@ -139,6 +163,10 @@ function CandidatosEmpresa({ onActualizar }) {
 
     return [...mapa.entries()];
   }, [candidatos]);
+
+  // ========================================
+  // FILTRAR CANDIDATOS
+  // ========================================
 
   const candidatosFiltrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
@@ -154,7 +182,8 @@ function CandidatosEmpresa({ onActualizar }) {
           .includes(texto);
 
       const coincideEstado =
-        !filtroEstado || candidato.estado === filtroEstado;
+        !filtroEstado ||
+        candidato.estado === filtroEstado;
 
       const coincideVacante =
         !filtroVacante ||
@@ -166,7 +195,16 @@ function CandidatosEmpresa({ onActualizar }) {
         coincideVacante
       );
     });
-  }, [candidatos, busqueda, filtroEstado, filtroVacante]);
+  }, [
+    candidatos,
+    busqueda,
+    filtroEstado,
+    filtroVacante,
+  ]);
+
+  // ========================================
+  // ABRIR DETALLE DEL CANDIDATO
+  // ========================================
 
   const abrirDetalle = async (idPostulacion) => {
     try {
@@ -187,11 +225,113 @@ function CandidatosEmpresa({ onActualizar }) {
     }
   };
 
+  // ========================================
+  // CERRAR DETALLE
+  // ========================================
+
   const cerrarDetalle = () => {
-    if (guardando) return;
+    if (guardando || abriendoCurriculum) return;
+
     setSeleccionado(null);
     setEstadoNuevo("");
   };
+
+  // ========================================
+  // VISUALIZAR CURRÍCULUM PDF
+  // ========================================
+
+  const verCurriculum = async () => {
+    if (
+      !seleccionado ||
+      !seleccionado.tiene_curriculum ||
+      abriendoCurriculum
+    ) {
+      return;
+    }
+
+    const sesion = sessionGet("empresa");
+
+    if (!sesion?.token) {
+      setError("Debes iniciar sesión como empresa");
+      return;
+    }
+
+    // Abrir la pestaña desde el clic para evitar
+    // que el navegador bloquee la ventana emergente.
+    const nuevaVentana = window.open(
+      "",
+      "_blank"
+    );
+
+    if (!nuevaVentana) {
+      setError(
+        "El navegador bloqueó la nueva pestaña. Permite las ventanas emergentes para BolsaTec."
+      );
+      return;
+    }
+
+    try {
+      setAbriendoCurriculum(true);
+      setError("");
+
+      const respuesta = await fetch(
+        `${API_URL}/api/empresa/candidatos/${seleccionado.id_postulacion}/curriculum`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${sesion.token}`,
+          },
+          cache: "no-store",
+        }
+      );
+
+      if (!respuesta.ok) {
+        const datos = await respuesta
+          .json()
+          .catch(() => ({}));
+
+        throw new Error(
+          datos.mensaje ||
+            "No se pudo consultar el currículum"
+        );
+      }
+
+      const archivo = await respuesta.blob();
+
+      if (archivo.type !== "application/pdf") {
+        throw new Error(
+          "El servidor no devolvió un archivo PDF válido"
+        );
+      }
+
+      const urlTemporal = URL.createObjectURL(archivo);
+
+      nuevaVentana.location.replace(urlTemporal);
+
+      // Liberar la URL temporal después de permitir
+      // que el navegador cargue el documento.
+      // Se conserva mientras la pestaña esté abierta.
+      const liberarURL = () => {
+        URL.revokeObjectURL(urlTemporal);
+      };
+
+      nuevaVentana.addEventListener(
+        "pagehide",
+        liberarURL,
+        { once: true }
+      );
+
+    } catch (err) {
+      nuevaVentana.close();
+      setError(err.message);
+    } finally {
+      setAbriendoCurriculum(false);
+    }
+  };
+
+  // ========================================
+  // CAMBIAR ESTADO DE POSTULACIÓN
+  // ========================================
 
   const cambiarEstado = async () => {
     if (!seleccionado || guardando) return;
@@ -209,15 +349,21 @@ function CandidatosEmpresa({ onActualizar }) {
         `/api/empresa/candidatos/${seleccionado.id_postulacion}/estado`,
         {
           method: "PATCH",
-          body: JSON.stringify({ estado: estadoNuevo }),
+          body: JSON.stringify({
+            estado: estadoNuevo,
+          }),
         }
       );
 
-      setMensaje("Estado de la postulación actualizado correctamente.");
+      setMensaje(
+        "Estado de la postulación actualizado correctamente."
+      );
+
       setSeleccionado(null);
       setEstadoNuevo("");
 
       await obtenerCandidatos();
+
       onActualizar?.();
     } catch (err) {
       setError(err.message);
@@ -226,8 +372,15 @@ function CandidatosEmpresa({ onActualizar }) {
     }
   };
 
+  // ========================================
+  // INTERFAZ
+  // ========================================
+
   return (
     <div className="bt-candidatos">
+
+      {/* ENCABEZADO */}
+
       <div className="bt-candidatos-encabezado">
         <div>
           <h2>Gestión de candidatos</h2>
@@ -248,6 +401,8 @@ function CandidatosEmpresa({ onActualizar }) {
         </button>
       </div>
 
+      {/* ESTADÍSTICAS */}
+
       <div className="bt-candidatos-resumen">
         <div>
           <Users size={22} />
@@ -267,44 +422,63 @@ function CandidatosEmpresa({ onActualizar }) {
           <strong>
             {
               candidatos.filter(
-                (candidato) => candidato.estado === "entrevista"
+                (candidato) =>
+                  candidato.estado === "entrevista"
               ).length
             }
           </strong>
         </div>
       </div>
 
+      {/* MENSAJES */}
+
       {error && (
-        <div className="bt-candidatos-alerta error" role="alert">
+        <div
+          className="bt-candidatos-alerta error"
+          role="alert"
+        >
           <AlertCircle size={18} />
           {error}
         </div>
       )}
 
       {mensaje && (
-        <div className="bt-candidatos-alerta exito" role="status">
+        <div
+          className="bt-candidatos-alerta exito"
+          role="status"
+        >
           <CheckCircle2 size={18} />
           {mensaje}
         </div>
       )}
 
+      {/* FILTROS */}
+
       <div className="bt-candidatos-filtros">
         <div className="bt-candidatos-busqueda">
           <Search size={19} />
+
           <input
             type="search"
             placeholder="Buscar por nombre o correo..."
             value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
+            onChange={(e) =>
+              setBusqueda(e.target.value)
+            }
           />
         </div>
 
         <select
           value={filtroVacante}
-          onChange={(e) => setFiltroVacante(e.target.value)}
+          onChange={(e) =>
+            setFiltroVacante(e.target.value)
+          }
           aria-label="Filtrar por vacante"
         >
-          <option value="">Todas las vacantes</option>
+          <option value="">
+            Todas las vacantes
+          </option>
+
           {vacantes.map(([id, titulo]) => (
             <option key={id} value={id}>
               {titulo}
@@ -314,17 +488,26 @@ function CandidatosEmpresa({ onActualizar }) {
 
         <select
           value={filtroEstado}
-          onChange={(e) => setFiltroEstado(e.target.value)}
+          onChange={(e) =>
+            setFiltroEstado(e.target.value)
+          }
           aria-label="Filtrar por estado"
         >
-          <option value="">Todos los estados</option>
-          {Object.entries(nombresEstado).map(([valor, nombre]) => (
-            <option key={valor} value={valor}>
-              {nombre}
-            </option>
-          ))}
+          <option value="">
+            Todos los estados
+          </option>
+
+          {Object.entries(nombresEstado).map(
+            ([valor, nombre]) => (
+              <option key={valor} value={valor}>
+                {nombre}
+              </option>
+            )
+          )}
         </select>
       </div>
+
+      {/* LISTA DE CANDIDATOS */}
 
       {cargando ? (
         <div className="bt-candidatos-vacio">
@@ -333,73 +516,91 @@ function CandidatosEmpresa({ onActualizar }) {
       ) : candidatosFiltrados.length === 0 ? (
         <div className="bt-candidatos-vacio">
           <Users size={35} />
+
           <h3>No se encontraron candidatos</h3>
+
           <p>
-            Cuando los estudiantes se postulen a tus vacantes,
-            aparecerán aquí.
+            Cuando los estudiantes se postulen a tus
+            vacantes, aparecerán aquí.
           </p>
         </div>
       ) : (
         <div className="bt-candidatos-lista">
-          {candidatosFiltrados.map((candidato) => (
-            <article
-              className="bt-candidato-tarjeta"
-              key={candidato.id_postulacion}
-            >
-              <div className="bt-candidato-avatar">
-                {candidato.nombre_estudiante?.charAt(0) || "E"}
-              </div>
-
-              <div className="bt-candidato-informacion">
-                <div className="bt-candidato-titulo">
-                  <h3>{candidato.nombre_estudiante}</h3>
-                  <span
-                    className={`bt-candidato-estado estado-${candidato.estado}`}
-                  >
-                    {obtenerNombreEstado(candidato.estado)}
-                  </span>
+          {candidatosFiltrados.map(
+            (candidato) => (
+              <article
+                className="bt-candidato-tarjeta"
+                key={candidato.id_postulacion}
+              >
+                <div className="bt-candidato-avatar">
+                  {candidato.nombre_estudiante
+                    ?.charAt(0) || "E"}
                 </div>
 
-                <p>
-                  <Mail size={15} />
-                  {candidato.correo_estudiante}
-                </p>
+                <div className="bt-candidato-informacion">
+                  <div className="bt-candidato-titulo">
+                    <h3>
+                      {candidato.nombre_estudiante}
+                    </h3>
 
-                <p>
-                  <BriefcaseBusiness size={15} />
-                  {candidato.titulo_vacante}
-                </p>
+                    <span
+                      className={`bt-candidato-estado estado-${candidato.estado}`}
+                    >
+                      {obtenerNombreEstado(
+                        candidato.estado
+                      )}
+                    </span>
+                  </div>
 
-                <p>
-                  <GraduationCap size={15} />
-                  {candidato.carrera || "Carrera sin registrar"}
-                  {candidato.semestre
-                    ? ` · Semestre ${candidato.semestre}`
-                    : ""}
-                </p>
+                  <p>
+                    <Mail size={15} />
+                    {candidato.correo_estudiante}
+                  </p>
 
-                <p>
-                  <CalendarDays size={15} />
-                  Postulación:{" "}
-                  {formatearFecha(candidato.fecha_postulacion)}
-                </p>
-              </div>
+                  <p>
+                    <BriefcaseBusiness size={15} />
+                    {candidato.titulo_vacante}
+                  </p>
 
-              <button
-                type="button"
-                className="bt-candidatos-btn principal"
-                onClick={() =>
-                  abrirDetalle(candidato.id_postulacion)
-                }
-                disabled={cargandoDetalle}
-              >
-                <Eye size={17} />
-                Ver candidato
-              </button>
-            </article>
-          ))}
+                  <p>
+                    <GraduationCap size={15} />
+                    {candidato.carrera ||
+                      "Carrera sin registrar"}
+
+                    {candidato.semestre
+                      ? ` · Semestre ${candidato.semestre}`
+                      : ""}
+                  </p>
+
+                  <p>
+                    <CalendarDays size={15} />
+                    Postulación:{" "}
+                    {formatearFecha(
+                      candidato.fecha_postulacion
+                    )}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="bt-candidatos-btn principal"
+                  onClick={() =>
+                    abrirDetalle(
+                      candidato.id_postulacion
+                    )
+                  }
+                  disabled={cargandoDetalle}
+                >
+                  <Eye size={17} />
+                  Ver candidato
+                </button>
+              </article>
+            )
+          )}
         </div>
       )}
+
+      {/* MODAL DEL CANDIDATO */}
 
       {seleccionado && (
         <div
@@ -411,23 +612,36 @@ function CandidatosEmpresa({ onActualizar }) {
             role="dialog"
             aria-modal="true"
             aria-label="Detalle del candidato"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) =>
+              e.stopPropagation()
+            }
           >
+
+            {/* CABECERA */}
+
             <div className="bt-candidato-modal-cabecera">
-              <h2>Información del candidato</h2>
+              <h2>
+                Información del candidato
+              </h2>
 
               <button
                 type="button"
                 onClick={cerrarDetalle}
-                disabled={guardando}
+                disabled={
+                  guardando || abriendoCurriculum
+                }
                 aria-label="Cerrar detalle"
               >
                 <X size={21} />
               </button>
             </div>
 
+            {/* INFORMACIÓN */}
+
             <div className="bt-candidato-modal-contenido">
-              <h3>{seleccionado.nombre_estudiante}</h3>
+              <h3>
+                {seleccionado.nombre_estudiante}
+              </h3>
 
               <p>
                 <strong>Correo:</strong>{" "}
@@ -436,12 +650,14 @@ function CandidatosEmpresa({ onActualizar }) {
 
               <p>
                 <strong>Carrera:</strong>{" "}
-                {seleccionado.carrera || "Sin registrar"}
+                {seleccionado.carrera ||
+                  "Sin registrar"}
               </p>
 
               <p>
                 <strong>Semestre:</strong>{" "}
-                {seleccionado.semestre ?? "Sin registrar"}
+                {seleccionado.semestre ??
+                  "Sin registrar"}
               </p>
 
               <p>
@@ -450,22 +666,57 @@ function CandidatosEmpresa({ onActualizar }) {
               </p>
 
               <p>
-                <strong>Fecha de postulación:</strong>{" "}
-                {formatearFecha(seleccionado.fecha_postulacion)}
+                <strong>
+                  Fecha de postulación:
+                </strong>{" "}
+                {formatearFecha(
+                  seleccionado.fecha_postulacion
+                )}
               </p>
 
-              <h4>Descripción profesional</h4>
+              {/* DESCRIPCIÓN */}
+
+              <h4>
+                Descripción profesional
+              </h4>
+
               <p>
                 {seleccionado.descripcion ||
                   "El estudiante todavía no ha registrado una descripción."}
               </p>
 
+              {/* CURRÍCULUM */}
+
               <h4>Currículum</h4>
-              <p>
-                {seleccionado.tiene_curriculum
-                  ? "El estudiante tiene un currículum registrado. La consulta segura del PDF se habilitará en el siguiente paso."
-                  : "El estudiante todavía no ha subido su currículum."}
-              </p>
+
+              {seleccionado.tiene_curriculum ? (
+                <div>
+                  <p>
+                    El estudiante tiene un
+                    currículum registrado.
+                  </p>
+
+                  <button
+                    type="button"
+                    className="bt-candidatos-btn principal"
+                    onClick={verCurriculum}
+                    disabled={abriendoCurriculum}
+                  >
+                    <FileText size={17} />
+
+                    {abriendoCurriculum
+                      ? "Abriendo PDF..."
+                      : "Ver currículum PDF"}
+                  </button>
+                </div>
+              ) : (
+                <p>
+                  El estudiante todavía no ha
+                  subido su currículum.
+                </p>
+              )}
+
+              {/* CAMBIAR ESTADO */}
 
               <div className="bt-candidato-cambio-estado">
                 <label htmlFor="estado-candidato">
@@ -481,15 +732,21 @@ function CandidatosEmpresa({ onActualizar }) {
                   disabled={guardando}
                 >
                   {!ESTADOS.some(
-                    (item) => item.valor === estadoNuevo
+                    (item) =>
+                      item.valor === estadoNuevo
                   ) && (
                     <option value={estadoNuevo}>
-                      {obtenerNombreEstado(estadoNuevo)}
+                      {obtenerNombreEstado(
+                        estadoNuevo
+                      )}
                     </option>
                   )}
 
                   {ESTADOS.map((item) => (
-                    <option key={item.valor} value={item.valor}>
+                    <option
+                      key={item.valor}
+                      value={item.valor}
+                    >
                       {item.nombre}
                     </option>
                   ))}
@@ -497,12 +754,16 @@ function CandidatosEmpresa({ onActualizar }) {
               </div>
             </div>
 
+            {/* ACCIONES */}
+
             <div className="bt-candidato-modal-acciones">
               <button
                 type="button"
                 className="bt-candidatos-btn"
                 onClick={cerrarDetalle}
-                disabled={guardando}
+                disabled={
+                  guardando || abriendoCurriculum
+                }
               >
                 Cancelar
               </button>
@@ -513,10 +774,14 @@ function CandidatosEmpresa({ onActualizar }) {
                 onClick={cambiarEstado}
                 disabled={
                   guardando ||
-                  estadoNuevo === seleccionado.estado
+                  abriendoCurriculum ||
+                  estadoNuevo ===
+                    seleccionado.estado
                 }
               >
-                {guardando ? "Guardando..." : "Guardar estado"}
+                {guardando
+                  ? "Guardando..."
+                  : "Guardar estado"}
               </button>
             </div>
           </div>
