@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
+
 import {
   GraduationCap,
   Save,
@@ -44,6 +45,10 @@ function PerfilEstudiante({ onActualizar }) {
 
   const inputPDF = useRef(null);
 
+  // ========================================
+  // OBTENER TOKEN DEL ESTUDIANTE
+  // ========================================
+
   const obtenerToken = () => {
     const token = sessionGet("estudiante")?.token;
 
@@ -53,6 +58,10 @@ function PerfilEstudiante({ onActualizar }) {
 
     return token;
   };
+
+  // ========================================
+  // CONSULTAR PERFIL
+  // ========================================
 
   const obtenerPerfil = async () => {
     try {
@@ -101,6 +110,10 @@ function PerfilEstudiante({ onActualizar }) {
     obtenerPerfil();
   }, []);
 
+  // ========================================
+  // ACTUALIZAR CAMPOS
+  // ========================================
+
   const actualizarCampo = (evento) => {
     const { name, value } = evento.target;
 
@@ -109,6 +122,10 @@ function PerfilEstudiante({ onActualizar }) {
       [name]: value
     }));
   };
+
+  // ========================================
+  // GUARDAR PERFIL
+  // ========================================
 
   const guardarPerfil = async (evento) => {
     evento.preventDefault();
@@ -167,25 +184,47 @@ function PerfilEstudiante({ onActualizar }) {
       return;
     }
 
-    if (
-      archivo.type !== "application/pdf" ||
-      !archivo.name.toLowerCase().endsWith(".pdf")
-    ) {
+    // Validar que el archivo sea PDF
+    const esPDF =
+      archivo.type === "application/pdf" &&
+      archivo.name.toLowerCase().endsWith(".pdf");
+
+    if (!esPDF) {
+      window.alert(
+        "ARCHIVO NO PERMITIDO\n\n" +
+        "Solo puedes subir archivos PDF (.pdf).\n" +
+        "Selecciona un currículum en formato PDF."
+      );
+
       setArchivoPDF(null);
       evento.target.value = "";
 
-      setError("Solo se permiten archivos PDF");
+      setError(
+        "Archivo no permitido. Solo se permiten archivos PDF."
+      );
+
       return;
     }
 
+    // Validar tamaño máximo de 5 MB
     if (archivo.size > MAX_PDF) {
+      window.alert(
+        "ARCHIVO DEMASIADO GRANDE\n\n" +
+        "El currículum no debe superar los 5 MB.\n" +
+        "Selecciona un PDF de menor tamaño."
+      );
+
       setArchivoPDF(null);
       evento.target.value = "";
 
-      setError("El PDF no debe superar los 5 MB");
+      setError(
+        "El PDF no debe superar los 5 MB."
+      );
+
       return;
     }
 
+    // Archivo válido
     setArchivoPDF(archivo);
   };
 
@@ -258,7 +297,6 @@ function PerfilEstudiante({ onActualizar }) {
       setViendoPDF(true);
       setError("");
 
-      // Abrir una pestaña durante el clic del usuario.
       const ventana = window.open("", "_blank");
 
       if (!ventana) {
@@ -297,8 +335,6 @@ function PerfilEstudiante({ onActualizar }) {
 
         ventana.location.href = urlTemporal;
 
-        // La URL temporal se libera cuando se cierra
-        // la página actual.
       } catch (error) {
         ventana.close();
         throw error;
@@ -315,6 +351,10 @@ function PerfilEstudiante({ onActualizar }) {
     }
   };
 
+  // ========================================
+  // PANTALLA DE CARGA
+  // ========================================
+
   if (cargando) {
     return (
       <div className="bt-dashboard-panel">
@@ -323,8 +363,13 @@ function PerfilEstudiante({ onActualizar }) {
     );
   }
 
+  // ========================================
+  // INTERFAZ DEL PERFIL
+  // ========================================
+
   return (
     <div className="bt-perfil-estudiante">
+
       <div className="bt-perfil-estudiante-header">
         <div>
           <h2>Mi perfil profesional</h2>
@@ -342,6 +387,8 @@ function PerfilEstudiante({ onActualizar }) {
           Actualizar
         </button>
       </div>
+
+      {/* MENSAJES */}
 
       {error && (
         <div
@@ -362,6 +409,9 @@ function PerfilEstudiante({ onActualizar }) {
       )}
 
       <div className="bt-perfil-estudiante-card">
+
+        {/* INFORMACIÓN DEL ESTUDIANTE */}
+
         <div className="bt-perfil-estudiante-identidad">
           <GraduationCap size={32} />
 
@@ -371,8 +421,12 @@ function PerfilEstudiante({ onActualizar }) {
           </div>
         </div>
 
+        {/* FORMULARIO DEL PERFIL */}
+
         <form onSubmit={guardarPerfil}>
+
           <div className="bt-perfil-estudiante-grid">
+
             <label>
               Carrera
               <input
@@ -418,10 +472,14 @@ function PerfilEstudiante({ onActualizar }) {
                 placeholder="Ej. 5512345678"
               />
             </label>
+
           </div>
+
+          {/* DESCRIPCIÓN PROFESIONAL */}
 
           <label className="bt-perfil-estudiante-descripcion">
             Descripción profesional
+
             <textarea
               name="descripcion"
               rows={5}
@@ -432,18 +490,22 @@ function PerfilEstudiante({ onActualizar }) {
           </label>
 
           {/* CURRÍCULUM PDF */}
+
           <div className="bt-perfil-estudiante-cv">
+
             <div className="bt-cv-titulo">
               <FileText size={24} />
 
               <div>
                 <h4>Mi currículum</h4>
                 <p>
-                  Adjunta tu currículum en PDF.
-                  Tamaño máximo: 5 MB.
+                  Adjunta tu currículum únicamente en
+                  formato PDF. Tamaño máximo: 5 MB.
                 </p>
               </div>
             </div>
+
+            {/* ESTADO DEL CURRÍCULUM */}
 
             {cvUrl ? (
               <p className="bt-cv-estado">
@@ -456,7 +518,10 @@ function PerfilEstudiante({ onActualizar }) {
               </p>
             )}
 
+            {/* SELECCIONAR ARCHIVO */}
+
             <div className="bt-cv-archivo">
+
               <label htmlFor="archivo-curriculum">
                 <Upload size={18} />
                 Seleccionar PDF
@@ -475,9 +540,13 @@ function PerfilEstudiante({ onActualizar }) {
                   ? archivoPDF.name
                   : "Ningún archivo seleccionado"}
               </span>
+
             </div>
 
+            {/* ACCIONES DEL CURRÍCULUM */}
+
             <div className="bt-cv-acciones">
+
               {cvUrl && (
                 <button
                   type="button"
@@ -486,6 +555,7 @@ function PerfilEstudiante({ onActualizar }) {
                   disabled={viendoPDF}
                 >
                   <Eye size={18} />
+
                   {viendoPDF
                     ? "Abriendo..."
                     : "Ver currículum"}
@@ -499,14 +569,19 @@ function PerfilEstudiante({ onActualizar }) {
                 disabled={!archivoPDF || subiendoPDF}
               >
                 <Upload size={18} />
+
                 {subiendoPDF
                   ? "Subiendo..."
                   : cvUrl
                     ? "Reemplazar PDF"
                     : "Subir currículum"}
               </button>
+
             </div>
+
           </div>
+
+          {/* GUARDAR PERFIL */}
 
           <div className="bt-perfil-estudiante-acciones">
             <button
@@ -515,11 +590,13 @@ function PerfilEstudiante({ onActualizar }) {
               disabled={guardando}
             >
               <Save size={18} />
+
               {guardando
                 ? "Guardando..."
                 : "Guardar cambios"}
             </button>
           </div>
+
         </form>
       </div>
     </div>
