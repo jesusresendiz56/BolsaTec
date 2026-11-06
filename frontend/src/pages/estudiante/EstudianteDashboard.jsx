@@ -15,11 +15,30 @@ import { sessionGet } from "../../services/session";
 import PerfilEstudiante from "./PerfilEstudiante";
 import BuscarVacantes from "./BuscarVacantes";
 import MisPostulaciones from "./MisPostulaciones";
+import NotificacionesEstudiante from "./NotificacionesEstudiante";
+
+import "../../notificaciones.css";
+
+// ========================================
+// MENÚ DEL ESTUDIANTE
+// ========================================
 
 const menu = [
-  { id: "dashboard", nombre: "Dashboard", icono: "dashboard" },
-  { id: "perfil", nombre: "Mi perfil", icono: "perfil" },
-  { id: "vacantes", nombre: "Buscar vacantes", icono: "vacantes" },
+  {
+    id: "dashboard",
+    nombre: "Dashboard",
+    icono: "dashboard",
+  },
+  {
+    id: "perfil",
+    nombre: "Mi perfil",
+    icono: "perfil",
+  },
+  {
+    id: "vacantes",
+    nombre: "Buscar vacantes",
+    icono: "vacantes",
+  },
   {
     id: "postulaciones",
     nombre: "Mis postulaciones",
@@ -32,6 +51,10 @@ const menu = [
   },
 ];
 
+// ========================================
+// TÍTULOS DE LAS SECCIONES
+// ========================================
+
 const titulos = {
   dashboard: "Dashboard del estudiante",
   perfil: "Mi perfil profesional",
@@ -39,6 +62,10 @@ const titulos = {
   postulaciones: "Mis postulaciones",
   notificaciones: "Notificaciones",
 };
+
+// ========================================
+// COMPONENTE PRINCIPAL
+// ========================================
 
 function EstudianteDashboard() {
   const usuario = sessionGet("estudiante")?.usuario;
@@ -91,18 +118,23 @@ function EstudianteDashboard() {
       if (!respuesta.ok) {
         throw new Error(
           datos.mensaje ||
-            "No se pudieron obtener las estadísticas"
+          "No se pudieron obtener las estadísticas"
         );
       }
 
       setResumen({
-        postulaciones: Number(datos.postulaciones) || 0,
-        vacantes: Number(datos.vacantes) || 0,
-        entrevistas: Number(datos.entrevistas) || 0,
-        notificaciones: Number(datos.notificaciones) || 0,
+        postulaciones:
+          Number(datos.postulaciones) || 0,
+        vacantes:
+          Number(datos.vacantes) || 0,
+        entrevistas:
+          Number(datos.entrevistas) || 0,
+        notificaciones:
+          Number(datos.notificaciones) || 0,
       });
 
       setEstudiante(datos.estudiante);
+
     } catch (err) {
       console.error(
         "Error en dashboard del estudiante:",
@@ -110,10 +142,15 @@ function EstudianteDashboard() {
       );
 
       setError(err.message);
+
     } finally {
       setCargando(false);
     }
   };
+
+  // ========================================
+  // CARGAR ESTADÍSTICAS AL INICIAR
+  // ========================================
 
   useEffect(() => {
     obtenerEstadisticas();
@@ -147,10 +184,15 @@ function EstudianteDashboard() {
   ];
 
   // ========================================
-  // SECCIONES
+  // MOSTRAR SECCIÓN SELECCIONADA
   // ========================================
 
   const mostrarSeccion = (seccion) => {
+
+    // ========================================
+    // DASHBOARD PRINCIPAL
+    // ========================================
+
     if (seccion === "dashboard") {
       return (
         <>
@@ -166,6 +208,8 @@ function EstudianteDashboard() {
               a tus postulaciones.
             </p>
           </div>
+
+          {/* ESTADÍSTICAS */}
 
           <div className="bt-dashboard-stats">
             {estadisticas.map((item) => {
@@ -194,6 +238,8 @@ function EstudianteDashboard() {
             })}
           </div>
 
+          {/* MENSAJE DE ERROR */}
+
           {error && (
             <div className="bt-dashboard-panel">
               <p style={{ color: "#DC2626" }}>
@@ -202,8 +248,12 @@ function EstudianteDashboard() {
             </div>
           )}
 
+          {/* ACCIONES PRINCIPALES */}
+
           <div className="bt-dashboard-panel">
-            <h3>Comienza tu experiencia profesional</h3>
+            <h3>
+              Comienza tu experiencia profesional
+            </h3>
 
             <p>
               Completa tu perfil, busca vacantes,
@@ -219,12 +269,15 @@ function EstudianteDashboard() {
                 disabled={cargando}
               >
                 <RefreshCw size={18} />
+
                 {cargando
                   ? "Actualizando..."
                   : "Actualizar"}
               </button>
             </div>
           </div>
+
+          {/* INFORMACIÓN DE LA CUENTA */}
 
           <div className="bt-dashboard-panel">
             <h3>Tu cuenta</h3>
@@ -258,6 +311,10 @@ function EstudianteDashboard() {
       );
     }
 
+    // ========================================
+    // MI PERFIL
+    // ========================================
+
     if (seccion === "perfil") {
       return (
         <PerfilEstudiante
@@ -266,29 +323,40 @@ function EstudianteDashboard() {
       );
     }
 
+    // ========================================
+    // BUSCAR VACANTES
+    // ========================================
+
     if (seccion === "vacantes") {
       return <BuscarVacantes />;
     }
+
+    // ========================================
+    // MIS POSTULACIONES
+    // ========================================
 
     if (seccion === "postulaciones") {
       return <MisPostulaciones />;
     }
 
+    // ========================================
+    // MIS NOTIFICACIONES
+    // ========================================
+
     if (seccion === "notificaciones") {
       return (
-        <div className="bt-dashboard-panel">
-          <h3>Mis notificaciones</h3>
-
-          <p>
-            Consulta avisos relacionados con tus
-            postulaciones y novedades de BolsaTec.
-          </p>
-        </div>
+        <NotificacionesEstudiante
+          onActualizar={obtenerEstadisticas}
+        />
       );
     }
 
     return null;
   };
+
+  // ========================================
+  // ESTRUCTURA DEL DASHBOARD
+  // ========================================
 
   return (
     <DashboardLayout
@@ -303,6 +371,7 @@ function EstudianteDashboard() {
           {seccion !== "dashboard" && (
             <div className="bt-dashboard-panel">
               <h3>{titulos[seccion]}</h3>
+
               <p>
                 Administra esta sección desde tu cuenta
                 de estudiante.

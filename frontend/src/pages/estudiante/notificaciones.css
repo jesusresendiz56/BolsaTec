@@ -1,0 +1,150 @@
+
+.bt-notificaciones-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.bt-notificaciones-header h3 {
+  margin: 0 0 8px;
+  color: #0b2b33;
+}
+
+.bt-notificaciones-header p {
+  margin: 0;
+  color: #64748b;
+}
+
+.bt-notificaciones-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.bt-notificaciones-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #fff;
+  color: #0b2b33;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bt-notificaciones-btn.principal {
+  background: #0e7490;
+  border-color: #0e7490;
+  color: #fff;
+}
+
+.bt-notificaciones-btn:disabled,
+.bt-notificacion-leer:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.bt-notificaciones-error {
+  padding: 12px;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.bt-notificaciones-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bt-notificacion-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.bt-notificacion-item.no-leida {
+  background: #ecfeff;
+  border-left: 4px solid #0e7490;
+}
+
+.bt-notificacion-item.leida {
+  background: #f8fafc;
+}
+
+.bt-notificacion-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #cffafe;
+  color: #0e7490;
+}
+
+.bt-notificacion-contenido {
+  flex: 1;
+  min-width: 0;
+}
+
+.bt-notificacion-contenido p {
+  margin: 0 0 8px;
+  color: #1e293b;
+  overflow-wrap: anywhere;
+}
+
+.bt-notificacion-contenido small {
+  color: #64748b;
+}
+
+.bt-notificacion-leer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: #0e7490;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bt-notificaciones-vacio {
+  padding: 40px 16px;
+  text-align: center;
+  color: #64748b;
+}
+
+.bt-notificaciones-vacio svg {
+  color: #0e7490;
+  margin-bottom: 12px;
+}
+
+.bt-notificaciones-vacio h4 {
+  margin: 0 0 8px;
+  color: #0b2b33;
+}
+
+@media (max-width: 640px) {
+  .bt-notificacion-item {
+    flex-wrap: wrap;
+  }
+
+  .bt-notificacion-leer {
+    margin-left: 54px;
+  }
+
+  .bt-notificaciones-acciones {
+    width: 100%;
+  }
+}
