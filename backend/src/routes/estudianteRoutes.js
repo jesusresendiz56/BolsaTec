@@ -18,6 +18,11 @@ const {
   obtenerCurriculum
 } = require("../controllers/curriculumController");
 
+const {
+  crearPostulacion,
+  obtenerPostulaciones
+} = require("../controllers/postulacionController");
+
 const subirPDF = require("../middleware/uploadCurriculum");
 
 // ========================================
@@ -69,5 +74,15 @@ router.get("/curriculum", obtenerCurriculum);
 
 // Consultar vacantes activas y aplicar filtros
 router.get("/vacantes", obtenerVacantes);
+
+// ========================================
+// POSTULACIONES DEL ESTUDIANTE
+// ========================================
+
+// Enviar postulación
+router.post("/postulaciones", crearPostulacion);
+
+// Consultar mis postulaciones
+router.get("/postulaciones", obtenerPostulaciones);
 
 module.exports = router;
