@@ -16,6 +16,9 @@ import { sessionGet } from "../../services/session";
 // Módulo de gestión de vacantes
 import VacantesEmpresa from "./VacantesEmpresa";
 
+// Módulo de perfil empresarial
+import PerfilEmpresa from "./PerfilEmpresa";
+
 const menu = [
   { id: "dashboard", nombre: "Dashboard", icono: "dashboard" },
   { id: "perfil", nombre: "Perfil empresarial", icono: "perfil" },
@@ -150,7 +153,10 @@ function EmpresaDashboard() {
   // =========================================
 
   const mostrarSeccion = (seccion) => {
-
+    // MÓDULO DE PERFIL EMPRESARIAL
+    if (seccion === "perfil") {
+  return <PerfilEmpresa onActualizar={obtenerEstadisticas} />;
+}
     // MÓDULO DE VACANTES
     if (seccion === "vacantes") {
       return (
