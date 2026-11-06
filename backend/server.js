@@ -7,6 +7,7 @@ const pool = require("./src/config/database");
 const authRoutes = require("./src/routes/authRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const empresaRoutes = require("./src/routes/empresaRoutes");
+const estudianteRoutes = require("./src/routes/estudianteRoutes");
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/empresa", empresaRoutes);
+app.use("/api/estudiante", estudianteRoutes);
 
 // Ruta principal
 app.get("/", (req, res) => {

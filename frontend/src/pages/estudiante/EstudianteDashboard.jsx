@@ -1,13 +1,15 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
 import {
   BriefcaseBusiness,
   FileText,
-  UserRound,
   Bell,
   Search,
   GraduationCap,
-  ArrowRight,
+  CalendarCheck,
+  RefreshCw,
+  Users,
 } from "lucide-react";
 
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
@@ -29,38 +31,126 @@ const titulos = {
   notificaciones: "Notificaciones",
 };
 
-function obtenerUsuario() {
-  try {
-    return JSON.parse(
-      localStorage.getItem("usuario") ||
-      sessionStorage.getItem("usuario") ||
-      "null"
-    );
-  } catch {
-    return null;
-  }
-}
-
 function EstudianteDashboard() {
   const usuario = sessionGet("estudiante")?.usuario;
+
   const [busqueda, setBusqueda] = useState("");
 
+  const [resumen, setResumen] = useState({
+    postulaciones: 0,
+    vacantes: 0,
+    entrevistas: 0,
+    notificaciones: 0,
+  });
+
+  const [estudiante, setEstudiante] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+
+  // ========================================
+  // CONSULTAR ESTADÍSTICAS REALES
+  // ========================================
+
+  const obtenerEstadisticas = async () => {
+    try {
+      setCargando(true);
+      setError("");
+
+      const sesion = sessionGet("estudiante");
+
+      if (!sesion?.token) {
+        throw new Error("Debes iniciar sesión como estudiante");
+      }
+
+      const API_URL = (
+        import.meta.env.VITE_API_URL ||
+        "http://localhost:3000"
+      ).replace(/\/$/, "");
+
+      const respuesta = await fetch(
+        `${API_URL}/api/estudiante/estadisticas`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${sesion.token}`,
+          },
+        }
+      );
+
+      const datos = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(
+          datos.mensaje ||
+          "No se pudieron obtener las estadísticas"
+        );
+      }
+
+      setResumen({
+        postulaciones: Number(datos.postulaciones) || 0,
+        vacantes: Number(datos.vacantes) || 0,
+        entrevistas: Number(datos.entrevistas) || 0,
+        notificaciones: Number(datos.notificaciones) || 0,
+      });
+
+      setEstudiante(datos.estudiante);
+
+    } catch (err) {
+      console.error("Error en dashboard del estudiante:", err);
+      setError(err.message);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    obtenerEstadisticas();
+  }, []);
+
+  // ========================================
+  // TARJETAS DEL DASHBOARD
+  // ========================================
+
   const estadisticas = [
-    { titulo: "Postulaciones", icono: FileText },
-    { titulo: "Vacantes disponibles", icono: BriefcaseBusiness },
-    { titulo: "Notificaciones", icono: Bell },
-    { titulo: "Mi perfil", icono: UserRound },
+    {
+      titulo: "Mis postulaciones",
+      icono: FileText,
+      valor: resumen.postulaciones,
+    },
+    {
+      titulo: "Vacantes disponibles",
+      icono: BriefcaseBusiness,
+      valor: resumen.vacantes,
+    },
+    {
+      titulo: "Entrevistas",
+      icono: CalendarCheck,
+      valor: resumen.entrevistas,
+    },
+    {
+      titulo: "Notificaciones",
+      icono: Bell,
+      valor: resumen.notificaciones,
+    },
   ];
+
+  // ========================================
+  // SECCIONES
+  // ========================================
 
   const mostrarSeccion = (seccion) => {
     if (seccion === "dashboard") {
       return (
         <>
           <div className="bt-dashboard-welcome">
-            <h2>¡Bienvenido, {usuario?.nombre || "estudiante"}!</h2>
+            <h2>
+              ¡Bienvenido, {usuario?.nombre || "estudiante"}!
+            </h2>
+
             <p>
-              Encuentra oportunidades profesionales, desarrolla
-              tu perfil y da seguimiento a tus postulaciones.
+              Encuentra oportunidades profesionales,
+              desarrolla tu perfil y da seguimiento
+              a tus postulaciones.
             </p>
           </div>
 
@@ -69,35 +159,84 @@ function EstudianteDashboard() {
               const Icono = item.icono;
 
               return (
-                <div className="bt-stat-card" key={item.titulo}>
+                <div
+                  className="bt-stat-card"
+                  key={item.titulo}
+                >
                   <div className="bt-stat-icon">
                     <Icono size={23} />
                   </div>
+
                   <p>{item.titulo}</p>
-                  <strong>—</strong>
+
+                  <strong>
+                    {cargando
+                      ? "..."
+                      : error
+                        ? "—"
+                        : item.valor}
+                  </strong>
                 </div>
               );
             })}
           </div>
 
+          {error && (
+            <div className="bt-dashboard-panel">
+              <p style={{ color: "#DC2626" }}>
+                {error}
+              </p>
+            </div>
+          )}
+
           <div className="bt-dashboard-panel">
             <h3>Comienza tu experiencia profesional</h3>
+
             <p>
-              Desde BolsaTec podrás completar tu perfil,
-              cargar tu currículum, buscar oportunidades
-              y consultar el estado de tus postulaciones.
+              Completa tu perfil, busca vacantes,
+              postúlate y consulta el estado
+              de tus solicitudes.
             </p>
-            <p>
-              Las estadísticas se mostrarán cuando conectemos
-              estos módulos con Supabase.
-            </p>
+
+            <div className="bt-dashboard-actions">
+              <button
+                type="button"
+                className="bt-dashboard-action"
+                onClick={obtenerEstadisticas}
+                disabled={cargando}
+              >
+                <RefreshCw size={18} />
+                {cargando ? "Actualizando..." : "Actualizar"}
+              </button>
+            </div>
           </div>
 
           <div className="bt-dashboard-panel">
             <h3>Tu cuenta</h3>
-            <p><strong>Nombre:</strong> {usuario?.nombre}</p>
-            <p><strong>Correo:</strong> {usuario?.correo}</p>
-            <p><strong>Rol:</strong> Estudiante</p>
+
+            <p>
+              <strong>Nombre:</strong>{" "}
+              {usuario?.nombre || "Sin información"}
+            </p>
+
+            <p>
+              <strong>Correo:</strong>{" "}
+              {usuario?.correo || "Sin información"}
+            </p>
+
+            <p>
+              <strong>Carrera:</strong>{" "}
+              {estudiante?.carrera || "Sin registrar"}
+            </p>
+
+            <p>
+              <strong>Semestre:</strong>{" "}
+              {estudiante?.semestre ?? "Sin registrar"}
+            </p>
+
+            <p>
+              <strong>Rol:</strong> Estudiante
+            </p>
           </div>
         </>
       );
@@ -109,21 +248,28 @@ function EstudianteDashboard() {
           <div className="bt-stat-icon">
             <GraduationCap size={24} />
           </div>
+
           <h3>Mi perfil profesional</h3>
+
           <p>
-            Aquí podrás administrar tu información personal,
-            carrera, semestre, experiencia, habilidades
+            Aquí podrás administrar tu información
+            personal, carrera, semestre, habilidades
             y currículum.
           </p>
+
           <p>
-            <strong>Usuario:</strong> {usuario?.nombre}
+            <strong>Nombre:</strong>{" "}
+            {usuario?.nombre}
           </p>
+
           <p>
-            <strong>Correo:</strong> {usuario?.correo}
+            <strong>Correo:</strong>{" "}
+            {usuario?.correo}
           </p>
+
           <p>
-            El formulario para editar el perfil se
-            desarrollará en el siguiente módulo.
+            El formulario de edición se implementará
+            en el siguiente módulo.
           </p>
         </div>
       );
@@ -133,9 +279,10 @@ function EstudianteDashboard() {
       return (
         <div className="bt-dashboard-panel">
           <h3>Explorar oportunidades</h3>
+
           <p>
-            Busca vacantes de empleo, prácticas profesionales
-            y estadías.
+            Busca vacantes de empleo, prácticas
+            profesionales y estadías.
           </p>
 
           <form
@@ -152,15 +299,17 @@ function EstudianteDashboard() {
                 flex: 1,
                 minWidth: 200,
                 padding: 12,
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--bt-border, #CBD5E1)",
                 borderRadius: 9,
+                background: "var(--bt-input, #FFFFFF)",
+                color: "var(--bt-text, #1E293B)",
               }}
             />
+
             <button
               className="bt-dashboard-action"
               type="submit"
               disabled
-              title="Disponible cuando conectemos el módulo de vacantes"
             >
               <Search size={18} />
               Buscar
@@ -168,8 +317,8 @@ function EstudianteDashboard() {
           </form>
 
           <p>
-            Próximamente aparecerán aquí las vacantes
-            registradas por las empresas.
+            Aquí aparecerán las vacantes activas
+            publicadas por las empresas.
           </p>
         </div>
       );
@@ -178,18 +327,20 @@ function EstudianteDashboard() {
     if (seccion === "postulaciones") {
       return (
         <div className="bt-dashboard-panel">
-          <h3>Seguimiento de postulaciones</h3>
+          <div className="bt-stat-icon">
+            <Users size={23} />
+          </div>
+
+          <h3>Mis postulaciones</h3>
+
           <p>
-            Aquí podrás consultar las vacantes a las que
-            te postulaste y su estado:
+            Consulta las vacantes a las que te has
+            postulado y revisa su estado.
           </p>
+
           <p>
-            Pendiente, en revisión, entrevista,
-            seleccionado o rechazado.
-          </p>
-          <p>
-            Esta sección se conectará con la tabla
-            de postulaciones de Supabase.
+            Estados: enviada, vista, entrevista,
+            rechazada y aceptada.
           </p>
         </div>
       );
@@ -199,13 +350,10 @@ function EstudianteDashboard() {
       return (
         <div className="bt-dashboard-panel">
           <h3>Mis notificaciones</h3>
+
           <p>
-            Recibirás avisos sobre tus postulaciones
-            y novedades importantes de BolsaTec.
-          </p>
-          <p>
-            La consulta de notificaciones todavía
-            está pendiente de implementar.
+            Consulta avisos relacionados con tus
+            postulaciones y novedades de BolsaTec.
           </p>
         </div>
       );
@@ -233,6 +381,7 @@ function EstudianteDashboard() {
               </p>
             </div>
           )}
+
           {mostrarSeccion(seccion)}
         </>
       )}
