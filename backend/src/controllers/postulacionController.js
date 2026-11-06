@@ -1,9 +1,10 @@
 
 const pool = require("../config/database");
 const { enviarCorreo } = require("../services/brevoService");
+const { crearNotificacion } = require("../services/notificacionService");
 
 // ========================================
-// ENVIAR NOTIFICACIONES POR BREVO
+// NOTIFICACIONES DE NUEVA POSTULACIÓN
 // ========================================
 
 const notificarNuevaPostulacion = async ({
@@ -12,11 +13,14 @@ const notificarNuevaPostulacion = async ({
   idEstudiante
 }) => {
   try {
+    // Obtener datos del estudiante, empresa y vacante
     const resultado = await pool.query(
       `SELECT
          v.titulo AS titulo_vacante,
          e.nombre_empresa,
+         ue.id_usuario AS id_usuario_empresa,
          ue.correo AS correo_empresa,
+         us.id_usuario AS id_usuario_estudiante,
          us.correo AS correo_estudiante,
          us.nombre AS nombre_estudiante
        FROM postulaciones p
@@ -45,50 +49,87 @@ const notificarNuevaPostulacion = async ({
 
     const datos = resultado.rows[0];
 
-    // Confirmación para el estudiante
-    const correoEstudiante = enviarCorreo({
-      destinatario: datos.correo_estudiante,
-      asunto: "Postulación registrada - BolsaTec",
-      mensaje:
-        `Hola ${datos.nombre_estudiante},\n\n` +
-        `Tu postulación a la vacante "${datos.titulo_vacante}" ` +
-        `de la empresa "${datos.nombre_empresa}" ` +
-        `se registró correctamente.\n\n` +
-        `Puedes consultar el estado de tu solicitud ` +
-        `en la sección "Mis postulaciones" de BolsaTec.\n\n` +
-        `BolsaTec - Tu futuro profesional comienza aquí.`
-    });
+    // ========================================
+    // CREAR NOTIFICACIONES INTERNAS
+    // ========================================
 
-    // Notificación para la empresa
-    const correoEmpresa = enviarCorreo({
-      destinatario: datos.correo_empresa,
-      asunto: "Nueva postulación recibida - BolsaTec",
-      mensaje:
-        `Hola ${datos.nombre_empresa},\n\n` +
-        `Has recibido una nueva postulación para la vacante ` +
-        `"${datos.titulo_vacante}".\n\n` +
-        `Candidato: ${datos.nombre_estudiante}\n\n` +
-        `Ingresa a BolsaTec para consultar la postulación.\n\n` +
-        `BolsaTec - Tu futuro profesional comienza aquí.`
-    });
+    const mensajeEstudiante =
+      `Tu postulación a "${datos.titulo_vacante}" ` +
+      `de la empresa "${datos.nombre_empresa}" ` +
+      `se registró correctamente.`;
 
-    const resultados = await Promise.allSettled([
-      correoEstudiante,
-      correoEmpresa
-    ]);
+    const mensajeEmpresa =
+      `Recibiste una nueva postulación de ` +
+      `${datos.nombre_estudiante} para la vacante ` +
+      `"${datos.titulo_vacante}".`;
+
+    const tareas = [
+      {
+        nombre: "Notificación interna del estudiante",
+        ejecutar: () => crearNotificacion(
+          datos.id_usuario_estudiante,
+          mensajeEstudiante
+        )
+      },
+      {
+        nombre: "Notificación interna de la empresa",
+        ejecutar: () => crearNotificacion(
+          datos.id_usuario_empresa,
+          mensajeEmpresa
+        )
+      },
+      {
+        nombre: "Correo del estudiante",
+        ejecutar: () => enviarCorreo({
+          destinatario: datos.correo_estudiante,
+          asunto: "Postulación registrada - BolsaTec",
+          mensaje:
+            `Hola ${datos.nombre_estudiante},\n\n` +
+            `Tu postulación a la vacante "${datos.titulo_vacante}" ` +
+            `de la empresa "${datos.nombre_empresa}" ` +
+            `se registró correctamente.\n\n` +
+            `Puedes consultar el estado de tu solicitud ` +
+            `en la sección "Mis postulaciones" de BolsaTec.\n\n` +
+            `BolsaTec - Tu futuro profesional comienza aquí.`
+        })
+      },
+      {
+        nombre: "Correo de la empresa",
+        ejecutar: () => enviarCorreo({
+          destinatario: datos.correo_empresa,
+          asunto: "Nueva postulación recibida - BolsaTec",
+          mensaje:
+            `Hola ${datos.nombre_empresa},\n\n` +
+            `Has recibido una nueva postulación para la vacante ` +
+            `"${datos.titulo_vacante}".\n\n` +
+            `Candidato: ${datos.nombre_estudiante}\n\n` +
+            `Ingresa a BolsaTec para consultar la postulación.\n\n` +
+            `BolsaTec - Tu futuro profesional comienza aquí.`
+        })
+      }
+    ];
+
+    // Cada operación se ejecuta independientemente.
+    // Un error no impide ejecutar las demás.
+    const resultados = await Promise.allSettled(
+      tareas.map((tarea) => tarea.ejecutar())
+    );
 
     resultados.forEach((resultado, indice) => {
-      const tipo = indice === 0 ? "estudiante" : "empresa";
+      const nombre = tareas[indice].nombre;
 
       if (resultado.status === "fulfilled") {
-        console.log(
-          `Brevo aceptó el correo para ${tipo}:`,
-          resultado.value.messageId
-        );
+        console.log(`${nombre}: correcto`);
+
+        if (resultado.value?.messageId) {
+          console.log(
+            `ID del correo: ${resultado.value.messageId}`
+          );
+        }
       } else {
         console.error(
-          `No se pudo enviar el correo para ${tipo}:`,
-          resultado.reason?.message
+          `${nombre}: error -`,
+          resultado.reason?.message || resultado.reason
         );
       }
     });
@@ -133,8 +174,8 @@ const crearPostulacion = async (req, res) => {
     const idEstudiante =
       estudianteResultado.rows[0].id_estudiante;
 
-    // Registrar solo si la vacante sigue activa.
-    // ON CONFLICT evita postulaciones duplicadas.
+    // Registrar únicamente si la vacante está activa
+    // y evitar postulaciones duplicadas.
     const resultado = await pool.query(
       `INSERT INTO postulaciones (
          id_vacante,
@@ -186,8 +227,8 @@ const crearPostulacion = async (req, res) => {
 
     const postulacion = resultado.rows[0];
 
-    // Se inicia el envío de correos sin bloquear
-    // la respuesta ni revertir la postulación.
+    // Iniciar notificaciones sin bloquear la respuesta.
+    // La postulación ya está registrada.
     void notificarNuevaPostulacion({
       idPostulacion: postulacion.id_postulacion,
       idVacante: postulacion.id_vacante,
