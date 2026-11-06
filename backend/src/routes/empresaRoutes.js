@@ -20,7 +20,8 @@ const {
 const {
   obtenerCandidatos,
   obtenerDetalleCandidato,
-  cambiarEstadoCandidato
+  cambiarEstadoCandidato,
+  obtenerCurriculumCandidato
 } = require("../controllers/candidatoController");
 
 // ========================================
@@ -80,6 +81,12 @@ router.get("/candidatos/:id", obtenerDetalleCandidato);
 router.patch(
   "/candidatos/:id/estado",
   cambiarEstadoCandidato
+);
+
+// Consultar currículum PDF del candidato
+router.get(
+  "/candidatos/:id/curriculum",
+  obtenerCurriculumCandidato
 );
 
 module.exports = router;
