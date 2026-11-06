@@ -477,6 +477,129 @@ const eliminarVacante = async (req, res) => {
   }
 };
 
+
+
+
+// ========================================
+// OBTENER PERFIL EMPRESARIAL
+// ========================================
+
+const obtenerPerfil = async (req, res) => {
+  try {
+    const resultado = await pool.query(
+      `SELECT
+        e.id_empresa,
+        e.nombre_empresa,
+        e.descripcion,
+        e.ubicacion,
+        e.telefono,
+        e.sector,
+        e.verificada,
+        u.nombre AS representante,
+        u.correo
+       FROM empresas e
+       INNER JOIN usuarios u
+         ON u.id_usuario = e.id_usuario
+       WHERE e.id_usuario = $1`,
+      [req.usuario.id_usuario]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({
+        mensaje: "Perfil empresarial no encontrado"
+      });
+    }
+
+    return res.json({
+      empresa: resultado.rows[0]
+    });
+  } catch (error) {
+    console.error("Error al obtener perfil:", error);
+    return res.status(500).json({
+      mensaje: "Error al consultar el perfil empresarial"
+    });
+  }
+};
+
+// ========================================
+// ACTUALIZAR PERFIL EMPRESARIAL
+// ========================================
+
+const actualizarPerfil = async (req, res) => {
+  try {
+    const {
+      nombre_empresa,
+      descripcion,
+      ubicacion,
+      telefono,
+      sector
+    } = req.body;
+
+    if (
+      typeof nombre_empresa !== "string" ||
+      !nombre_empresa.trim()
+    ) {
+      return res.status(400).json({
+        mensaje: "El nombre de la empresa es obligatorio"
+      });
+    }
+
+    const opcionales = { descripcion, ubicacion, telefono, sector };
+
+    if (
+      Object.values(opcionales).some(
+        (valor) => valor != null && typeof valor !== "string"
+      )
+    ) {
+      return res.status(400).json({
+        mensaje: "Los campos del perfil deben contener texto"
+      });
+    }
+
+    const resultado = await pool.query(
+      `UPDATE empresas
+       SET nombre_empresa = $1,
+           descripcion = $2,
+           ubicacion = $3,
+           telefono = $4,
+           sector = $5
+       WHERE id_usuario = $6
+       RETURNING
+         id_empresa,
+         nombre_empresa,
+         descripcion,
+         ubicacion,
+         telefono,
+         sector,
+         verificada`,
+      [
+        nombre_empresa.trim(),
+        descripcion?.trim() || null,
+        ubicacion?.trim() || null,
+        telefono?.trim() || null,
+        sector?.trim() || null,
+        req.usuario.id_usuario
+      ]
+    );
+
+    if (resultado.rows.length === 0) {
+      return res.status(404).json({
+        mensaje: "Perfil empresarial no encontrado"
+      });
+    }
+
+    return res.json({
+      mensaje: "Perfil empresarial actualizado correctamente",
+      empresa: resultado.rows[0]
+    });
+  } catch (error) {
+    console.error("Error al actualizar perfil:", error);
+    return res.status(500).json({
+      mensaje: "Error al actualizar el perfil empresarial"
+    });
+  }
+};
+
 // ========================================
 // EXPORTAR FUNCIONES
 // ========================================
@@ -487,5 +610,7 @@ module.exports = {
   crearVacante,
   editarVacante,
   cambiarEstadoVacante,
-  eliminarVacante
+  eliminarVacante,
+  obtenerPerfil,
+  actualizarPerfil
 };

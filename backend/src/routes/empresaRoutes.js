@@ -12,7 +12,9 @@ const {
   crearVacante,
   editarVacante,
   cambiarEstadoVacante,
-  eliminarVacante
+  eliminarVacante,
+  obtenerPerfil,
+  actualizarPerfil
 } = require("../controllers/empresaController");
 
 const soloEmpresa = (req, res, next) => {
@@ -29,6 +31,10 @@ router.use(verificarToken, soloEmpresa);
 
 // Estadísticas
 router.get("/estadisticas", obtenerEstadisticas);
+
+// Perfil empresarial
+router.get("/perfil", obtenerPerfil);
+router.put("/perfil", actualizarPerfil);
 
 // CRUD de vacantes
 router.get("/vacantes", obtenerVacantes);
