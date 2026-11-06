@@ -5,8 +5,6 @@ import {
   BriefcaseBusiness,
   FileText,
   Bell,
-  Search,
-  GraduationCap,
   CalendarCheck,
   RefreshCw,
   Users,
@@ -15,6 +13,7 @@ import {
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { sessionGet } from "../../services/session";
 import PerfilEstudiante from "./PerfilEstudiante";
+import BuscarVacantes from "./BuscarVacantes";
 
 const menu = [
   { id: "dashboard", nombre: "Dashboard", icono: "dashboard" },
@@ -34,8 +33,6 @@ const titulos = {
 
 function EstudianteDashboard() {
   const usuario = sessionGet("estudiante")?.usuario;
-
-  const [busqueda, setBusqueda] = useState("");
 
   const [resumen, setResumen] = useState({
     postulaciones: 0,
@@ -95,7 +92,6 @@ function EstudianteDashboard() {
       });
 
       setEstudiante(datos.estudiante);
-
     } catch (err) {
       console.error("Error en dashboard del estudiante:", err);
       setError(err.message);
@@ -243,59 +239,14 @@ function EstudianteDashboard() {
       );
     }
 
-   if (seccion === "perfil") {
-  return (
-    <PerfilEstudiante onActualizar={obtenerEstadisticas} />
-  );
-}
+    if (seccion === "perfil") {
+      return (
+        <PerfilEstudiante onActualizar={obtenerEstadisticas} />
+      );
+    }
 
     if (seccion === "vacantes") {
-      return (
-        <div className="bt-dashboard-panel">
-          <h3>Explorar oportunidades</h3>
-
-          <p>
-            Busca vacantes de empleo, prácticas
-            profesionales y estadías.
-          </p>
-
-          <form
-            className="bt-dashboard-actions"
-            onSubmit={(e) => e.preventDefault()}
-          >
-            <input
-              type="search"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              placeholder="Buscar por puesto o carrera"
-              aria-label="Buscar vacantes"
-              style={{
-                flex: 1,
-                minWidth: 200,
-                padding: 12,
-                border: "1px solid var(--bt-border, #CBD5E1)",
-                borderRadius: 9,
-                background: "var(--bt-input, #FFFFFF)",
-                color: "var(--bt-text, #1E293B)",
-              }}
-            />
-
-            <button
-              className="bt-dashboard-action"
-              type="submit"
-              disabled
-            >
-              <Search size={18} />
-              Buscar
-            </button>
-          </form>
-
-          <p>
-            Aquí aparecerán las vacantes activas
-            publicadas por las empresas.
-          </p>
-        </div>
-      );
+      return <BuscarVacantes />;
     }
 
     if (seccion === "postulaciones") {
