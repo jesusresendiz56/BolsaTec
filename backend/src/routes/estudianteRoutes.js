@@ -23,6 +23,12 @@ const {
   obtenerPostulaciones
 } = require("../controllers/postulacionController");
 
+const {
+  obtenerNotificaciones,
+  marcarNotificacionLeida,
+  marcarTodasLeidas
+} = require("../controllers/notificacionController");
+
 const subirPDF = require("../middleware/uploadCurriculum");
 
 // ========================================
@@ -62,27 +68,36 @@ router.put("/perfil", actualizarPerfil);
 // CURRÍCULUM DEL ESTUDIANTE
 // ========================================
 
-// Subir o reemplazar currículum PDF
 router.post("/curriculum", subirPDF, subirCurriculum);
-
-// Consultar currículum PDF
 router.get("/curriculum", obtenerCurriculum);
 
 // ========================================
 // BUSCAR VACANTES
 // ========================================
 
-// Consultar vacantes activas y aplicar filtros
 router.get("/vacantes", obtenerVacantes);
 
 // ========================================
 // POSTULACIONES DEL ESTUDIANTE
 // ========================================
 
-// Enviar postulación
 router.post("/postulaciones", crearPostulacion);
-
-// Consultar mis postulaciones
 router.get("/postulaciones", obtenerPostulaciones);
+
+// ========================================
+// NOTIFICACIONES DEL ESTUDIANTE
+// ========================================
+
+// Consultar notificaciones
+router.get("/notificaciones", obtenerNotificaciones);
+
+// Marcar todas como leídas
+router.patch("/notificaciones/leer-todas", marcarTodasLeidas);
+
+// Marcar una notificación como leída
+router.patch(
+  "/notificaciones/:id/leer",
+  marcarNotificacionLeida
+);
 
 module.exports = router;
