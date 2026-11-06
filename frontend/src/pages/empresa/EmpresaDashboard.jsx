@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 
 import {
-  Building2,
   BriefcaseBusiness,
   Users,
   FileText,
@@ -13,11 +12,9 @@ import {
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { sessionGet } from "../../services/session";
 
-// Módulo de gestión de vacantes
 import VacantesEmpresa from "./VacantesEmpresa";
-
-// Módulo de perfil empresarial
 import PerfilEmpresa from "./PerfilEmpresa";
+import CandidatosEmpresa from "./CandidatosEmpresa";
 
 const menu = [
   { id: "dashboard", nombre: "Dashboard", icono: "dashboard" },
@@ -29,14 +26,6 @@ const menu = [
 ];
 
 const secciones = {
-  perfil: {
-    titulo: "Perfil empresarial",
-    descripcion: "Administra la información de tu empresa.",
-  },
-  candidatos: {
-    titulo: "Gestión de candidatos",
-    descripcion: "Consulta los estudiantes interesados en tus vacantes.",
-  },
   postulaciones: {
     titulo: "Postulaciones recibidas",
     descripcion: "Revisa las solicitudes recibidas.",
@@ -60,10 +49,6 @@ function EmpresaDashboard() {
   const [empresa, setEmpresa] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
-
-  // =========================================
-  // OBTENER ESTADÍSTICAS REALES
-  // =========================================
 
   const obtenerEstadisticas = async () => {
     try {
@@ -108,7 +93,6 @@ function EmpresaDashboard() {
       });
 
       setEmpresa(datos.empresa);
-
     } catch (err) {
       console.error("Error en dashboard empresarial:", err);
       setError(err.message);
@@ -120,10 +104,6 @@ function EmpresaDashboard() {
   useEffect(() => {
     obtenerEstadisticas();
   }, []);
-
-  // =========================================
-  // TARJETAS DE ESTADÍSTICAS
-  // =========================================
 
   const estadisticas = [
     {
@@ -148,31 +128,30 @@ function EmpresaDashboard() {
     },
   ];
 
-  // =========================================
-  // MOSTRAR SECCIONES DEL DASHBOARD
-  // =========================================
-
   const mostrarSeccion = (seccion) => {
-    // MÓDULO DE PERFIL EMPRESARIAL
     if (seccion === "perfil") {
-  return <PerfilEmpresa onActualizar={obtenerEstadisticas} />;
-}
-    // MÓDULO DE VACANTES
-    if (seccion === "vacantes") {
       return (
-        <VacantesEmpresa
-          onActualizar={obtenerEstadisticas}
-        />
+        <PerfilEmpresa onActualizar={obtenerEstadisticas} />
       );
     }
 
-    // DASHBOARD PRINCIPAL
+    if (seccion === "vacantes") {
+      return (
+        <VacantesEmpresa onActualizar={obtenerEstadisticas} />
+      );
+    }
+
+    if (seccion === "candidatos") {
+      return (
+        <CandidatosEmpresa onActualizar={obtenerEstadisticas} />
+      );
+    }
+
     if (seccion === "dashboard") {
       return (
         <>
           <div className="bt-dashboard-welcome">
             <h2>¡Bienvenido a BolsaTec!</h2>
-
             <p>
               {empresa?.nombre_empresa ||
                 usuario?.nombre ||
@@ -246,20 +225,17 @@ function EmpresaDashboard() {
 
             <p>
               <strong>Empresa:</strong>{" "}
-              {empresa?.nombre_empresa ||
-                "Sin información"}
+              {empresa?.nombre_empresa || "Sin información"}
             </p>
 
             <p>
               <strong>Representante:</strong>{" "}
-              {usuario?.nombre ||
-                "Sin información"}
+              {usuario?.nombre || "Sin información"}
             </p>
 
             <p>
               <strong>Correo:</strong>{" "}
-              {usuario?.correo ||
-                "Sin información"}
+              {usuario?.correo || "Sin información"}
             </p>
 
             <p>
@@ -270,28 +246,14 @@ function EmpresaDashboard() {
       );
     }
 
-    // OTROS MÓDULOS PENDIENTES
     const datos = secciones[seccion];
 
     if (!datos) return null;
 
     return (
       <div className="bt-dashboard-panel">
-        <div className="bt-stat-icon">
-          {seccion === "perfil" ? (
-            <Building2 size={23} />
-          ) : seccion === "candidatos" ? (
-            <Users size={23} />
-          ) : seccion === "postulaciones" ? (
-            <FileText size={23} />
-          ) : (
-            <Bell size={23} />
-          )}
-        </div>
-
         <h3>{datos.titulo}</h3>
         <p>{datos.descripcion}</p>
-
         <p>
           Este módulo se conectará con el backend
           para consultar y administrar su información.
@@ -299,10 +261,6 @@ function EmpresaDashboard() {
       </div>
     );
   };
-
-  // =========================================
-  // LAYOUT PRINCIPAL
-  // =========================================
 
   return (
     <DashboardLayout
