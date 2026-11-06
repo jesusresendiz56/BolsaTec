@@ -12,11 +12,10 @@ const {
   actualizarPerfil
 } = require("../controllers/estudianteController");
 
+// ========================================
+// PERMITIR ÚNICAMENTE ESTUDIANTES
+// ========================================
 
-router.get("/perfil", obtenerPerfil);
-router.put("/perfil", actualizarPerfil);
-
-// Permitir únicamente estudiantes
 const soloEstudiante = (req, res, next) => {
   if (req.usuario?.rol !== "estudiante") {
     return res.status(403).json({
@@ -27,10 +26,23 @@ const soloEstudiante = (req, res, next) => {
   next();
 };
 
-// Proteger las rutas
+// ========================================
+// PROTEGER TODAS LAS RUTAS
+// ========================================
+
 router.use(verificarToken, soloEstudiante);
 
-// Estadísticas del dashboard
+// ========================================
+// DASHBOARD DEL ESTUDIANTE
+// ========================================
+
 router.get("/estadisticas", obtenerEstadisticas);
+
+// ========================================
+// PERFIL DEL ESTUDIANTE
+// ========================================
+
+router.get("/perfil", obtenerPerfil);
+router.put("/perfil", actualizarPerfil);
 
 module.exports = router;
