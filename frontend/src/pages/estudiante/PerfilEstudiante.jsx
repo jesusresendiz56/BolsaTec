@@ -1,12 +1,23 @@
 
-import { useEffect, useState } from "react";
-import { GraduationCap, Save, RefreshCw } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  GraduationCap,
+  Save,
+  RefreshCw,
+  FileText,
+  Upload,
+  Eye,
+  CheckCircle2
+} from "lucide-react";
+
 import { sessionGet } from "../../services/session";
 import "./PerfilEstudiante.css";
 
 const API_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:3000"
 ).replace(/\/$/, "");
+
+const MAX_PDF = 5 * 1024 * 1024;
 
 const perfilInicial = {
   carrera: "",
@@ -22,27 +33,37 @@ function PerfilEstudiante({ onActualizar }) {
   const [correo, setCorreo] = useState("");
   const [cvUrl, setCvUrl] = useState("");
 
+  const [archivoPDF, setArchivoPDF] = useState(null);
+  const [subiendoPDF, setSubiendoPDF] = useState(false);
+  const [viendoPDF, setViendoPDF] = useState(false);
+
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
+
+  const inputPDF = useRef(null);
+
+  const obtenerToken = () => {
+    const token = sessionGet("estudiante")?.token;
+
+    if (!token) {
+      throw new Error("Debes iniciar sesión como estudiante");
+    }
+
+    return token;
+  };
 
   const obtenerPerfil = async () => {
     try {
       setCargando(true);
       setError("");
 
-      const token = sessionGet("estudiante")?.token;
-
-      if (!token) {
-        throw new Error("Debes iniciar sesión como estudiante");
-      }
-
       const respuesta = await fetch(
         `${API_URL}/api/estudiante/perfil`,
         {
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${obtenerToken()}`
           }
         }
       );
@@ -50,7 +71,9 @@ function PerfilEstudiante({ onActualizar }) {
       const datos = await respuesta.json();
 
       if (!respuesta.ok) {
-        throw new Error(datos.mensaje || "Error al obtener perfil");
+        throw new Error(
+          datos.mensaje || "Error al obtener el perfil"
+        );
       }
 
       const estudiante = datos.estudiante;
@@ -95,19 +118,13 @@ function PerfilEstudiante({ onActualizar }) {
       setError("");
       setMensaje("");
 
-      const token = sessionGet("estudiante")?.token;
-
-      if (!token) {
-        throw new Error("Debes iniciar sesión como estudiante");
-      }
-
       const respuesta = await fetch(
         `${API_URL}/api/estudiante/perfil`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${obtenerToken()}`
           },
           body: JSON.stringify(perfil)
         }
@@ -116,10 +133,14 @@ function PerfilEstudiante({ onActualizar }) {
       const datos = await respuesta.json();
 
       if (!respuesta.ok) {
-        throw new Error(datos.mensaje || "Error al guardar perfil");
+        throw new Error(
+          datos.mensaje || "Error al guardar el perfil"
+        );
       }
 
-      setMensaje(datos.mensaje || "Perfil actualizado correctamente");
+      setMensaje(
+        datos.mensaje || "Perfil actualizado correctamente"
+      );
 
       await obtenerPerfil();
       onActualizar?.();
@@ -128,6 +149,169 @@ function PerfilEstudiante({ onActualizar }) {
       setError(err.message);
     } finally {
       setGuardando(false);
+    }
+  };
+
+  // ========================================
+  // SELECCIONAR ARCHIVO PDF
+  // ========================================
+
+  const seleccionarPDF = (evento) => {
+    const archivo = evento.target.files?.[0];
+
+    setError("");
+    setMensaje("");
+
+    if (!archivo) {
+      setArchivoPDF(null);
+      return;
+    }
+
+    if (
+      archivo.type !== "application/pdf" ||
+      !archivo.name.toLowerCase().endsWith(".pdf")
+    ) {
+      setArchivoPDF(null);
+      evento.target.value = "";
+
+      setError("Solo se permiten archivos PDF");
+      return;
+    }
+
+    if (archivo.size > MAX_PDF) {
+      setArchivoPDF(null);
+      evento.target.value = "";
+
+      setError("El PDF no debe superar los 5 MB");
+      return;
+    }
+
+    setArchivoPDF(archivo);
+  };
+
+  // ========================================
+  // SUBIR O REEMPLAZAR CURRÍCULUM
+  // ========================================
+
+  const subirCurriculum = async () => {
+    if (!archivoPDF) {
+      setError("Selecciona un archivo PDF");
+      return;
+    }
+
+    try {
+      setSubiendoPDF(true);
+      setError("");
+      setMensaje("");
+
+      const formulario = new FormData();
+
+      formulario.append("curriculum", archivoPDF);
+
+      const respuesta = await fetch(
+        `${API_URL}/api/estudiante/curriculum`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${obtenerToken()}`
+          },
+          body: formulario
+        }
+      );
+
+      const datos = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(
+          datos.mensaje || "No se pudo subir el currículum"
+        );
+      }
+
+      setCvUrl(datos.cv_url || "");
+      setArchivoPDF(null);
+
+      if (inputPDF.current) {
+        inputPDF.current.value = "";
+      }
+
+      setMensaje(
+        datos.mensaje || "Currículum guardado correctamente"
+      );
+
+      onActualizar?.();
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubiendoPDF(false);
+    }
+  };
+
+  // ========================================
+  // VISUALIZAR CURRÍCULUM PRIVADO
+  // ========================================
+
+  const verCurriculum = async () => {
+    let urlTemporal = null;
+
+    try {
+      setViendoPDF(true);
+      setError("");
+
+      // Abrir una pestaña durante el clic del usuario.
+      const ventana = window.open("", "_blank");
+
+      if (!ventana) {
+        throw new Error(
+          "El navegador bloqueó la nueva pestaña"
+        );
+      }
+
+      try {
+        const respuesta = await fetch(
+          `${API_URL}/api/estudiante/curriculum`,
+          {
+            headers: {
+              Authorization: `Bearer ${obtenerToken()}`
+            }
+          }
+        );
+
+        if (!respuesta.ok) {
+          const datos = await respuesta.json().catch(() => ({}));
+
+          throw new Error(
+            datos.mensaje || "No se pudo consultar el PDF"
+          );
+        }
+
+        const archivo = await respuesta.blob();
+
+        if (archivo.type !== "application/pdf") {
+          throw new Error(
+            "El servidor no devolvió un archivo PDF"
+          );
+        }
+
+        urlTemporal = URL.createObjectURL(archivo);
+
+        ventana.location.href = urlTemporal;
+
+        // La URL temporal se libera cuando se cierra
+        // la página actual.
+      } catch (error) {
+        ventana.close();
+        throw error;
+      }
+
+    } catch (err) {
+      if (urlTemporal) {
+        URL.revokeObjectURL(urlTemporal);
+      }
+
+      setError(err.message);
+    } finally {
+      setViendoPDF(false);
     }
   };
 
@@ -144,7 +328,9 @@ function PerfilEstudiante({ onActualizar }) {
       <div className="bt-perfil-estudiante-header">
         <div>
           <h2>Mi perfil profesional</h2>
-          <p>Administra tu información académica y profesional.</p>
+          <p>
+            Administra tu información académica y profesional.
+          </p>
         </div>
 
         <button
@@ -158,13 +344,19 @@ function PerfilEstudiante({ onActualizar }) {
       </div>
 
       {error && (
-        <div className="bt-perfil-estudiante-error" role="alert">
+        <div
+          className="bt-perfil-estudiante-error"
+          role="alert"
+        >
           {error}
         </div>
       )}
 
       {mensaje && (
-        <div className="bt-perfil-estudiante-exito" role="status">
+        <div
+          className="bt-perfil-estudiante-exito"
+          role="status"
+        >
           {mensaje}
         </div>
       )}
@@ -172,6 +364,7 @@ function PerfilEstudiante({ onActualizar }) {
       <div className="bt-perfil-estudiante-card">
         <div className="bt-perfil-estudiante-identidad">
           <GraduationCap size={32} />
+
           <div>
             <h3>{nombre}</h3>
             <p>{correo}</p>
@@ -238,19 +431,81 @@ function PerfilEstudiante({ onActualizar }) {
             />
           </label>
 
+          {/* CURRÍCULUM PDF */}
           <div className="bt-perfil-estudiante-cv">
-            <h4>Mi currículum</h4>
+            <div className="bt-cv-titulo">
+              <FileText size={24} />
+
+              <div>
+                <h4>Mi currículum</h4>
+                <p>
+                  Adjunta tu currículum en PDF.
+                  Tamaño máximo: 5 MB.
+                </p>
+              </div>
+            </div>
 
             {cvUrl ? (
-              <p>Ya tienes un currículum registrado.</p>
+              <p className="bt-cv-estado">
+                <CheckCircle2 size={18} />
+                Ya tienes un currículum registrado.
+              </p>
             ) : (
-              <p>Aún no has registrado tu currículum.</p>
+              <p>
+                Aún no has registrado tu currículum.
+              </p>
             )}
 
-            <p>
-              La carga de archivos PDF se implementará
-              en el siguiente paso.
-            </p>
+            <div className="bt-cv-archivo">
+              <label htmlFor="archivo-curriculum">
+                <Upload size={18} />
+                Seleccionar PDF
+              </label>
+
+              <input
+                ref={inputPDF}
+                id="archivo-curriculum"
+                type="file"
+                accept=".pdf,application/pdf"
+                onChange={seleccionarPDF}
+              />
+
+              <span>
+                {archivoPDF
+                  ? archivoPDF.name
+                  : "Ningún archivo seleccionado"}
+              </span>
+            </div>
+
+            <div className="bt-cv-acciones">
+              {cvUrl && (
+                <button
+                  type="button"
+                  className="bt-perfil-estudiante-btn"
+                  onClick={verCurriculum}
+                  disabled={viendoPDF}
+                >
+                  <Eye size={18} />
+                  {viendoPDF
+                    ? "Abriendo..."
+                    : "Ver currículum"}
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="bt-perfil-estudiante-btn bt-perfil-estudiante-primary"
+                onClick={subirCurriculum}
+                disabled={!archivoPDF || subiendoPDF}
+              >
+                <Upload size={18} />
+                {subiendoPDF
+                  ? "Subiendo..."
+                  : cvUrl
+                    ? "Reemplazar PDF"
+                    : "Subir currículum"}
+              </button>
+            </div>
           </div>
 
           <div className="bt-perfil-estudiante-acciones">
@@ -260,7 +515,9 @@ function PerfilEstudiante({ onActualizar }) {
               disabled={guardando}
             >
               <Save size={18} />
-              {guardando ? "Guardando..." : "Guardar cambios"}
+              {guardando
+                ? "Guardando..."
+                : "Guardar cambios"}
             </button>
           </div>
         </form>
