@@ -21,7 +21,7 @@ import NotificacionesEstudiante from "./NotificacionesEstudiante";
 // ESTILOS DE NOTIFICACIONES
 // ========================================
 
-import "./Notificaciones.css";
+import "./notificaciones.css";
 
 // ========================================
 // MENÚ DEL ESTUDIANTE
