@@ -17,7 +17,11 @@ import BuscarVacantes from "./BuscarVacantes";
 import MisPostulaciones from "./MisPostulaciones";
 import NotificacionesEstudiante from "./NotificacionesEstudiante";
 
-import "../../notificaciones.css";
+// ========================================
+// ESTILOS DE NOTIFICACIONES
+// ========================================
+
+import "./Notificaciones.css";
 
 // ========================================
 // MENÚ DEL ESTUDIANTE
@@ -123,14 +127,10 @@ function EstudianteDashboard() {
       }
 
       setResumen({
-        postulaciones:
-          Number(datos.postulaciones) || 0,
-        vacantes:
-          Number(datos.vacantes) || 0,
-        entrevistas:
-          Number(datos.entrevistas) || 0,
-        notificaciones:
-          Number(datos.notificaciones) || 0,
+        postulaciones: Number(datos.postulaciones) || 0,
+        vacantes: Number(datos.vacantes) || 0,
+        entrevistas: Number(datos.entrevistas) || 0,
+        notificaciones: Number(datos.notificaciones) || 0,
       });
 
       setEstudiante(datos.estudiante);
@@ -340,7 +340,7 @@ function EstudianteDashboard() {
     }
 
     // ========================================
-    // MIS NOTIFICACIONES
+    // NOTIFICACIONES INTERNAS
     // ========================================
 
     if (seccion === "notificaciones") {
