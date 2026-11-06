@@ -284,3 +284,33 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ========================================
+   ESTADOS DE POSTULACIONES
+======================================== */
+
+.bt-postulacion-estado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #059669;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.bt-postulacion-exito {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 9px;
+  background: rgba(5, 150, 105, 0.12);
+  color: #059669;
+  font-weight: 600;
+}
+
+.bt-vacante-detalles:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}

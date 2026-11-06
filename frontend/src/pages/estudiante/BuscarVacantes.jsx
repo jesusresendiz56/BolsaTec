@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+
 import {
   Search,
   MapPin,
@@ -8,6 +9,8 @@ import {
   RefreshCw,
   CalendarDays,
   X,
+  Send,
+  CheckCircle2,
 } from "lucide-react";
 
 import { sessionGet } from "../../services/session";
@@ -46,6 +49,20 @@ const formatoSalario = (valor) => {
   }).format(numero);
 };
 
+const mostrarSalario = (vacante) => {
+  const minimo = formatoSalario(vacante.salario_min);
+  const maximo = formatoSalario(vacante.salario_max);
+
+  if (minimo && maximo) {
+    return `${minimo} - ${maximo} MXN`;
+  }
+
+  if (minimo) return `Desde ${minimo} MXN`;
+  if (maximo) return `Hasta ${maximo} MXN`;
+
+  return "Salario no especificado";
+};
+
 function BuscarVacantes() {
   const [vacantes, setVacantes] = useState([]);
   const [busqueda, setBusqueda] = useState("");
@@ -54,8 +71,27 @@ function BuscarVacantes() {
 
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+
   const [vacanteSeleccionada, setVacanteSeleccionada] =
     useState(null);
+
+  // ========================================
+  // ESTADOS DE POSTULACIONES
+  // ========================================
+
+  const [idsPostulados, setIdsPostulados] = useState([]);
+  const [enviandoPostulacion, setEnviandoPostulacion] =
+    useState(false);
+
+  const [mensajePostulacion, setMensajePostulacion] =
+    useState("");
+
+  const [errorPostulacion, setErrorPostulacion] =
+    useState("");
+
+  // ========================================
+  // CONSULTAR VACANTES ACTIVAS
+  // ========================================
 
   const consultarVacantes = async (
     filtros = { busqueda: "", modalidad: "", tipo: "" }
@@ -101,7 +137,8 @@ function BuscarVacantes() {
 
       if (!respuesta.ok) {
         throw new Error(
-          datos.mensaje || "No se pudieron consultar las vacantes"
+          datos.mensaje ||
+            "No se pudieron consultar las vacantes"
         );
       }
 
@@ -117,9 +154,60 @@ function BuscarVacantes() {
     }
   };
 
+  // ========================================
+  // CONSULTAR POSTULACIONES EXISTENTES
+  // ========================================
+
+  const consultarPostulaciones = async () => {
+    try {
+      const sesion = sessionGet("estudiante");
+
+      if (!sesion?.token) return;
+
+      const respuesta = await fetch(
+        `${API_URL}/api/estudiante/postulaciones`,
+        {
+          headers: {
+            Authorization: `Bearer ${sesion.token}`,
+          },
+        }
+      );
+
+      const datos = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(
+          datos.mensaje ||
+            "No se pudieron consultar las postulaciones"
+        );
+      }
+
+      const postulaciones = Array.isArray(datos.postulaciones)
+        ? datos.postulaciones
+        : [];
+
+      setIdsPostulados(
+        postulaciones.map((item) => Number(item.id_vacante))
+      );
+    } catch (err) {
+      console.error(
+        "Error al consultar postulaciones:",
+        err
+      );
+      setErrorPostulacion(
+        "No se pudo verificar si ya te postulaste."
+      );
+    }
+  };
+
   useEffect(() => {
     consultarVacantes();
+    consultarPostulaciones();
   }, []);
+
+  // ========================================
+  // BUSCADOR Y FILTROS
+  // ========================================
 
   const buscar = (evento) => {
     evento.preventDefault();
@@ -133,33 +221,135 @@ function BuscarVacantes() {
     consultarVacantes();
   };
 
-  const mostrarSalario = (vacante) => {
-    const minimo = formatoSalario(vacante.salario_min);
-    const maximo = formatoSalario(vacante.salario_max);
+  // ========================================
+  // ABRIR DETALLES
+  // ========================================
 
-    if (minimo && maximo) {
-      return `${minimo} - ${maximo} MXN`;
+  const abrirDetalles = (vacante) => {
+    setVacanteSeleccionada(vacante);
+    setMensajePostulacion("");
+    setErrorPostulacion("");
+  };
+
+  const cerrarDetalles = () => {
+    if (enviandoPostulacion) return;
+
+    setVacanteSeleccionada(null);
+    setMensajePostulacion("");
+    setErrorPostulacion("");
+  };
+
+  // ========================================
+  // ENVIAR POSTULACIÓN
+  // ========================================
+
+  const postularme = async () => {
+    if (!vacanteSeleccionada || enviandoPostulacion) return;
+
+    const idVacante = Number(
+      vacanteSeleccionada.id_vacante
+    );
+
+    if (idsPostulados.includes(idVacante)) {
+      setErrorPostulacion(
+        "Ya te postulaste a esta vacante."
+      );
+      return;
     }
 
-    if (minimo) return `Desde ${minimo} MXN`;
-    if (maximo) return `Hasta ${maximo} MXN`;
+    try {
+      setEnviandoPostulacion(true);
+      setMensajePostulacion("");
+      setErrorPostulacion("");
 
-    return "Salario no especificado";
+      const sesion = sessionGet("estudiante");
+
+      if (!sesion?.token) {
+        throw new Error(
+          "Debes iniciar sesión como estudiante"
+        );
+      }
+
+      const respuesta = await fetch(
+        `${API_URL}/api/estudiante/postulaciones`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${sesion.token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id_vacante: idVacante,
+          }),
+        }
+      );
+
+      const datos = await respuesta.json();
+
+      if (!respuesta.ok) {
+        if (
+          respuesta.status === 409 &&
+          datos.mensaje ===
+            "Ya te postulaste a esta vacante"
+        ) {
+          setIdsPostulados((anteriores) => [
+            ...new Set([...anteriores, idVacante]),
+          ]);
+        }
+
+        throw new Error(
+          datos.mensaje || "No se pudo enviar la postulación"
+        );
+      }
+
+      setIdsPostulados((anteriores) => [
+        ...new Set([...anteriores, idVacante]),
+      ]);
+
+      setMensajePostulacion(
+        datos.mensaje ||
+          "Postulación enviada correctamente"
+      );
+    } catch (err) {
+      console.error(
+        "Error al enviar postulación:",
+        err
+      );
+
+      setErrorPostulacion(err.message);
+    } finally {
+      setEnviandoPostulacion(false);
+    }
   };
+
+  // ========================================
+  // INTERFAZ
+  // ========================================
+
+  const yaPostulado =
+    vacanteSeleccionada &&
+    idsPostulados.includes(
+      Number(vacanteSeleccionada.id_vacante)
+    );
 
   return (
     <div className="bt-vacantes">
       <div className="bt-vacantes-intro">
         <h3>Explorar oportunidades</h3>
+
         <p>
           Encuentra empleos y prácticas profesionales
           publicados por las empresas de BolsaTec.
         </p>
       </div>
 
-      <form className="bt-vacantes-filtros" onSubmit={buscar}>
+      <form
+        className="bt-vacantes-filtros"
+        onSubmit={buscar}
+      >
         <div className="bt-vacantes-busqueda">
           <Search size={19} />
+
           <input
             type="search"
             value={busqueda}
@@ -186,9 +376,15 @@ function BuscarVacantes() {
           aria-label="Filtrar por tipo"
         >
           <option value="">Todos los tipos</option>
-          <option value="practicas">Prácticas profesionales</option>
-          <option value="medio_tiempo">Medio tiempo</option>
-          <option value="tiempo_completo">Tiempo completo</option>
+          <option value="practicas">
+            Prácticas profesionales
+          </option>
+          <option value="medio_tiempo">
+            Medio tiempo
+          </option>
+          <option value="tiempo_completo">
+            Tiempo completo
+          </option>
         </select>
 
         <div className="bt-vacantes-botones">
@@ -215,7 +411,11 @@ function BuscarVacantes() {
         <button
           type="button"
           onClick={() =>
-            consultarVacantes({ busqueda, modalidad, tipo })
+            consultarVacantes({
+              busqueda,
+              modalidad,
+              tipo,
+            })
           }
           disabled={cargando}
           className="bt-vacantes-actualizar"
@@ -232,83 +432,106 @@ function BuscarVacantes() {
       )}
 
       {error && (
-        <div className="bt-vacantes-error" role="alert">
+        <div
+          className="bt-vacantes-error"
+          role="alert"
+        >
           {error}
         </div>
       )}
 
-      {!cargando && !error && vacantes.length === 0 && (
-        <div className="bt-vacantes-mensaje">
-          <BriefcaseBusiness size={32} />
-          <h4>No se encontraron vacantes</h4>
-          <p>
-            Intenta cambiar los filtros o vuelve a consultar
-            más adelante.
-          </p>
-        </div>
-      )}
+      {!cargando &&
+        !error &&
+        vacantes.length === 0 && (
+          <div className="bt-vacantes-mensaje">
+            <BriefcaseBusiness size={32} />
+            <h4>No se encontraron vacantes</h4>
 
-      {!cargando && !error && vacantes.length > 0 && (
-        <>
-          <p className="bt-vacantes-contador">
-            {vacantes.length} vacante(s) encontrada(s)
-          </p>
-
-          <div className="bt-vacantes-grid">
-            {vacantes.map((vacante) => (
-              <article
-                className="bt-vacante-card"
-                key={vacante.id_vacante}
-              >
-                <div className="bt-vacante-icono">
-                  <Building2 size={24} />
-                </div>
-
-                <h3>{vacante.titulo}</h3>
-
-                <p className="bt-vacante-empresa">
-                  {vacante.nombre_empresa}
-                </p>
-
-                <div className="bt-vacante-etiquetas">
-                  <span>
-                    {modalidades[vacante.modalidad] ||
-                      vacante.modalidad}
-                  </span>
-
-                  <span>
-                    {tipos[vacante.tipo] || vacante.tipo}
-                  </span>
-                </div>
-
-                <p className="bt-vacante-dato">
-                  <MapPin size={16} />
-                  {vacante.ubicacion || "No especificada"}
-                </p>
-
-                <p className="bt-vacante-salario">
-                  {mostrarSalario(vacante)}
-                </p>
-
-                <button
-                  type="button"
-                  className="bt-vacante-detalles"
-                  onClick={() =>
-                    setVacanteSeleccionada(vacante)
-                  }
-                >
-                  Ver detalles
-                </button>
-              </article>
-            ))}
+            <p>
+              Intenta cambiar los filtros o vuelve a
+              consultar más adelante.
+            </p>
           </div>
-        </>
-      )}
+        )}
+
+      {!cargando &&
+        !error &&
+        vacantes.length > 0 && (
+          <>
+            <p className="bt-vacantes-contador">
+              {vacantes.length} vacante(s) encontrada(s)
+            </p>
+
+            <div className="bt-vacantes-grid">
+              {vacantes.map((vacante) => {
+                const postulada = idsPostulados.includes(
+                  Number(vacante.id_vacante)
+                );
+
+                return (
+                  <article
+                    className="bt-vacante-card"
+                    key={vacante.id_vacante}
+                  >
+                    <div className="bt-vacante-icono">
+                      <Building2 size={24} />
+                    </div>
+
+                    <h3>{vacante.titulo}</h3>
+
+                    <p className="bt-vacante-empresa">
+                      {vacante.nombre_empresa}
+                    </p>
+
+                    <div className="bt-vacante-etiquetas">
+                      <span>
+                        {modalidades[vacante.modalidad] ||
+                          vacante.modalidad}
+                      </span>
+
+                      <span>
+                        {tipos[vacante.tipo] ||
+                          vacante.tipo}
+                      </span>
+                    </div>
+
+                    <p className="bt-vacante-dato">
+                      <MapPin size={16} />
+                      {vacante.ubicacion ||
+                        "No especificada"}
+                    </p>
+
+                    <p className="bt-vacante-salario">
+                      {mostrarSalario(vacante)}
+                    </p>
+
+                    {postulada && (
+                      <p className="bt-postulacion-estado">
+                        <CheckCircle2 size={17} />
+                        Ya te postulaste
+                      </p>
+                    )}
+
+                    <button
+                      type="button"
+                      className="bt-vacante-detalles"
+                      onClick={() =>
+                        abrirDetalles(vacante)
+                      }
+                    >
+                      Ver detalles
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+          </>
+        )}
 
       {vacanteSeleccionada && (
         <div
           className="bt-vacante-modal-fondo"
-          onClick={() => setVacanteSeleccionada(null)}
+          onClick={cerrarDetalles}
         >
           <div
             className="bt-vacante-modal"
@@ -320,7 +543,8 @@ function BuscarVacantes() {
             <button
               type="button"
               className="bt-vacante-cerrar"
-              onClick={() => setVacanteSeleccionada(null)}
+              onClick={cerrarDetalles}
+              disabled={enviandoPostulacion}
               aria-label="Cerrar detalles"
             >
               <X size={21} />
@@ -335,9 +559,12 @@ function BuscarVacantes() {
 
             <div className="bt-vacante-etiquetas">
               <span>
-                {modalidades[vacanteSeleccionada.modalidad] ||
+                {modalidades[
+                  vacanteSeleccionada.modalidad
+                ] ||
                   vacanteSeleccionada.modalidad}
               </span>
+
               <span>
                 {tipos[vacanteSeleccionada.tipo] ||
                   vacanteSeleccionada.tipo}
@@ -371,11 +598,47 @@ function BuscarVacantes() {
                 "Sin descripción"}
             </p>
 
-            <p className="bt-vacante-aviso">
-              La opción para postularte estará disponible
-              cuando implementemos el módulo de
-              postulaciones.
-            </p>
+            {mensajePostulacion && (
+              <div
+                className="bt-postulacion-exito"
+                role="status"
+              >
+                <CheckCircle2 size={19} />
+                {mensajePostulacion}
+              </div>
+            )}
+
+            {errorPostulacion && (
+              <div
+                className="bt-vacantes-error"
+                role="alert"
+              >
+                {errorPostulacion}
+              </div>
+            )}
+
+            <button
+              type="button"
+              className="bt-vacante-detalles"
+              onClick={postularme}
+              disabled={
+                enviandoPostulacion || yaPostulado
+              }
+            >
+              {yaPostulado ? (
+                <>
+                  <CheckCircle2 size={18} />
+                  Ya te postulaste
+                </>
+              ) : enviandoPostulacion ? (
+                "Enviando postulación..."
+              ) : (
+                <>
+                  <Send size={18} />
+                  Postularme
+                </>
+              )}
+            </button>
           </div>
         </div>
       )}
