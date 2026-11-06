@@ -14,6 +14,7 @@ import {
 
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { sessionGet } from "../../services/session";
+import PerfilEstudiante from "./PerfilEstudiante";
 
 const menu = [
   { id: "dashboard", nombre: "Dashboard", icono: "dashboard" },
@@ -242,38 +243,11 @@ function EstudianteDashboard() {
       );
     }
 
-    if (seccion === "perfil") {
-      return (
-        <div className="bt-dashboard-panel">
-          <div className="bt-stat-icon">
-            <GraduationCap size={24} />
-          </div>
-
-          <h3>Mi perfil profesional</h3>
-
-          <p>
-            Aquí podrás administrar tu información
-            personal, carrera, semestre, habilidades
-            y currículum.
-          </p>
-
-          <p>
-            <strong>Nombre:</strong>{" "}
-            {usuario?.nombre}
-          </p>
-
-          <p>
-            <strong>Correo:</strong>{" "}
-            {usuario?.correo}
-          </p>
-
-          <p>
-            El formulario de edición se implementará
-            en el siguiente módulo.
-          </p>
-        </div>
-      );
-    }
+   if (seccion === "perfil") {
+  return (
+    <PerfilEstudiante onActualizar={obtenerEstadisticas} />
+  );
+}
 
     if (seccion === "vacantes") {
       return (

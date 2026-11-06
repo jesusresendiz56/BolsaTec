@@ -7,8 +7,14 @@ const {
 } = require("../middleware/authMiddleware");
 
 const {
-  obtenerEstadisticas
+  obtenerEstadisticas,
+  obtenerPerfil,
+  actualizarPerfil
 } = require("../controllers/estudianteController");
+
+
+router.get("/perfil", obtenerPerfil);
+router.put("/perfil", actualizarPerfil);
 
 // Permitir únicamente estudiantes
 const soloEstudiante = (req, res, next) => {
