@@ -7,20 +7,29 @@ import {
   Bell,
   CalendarCheck,
   RefreshCw,
-  Users,
 } from "lucide-react";
 
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { sessionGet } from "../../services/session";
+
 import PerfilEstudiante from "./PerfilEstudiante";
 import BuscarVacantes from "./BuscarVacantes";
+import MisPostulaciones from "./MisPostulaciones";
 
 const menu = [
   { id: "dashboard", nombre: "Dashboard", icono: "dashboard" },
   { id: "perfil", nombre: "Mi perfil", icono: "perfil" },
   { id: "vacantes", nombre: "Buscar vacantes", icono: "vacantes" },
-  { id: "postulaciones", nombre: "Mis postulaciones", icono: "postulaciones" },
-  { id: "notificaciones", nombre: "Notificaciones", icono: "notificaciones" },
+  {
+    id: "postulaciones",
+    nombre: "Mis postulaciones",
+    icono: "postulaciones",
+  },
+  {
+    id: "notificaciones",
+    nombre: "Notificaciones",
+    icono: "notificaciones",
+  },
 ];
 
 const titulos = {
@@ -57,7 +66,9 @@ function EstudianteDashboard() {
       const sesion = sessionGet("estudiante");
 
       if (!sesion?.token) {
-        throw new Error("Debes iniciar sesión como estudiante");
+        throw new Error(
+          "Debes iniciar sesión como estudiante"
+        );
       }
 
       const API_URL = (
@@ -80,7 +91,7 @@ function EstudianteDashboard() {
       if (!respuesta.ok) {
         throw new Error(
           datos.mensaje ||
-          "No se pudieron obtener las estadísticas"
+            "No se pudieron obtener las estadísticas"
         );
       }
 
@@ -93,7 +104,11 @@ function EstudianteDashboard() {
 
       setEstudiante(datos.estudiante);
     } catch (err) {
-      console.error("Error en dashboard del estudiante:", err);
+      console.error(
+        "Error en dashboard del estudiante:",
+        err
+      );
+
       setError(err.message);
     } finally {
       setCargando(false);
@@ -141,7 +156,8 @@ function EstudianteDashboard() {
         <>
           <div className="bt-dashboard-welcome">
             <h2>
-              ¡Bienvenido, {usuario?.nombre || "estudiante"}!
+              ¡Bienvenido,{" "}
+              {usuario?.nombre || "estudiante"}!
             </h2>
 
             <p>
@@ -203,7 +219,9 @@ function EstudianteDashboard() {
                 disabled={cargando}
               >
                 <RefreshCw size={18} />
-                {cargando ? "Actualizando..." : "Actualizar"}
+                {cargando
+                  ? "Actualizando..."
+                  : "Actualizar"}
               </button>
             </div>
           </div>
@@ -228,7 +246,8 @@ function EstudianteDashboard() {
 
             <p>
               <strong>Semestre:</strong>{" "}
-              {estudiante?.semestre ?? "Sin registrar"}
+              {estudiante?.semestre ??
+                "Sin registrar"}
             </p>
 
             <p>
@@ -241,7 +260,9 @@ function EstudianteDashboard() {
 
     if (seccion === "perfil") {
       return (
-        <PerfilEstudiante onActualizar={obtenerEstadisticas} />
+        <PerfilEstudiante
+          onActualizar={obtenerEstadisticas}
+        />
       );
     }
 
@@ -250,25 +271,7 @@ function EstudianteDashboard() {
     }
 
     if (seccion === "postulaciones") {
-      return (
-        <div className="bt-dashboard-panel">
-          <div className="bt-stat-icon">
-            <Users size={23} />
-          </div>
-
-          <h3>Mis postulaciones</h3>
-
-          <p>
-            Consulta las vacantes a las que te has
-            postulado y revisa su estado.
-          </p>
-
-          <p>
-            Estados: enviada, vista, entrevista,
-            rechazada y aceptada.
-          </p>
-        </div>
-      );
+      return <MisPostulaciones />;
     }
 
     if (seccion === "notificaciones") {
