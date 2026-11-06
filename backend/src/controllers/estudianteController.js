@@ -210,8 +210,81 @@ const actualizarPerfil = async (req, res) => {
   }
 };
 
+
+
+
+// ========================================
+// CONSULTAR VACANTES ACTIVAS
+// ========================================
+
+const obtenerVacantes = async (req, res) => {
+  try {
+    const { busqueda = "", modalidad = "", tipo = "" } = req.query;
+
+    const modalidades = ["presencial", "hibrida", "remota"];
+    const tipos = [
+      "practicas",
+      "medio_tiempo",
+      "tiempo_completo"
+    ];
+
+    if (modalidad && !modalidades.includes(modalidad)) {
+      return res.status(400).json({
+        mensaje: "Modalidad no válida"
+      });
+    }
+
+    if (tipo && !tipos.includes(tipo)) {
+      return res.status(400).json({
+        mensaje: "Tipo de vacante no válido"
+      });
+    }
+
+    const resultado = await pool.query(
+      `SELECT
+        v.id_vacante,
+        v.titulo,
+        v.descripcion,
+        v.modalidad,
+        v.tipo,
+        v.ubicacion,
+        v.salario_min,
+        v.salario_max,
+        v.fecha_publicacion,
+        e.nombre_empresa
+       FROM vacantes v
+       INNER JOIN empresas e
+         ON e.id_empresa = v.id_empresa
+       WHERE v.estado = 'activa'
+         AND (
+           $1 = ''
+           OR v.titulo ILIKE '%' || $1 || '%'
+           OR e.nombre_empresa ILIKE '%' || $1 || '%'
+           OR COALESCE(v.ubicacion, '') ILIKE '%' || $1 || '%'
+         )
+         AND ($2 = '' OR v.modalidad = $2)
+         AND ($3 = '' OR v.tipo = $3)
+       ORDER BY v.fecha_publicacion DESC, v.id_vacante DESC`,
+      [busqueda.trim(), modalidad, tipo]
+    );
+
+    return res.json({
+      vacantes: resultado.rows,
+      total: resultado.rowCount
+    });
+
+  } catch (error) {
+    console.error("Error al consultar vacantes:", error);
+
+    return res.status(500).json({
+      mensaje: "No se pudieron consultar las vacantes"
+    });
+  }
+};
+
 module.exports = {
   obtenerEstadisticas,
   obtenerPerfil,
-  actualizarPerfil
+  actualizarPerfil,
+  obtenerVacantes
 };

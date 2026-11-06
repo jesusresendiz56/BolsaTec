@@ -9,7 +9,8 @@ const {
 const {
   obtenerEstadisticas,
   obtenerPerfil,
-  actualizarPerfil
+  actualizarPerfil,
+  obtenerVacantes
 } = require("../controllers/estudianteController");
 
 const {
@@ -61,5 +62,12 @@ router.post("/curriculum", subirPDF, subirCurriculum);
 
 // Consultar currículum PDF
 router.get("/curriculum", obtenerCurriculum);
+
+// ========================================
+// BUSCAR VACANTES
+// ========================================
+
+// Consultar vacantes activas y aplicar filtros
+router.get("/vacantes", obtenerVacantes);
 
 module.exports = router;
