@@ -7,12 +7,14 @@ import {
   Users,
   FileText,
   Bell,
-  PlusCircle,
   RefreshCw,
 } from "lucide-react";
 
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
 import { sessionGet } from "../../services/session";
+
+// Módulo de gestión de vacantes
+import VacantesEmpresa from "./VacantesEmpresa";
 
 const menu = [
   { id: "dashboard", nombre: "Dashboard", icono: "dashboard" },
@@ -27,10 +29,6 @@ const secciones = {
   perfil: {
     titulo: "Perfil empresarial",
     descripcion: "Administra la información de tu empresa.",
-  },
-  vacantes: {
-    titulo: "Mis vacantes",
-    descripcion: "Consulta y administra tus ofertas laborales.",
   },
   candidatos: {
     titulo: "Gestión de candidatos",
@@ -59,6 +57,10 @@ function EmpresaDashboard() {
   const [empresa, setEmpresa] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+
+  // =========================================
+  // OBTENER ESTADÍSTICAS REALES
+  // =========================================
 
   const obtenerEstadisticas = async () => {
     try {
@@ -116,6 +118,10 @@ function EmpresaDashboard() {
     obtenerEstadisticas();
   }, []);
 
+  // =========================================
+  // TARJETAS DE ESTADÍSTICAS
+  // =========================================
+
   const estadisticas = [
     {
       titulo: "Vacantes publicadas",
@@ -139,14 +145,27 @@ function EmpresaDashboard() {
     },
   ];
 
+  // =========================================
+  // MOSTRAR SECCIONES DEL DASHBOARD
+  // =========================================
+
   const mostrarSeccion = (seccion) => {
+
+    // MÓDULO DE VACANTES
+    if (seccion === "vacantes") {
+      return (
+        <VacantesEmpresa
+          onActualizar={obtenerEstadisticas}
+        />
+      );
+    }
+
+    // DASHBOARD PRINCIPAL
     if (seccion === "dashboard") {
       return (
         <>
           <div className="bt-dashboard-welcome">
-            <h2>
-              ¡Bienvenido a BolsaTec!
-            </h2>
+            <h2>¡Bienvenido a BolsaTec!</h2>
 
             <p>
               {empresa?.nombre_empresa ||
@@ -209,7 +228,9 @@ function EmpresaDashboard() {
                 disabled={cargando}
               >
                 <RefreshCw size={18} />
-                {cargando ? "Actualizando..." : "Actualizar"}
+                {cargando
+                  ? "Actualizando..."
+                  : "Actualizar"}
               </button>
             </div>
           </div>
@@ -219,17 +240,20 @@ function EmpresaDashboard() {
 
             <p>
               <strong>Empresa:</strong>{" "}
-              {empresa?.nombre_empresa || "Sin información"}
+              {empresa?.nombre_empresa ||
+                "Sin información"}
             </p>
 
             <p>
               <strong>Representante:</strong>{" "}
-              {usuario?.nombre || "Sin información"}
+              {usuario?.nombre ||
+                "Sin información"}
             </p>
 
             <p>
               <strong>Correo:</strong>{" "}
-              {usuario?.correo || "Sin información"}
+              {usuario?.correo ||
+                "Sin información"}
             </p>
 
             <p>
@@ -240,6 +264,7 @@ function EmpresaDashboard() {
       );
     }
 
+    // OTROS MÓDULOS PENDIENTES
     const datos = secciones[seccion];
 
     if (!datos) return null;
@@ -249,29 +274,17 @@ function EmpresaDashboard() {
         <div className="bt-stat-icon">
           {seccion === "perfil" ? (
             <Building2 size={23} />
-          ) : seccion === "vacantes" ? (
-            <BriefcaseBusiness size={23} />
-          ) : (
+          ) : seccion === "candidatos" ? (
             <Users size={23} />
+          ) : seccion === "postulaciones" ? (
+            <FileText size={23} />
+          ) : (
+            <Bell size={23} />
           )}
         </div>
 
         <h3>{datos.titulo}</h3>
         <p>{datos.descripcion}</p>
-
-        {seccion === "vacantes" && (
-          <div className="bt-dashboard-actions">
-            <button
-              type="button"
-              className="bt-dashboard-action"
-              disabled
-              title="Pendiente de implementar el CRUD de vacantes"
-            >
-              <PlusCircle size={18} />
-              Nueva vacante
-            </button>
-          </div>
-        )}
 
         <p>
           Este módulo se conectará con el backend
@@ -280,6 +293,10 @@ function EmpresaDashboard() {
       </div>
     );
   };
+
+  // =========================================
+  // LAYOUT PRINCIPAL
+  // =========================================
 
   return (
     <DashboardLayout
