@@ -1,4 +1,6 @@
 
+import { useEffect, useState } from "react";
+
 import {
   Building2,
   BriefcaseBusiness,
@@ -6,6 +8,7 @@ import {
   FileText,
   Bell,
   PlusCircle,
+  RefreshCw,
 } from "lucide-react";
 
 import DashboardLayout from "../../components/dashboard/DashboardLayout";
@@ -20,65 +23,137 @@ const menu = [
   { id: "notificaciones", nombre: "Notificaciones", icono: "notificaciones" },
 ];
 
-function obtenerUsuario() {
-  try {
-    return JSON.parse(
-      localStorage.getItem("usuario") ||
-      sessionStorage.getItem("usuario") ||
-      "null"
-    );
-  } catch {
-    return null;
-  }
-}
+const secciones = {
+  perfil: {
+    titulo: "Perfil empresarial",
+    descripcion: "Administra la información de tu empresa.",
+  },
+  vacantes: {
+    titulo: "Mis vacantes",
+    descripcion: "Consulta y administra tus ofertas laborales.",
+  },
+  candidatos: {
+    titulo: "Gestión de candidatos",
+    descripcion: "Consulta los estudiantes interesados en tus vacantes.",
+  },
+  postulaciones: {
+    titulo: "Postulaciones recibidas",
+    descripcion: "Revisa las solicitudes recibidas.",
+  },
+  notificaciones: {
+    titulo: "Notificaciones",
+    descripcion: "Consulta los avisos de tu empresa.",
+  },
+};
 
 function EmpresaDashboard() {
   const usuario = sessionGet("empresa")?.usuario;
 
-  const estadisticas = [
-    { titulo: "Vacantes publicadas", icono: BriefcaseBusiness },
-    { titulo: "Candidatos", icono: Users },
-    { titulo: "Postulaciones", icono: FileText },
-    { titulo: "Notificaciones", icono: Bell },
-  ];
+  const [resumen, setResumen] = useState({
+    vacantes: 0,
+    candidatos: 0,
+    postulaciones: 0,
+    notificaciones: 0,
+  });
 
-  const secciones = {
-    perfil: {
-      titulo: "Perfil empresarial",
-      descripcion:
-        "Administra el nombre de tu empresa, sector, ubicación, descripción y datos de contacto.",
-    },
-    vacantes: {
-      titulo: "Mis vacantes",
-      descripcion:
-        "Aquí podrás crear, editar, pausar y cerrar las vacantes de tu empresa.",
-    },
-    candidatos: {
-      titulo: "Gestión de candidatos",
-      descripcion:
-        "Consulta los estudiantes que se postulen a tus vacantes y revisa sus perfiles profesionales.",
-    },
-    postulaciones: {
-      titulo: "Postulaciones recibidas",
-      descripcion:
-        "Administra las solicitudes de los estudiantes y actualiza el estado de cada postulación.",
-    },
-    notificaciones: {
-      titulo: "Notificaciones",
-      descripcion:
-        "Consulta los avisos relacionados con tus vacantes y postulaciones.",
-    },
+  const [empresa, setEmpresa] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+
+  const obtenerEstadisticas = async () => {
+    try {
+      setCargando(true);
+      setError("");
+
+      const sesion = sessionGet("empresa");
+
+      if (!sesion?.token) {
+        throw new Error("Debes iniciar sesión como empresa");
+      }
+
+      const API_URL = (
+        import.meta.env.VITE_API_URL ||
+        "http://localhost:3000"
+      ).replace(/\/$/, "");
+
+      const respuesta = await fetch(
+        `${API_URL}/api/empresa/estadisticas`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${sesion.token}`,
+          },
+        }
+      );
+
+      const datos = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(
+          datos.mensaje ||
+          "No se pudieron obtener las estadísticas"
+        );
+      }
+
+      setResumen({
+        vacantes: Number(datos.vacantes) || 0,
+        candidatos: Number(datos.candidatos) || 0,
+        postulaciones: Number(datos.postulaciones) || 0,
+        notificaciones: Number(datos.notificaciones) || 0,
+      });
+
+      setEmpresa(datos.empresa);
+
+    } catch (err) {
+      console.error("Error en dashboard empresarial:", err);
+      setError(err.message);
+    } finally {
+      setCargando(false);
+    }
   };
+
+  useEffect(() => {
+    obtenerEstadisticas();
+  }, []);
+
+  const estadisticas = [
+    {
+      titulo: "Vacantes publicadas",
+      icono: BriefcaseBusiness,
+      valor: resumen.vacantes,
+    },
+    {
+      titulo: "Candidatos",
+      icono: Users,
+      valor: resumen.candidatos,
+    },
+    {
+      titulo: "Postulaciones",
+      icono: FileText,
+      valor: resumen.postulaciones,
+    },
+    {
+      titulo: "Notificaciones",
+      icono: Bell,
+      valor: resumen.notificaciones,
+    },
+  ];
 
   const mostrarSeccion = (seccion) => {
     if (seccion === "dashboard") {
       return (
         <>
           <div className="bt-dashboard-welcome">
-            <h2>¡Bienvenido a BolsaTec!</h2>
+            <h2>
+              ¡Bienvenido a BolsaTec!
+            </h2>
+
             <p>
-              {usuario?.nombre}, administra tus oportunidades
-              laborales y conecta con talento universitario.
+              {empresa?.nombre_empresa ||
+                usuario?.nombre ||
+                "Empresa"}
+              , administra tus oportunidades laborales
+              y conecta con talento universitario.
             </p>
           </div>
 
@@ -87,35 +162,79 @@ function EmpresaDashboard() {
               const Icono = item.icono;
 
               return (
-                <div className="bt-stat-card" key={item.titulo}>
+                <div
+                  className="bt-stat-card"
+                  key={item.titulo}
+                >
                   <div className="bt-stat-icon">
                     <Icono size={23} />
                   </div>
+
                   <p>{item.titulo}</p>
-                  <strong>—</strong>
+
+                  <strong>
+                    {cargando
+                      ? "..."
+                      : error
+                        ? "—"
+                        : item.valor}
+                  </strong>
                 </div>
               );
             })}
           </div>
 
+          {error && (
+            <div className="bt-dashboard-panel">
+              <p style={{ color: "#DC2626" }}>
+                {error}
+              </p>
+            </div>
+          )}
+
           <div className="bt-dashboard-panel">
             <h3>Panel empresarial</h3>
+
             <p>
-              Desde aquí podrás administrar las vacantes
-              de tu empresa, revisar candidatos y dar
-              seguimiento a las postulaciones recibidas.
+              Consulta las estadísticas de tu empresa,
+              administra vacantes y revisa las
+              postulaciones recibidas.
             </p>
-            <p>
-              Los indicadores mostrarán valores reales
-              cuando conectemos las consultas a Supabase.
-            </p>
+
+            <div className="bt-dashboard-actions">
+              <button
+                type="button"
+                className="bt-dashboard-action"
+                onClick={obtenerEstadisticas}
+                disabled={cargando}
+              >
+                <RefreshCw size={18} />
+                {cargando ? "Actualizando..." : "Actualizar"}
+              </button>
+            </div>
           </div>
 
           <div className="bt-dashboard-panel">
             <h3>Información de tu cuenta</h3>
-            <p><strong>Representante:</strong> {usuario?.nombre}</p>
-            <p><strong>Correo:</strong> {usuario?.correo}</p>
-            <p><strong>Rol:</strong> Empresa</p>
+
+            <p>
+              <strong>Empresa:</strong>{" "}
+              {empresa?.nombre_empresa || "Sin información"}
+            </p>
+
+            <p>
+              <strong>Representante:</strong>{" "}
+              {usuario?.nombre || "Sin información"}
+            </p>
+
+            <p>
+              <strong>Correo:</strong>{" "}
+              {usuario?.correo || "Sin información"}
+            </p>
+
+            <p>
+              <strong>Rol:</strong> Empresa
+            </p>
           </div>
         </>
       );
@@ -146,7 +265,7 @@ function EmpresaDashboard() {
               type="button"
               className="bt-dashboard-action"
               disabled
-              title="Se habilitará al implementar la publicación de vacantes"
+              title="Pendiente de implementar el CRUD de vacantes"
             >
               <PlusCircle size={18} />
               Nueva vacante
@@ -155,8 +274,8 @@ function EmpresaDashboard() {
         )}
 
         <p>
-          La gestión de esta sección se implementará
-          con los endpoints correspondientes del backend.
+          Este módulo se conectará con el backend
+          para consultar y administrar su información.
         </p>
       </div>
     );
