@@ -7,10 +7,14 @@ const {
 } = require("../middleware/authMiddleware");
 
 const {
-  obtenerEstadisticas
+  obtenerEstadisticas,
+  obtenerVacantes,
+  crearVacante,
+  editarVacante,
+  cambiarEstadoVacante,
+  eliminarVacante
 } = require("../controllers/empresaController");
 
-// Verificar que el usuario sea una empresa
 const soloEmpresa = (req, res, next) => {
   if (req.usuario?.rol !== "empresa") {
     return res.status(403).json({
@@ -21,10 +25,16 @@ const soloEmpresa = (req, res, next) => {
   next();
 };
 
-// Proteger las rutas empresariales
 router.use(verificarToken, soloEmpresa);
 
-// Estadísticas reales
+// Estadísticas
 router.get("/estadisticas", obtenerEstadisticas);
+
+// CRUD de vacantes
+router.get("/vacantes", obtenerVacantes);
+router.post("/vacantes", crearVacante);
+router.put("/vacantes/:id", editarVacante);
+router.patch("/vacantes/:id/estado", cambiarEstadoVacante);
+router.delete("/vacantes/:id", eliminarVacante);
 
 module.exports = router;
