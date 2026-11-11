@@ -1,4 +1,8 @@
 
+/* ========================================
+   BOTÓN GLOBAL DE MODO OSCURO
+======================================== */
+
 .bt-global-theme-toggle {
   position: fixed;
   top: 17px;
@@ -11,6 +15,7 @@
 
   width: 43px;
   height: 43px;
+  flex-shrink: 0;
 
   border-radius: 50%;
   border: 1px solid #CBD5E1;
@@ -20,12 +25,21 @@
 
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+
+  transition:
+    background 0.2s,
+    color 0.2s,
+    transform 0.2s;
 }
 
 .bt-global-theme-toggle:hover {
   background: #CFFAFE;
+  transform: scale(1.05);
 }
+
+/* ========================================
+   MODO OSCURO
+======================================== */
 
 [data-theme="dark"] .bt-global-theme-toggle {
   background: #193540;
@@ -37,11 +51,36 @@
   background: #245263;
 }
 
+/* ========================================
+   DASHBOARD: BOTÓN EN EL ENCABEZADO
+======================================== */
+
+/*
+  Cuando el botón está dentro del encabezado,
+  deja de utilizar posición fija.
+*/
+
+.bt-dashboard-header .bt-global-theme-toggle {
+  position: static;
+  top: auto;
+  right: auto;
+  z-index: 1;
+  margin: 0;
+}
+
+/* ========================================
+   PANTALLAS PEQUEÑAS
+======================================== */
+
 @media (max-width: 600px) {
   .bt-global-theme-toggle {
     top: 12px;
     right: 12px;
     width: 39px;
     height: 39px;
+  }
+
+  .bt-dashboard-header .bt-global-theme-toggle {
+    position: static;
   }
 }

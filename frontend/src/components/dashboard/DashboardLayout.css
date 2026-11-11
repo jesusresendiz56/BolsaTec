@@ -392,3 +392,109 @@
     gap: 10px;
   }
 }
+
+
+/* ========================================
+   CORRECCIÓN DEL ENCABEZADO DE BOLSATEC
+======================================== */
+
+.bt-dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-width: 0;
+}
+
+/* Título del dashboard */
+
+.bt-dashboard-header-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Información del usuario */
+
+.bt-dashboard-user {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 12px;
+
+  /* Espacio reservado para el botón de tema */
+  margin-right: 65px;
+}
+
+.bt-dashboard-avatar {
+  flex-shrink: 0;
+}
+
+.bt-dashboard-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 240px;
+}
+
+.bt-dashboard-user-info strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.bt-dashboard-user-info span {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+/* ========================================
+   TABLET
+======================================== */
+
+@media (max-width: 1000px) {
+  .bt-dashboard-header {
+    gap: 12px;
+  }
+
+  .bt-dashboard-user {
+    margin-right: 60px;
+  }
+
+  .bt-dashboard-user-info {
+    max-width: 170px;
+  }
+}
+
+/* ========================================
+   CELULARES
+======================================== */
+
+@media (max-width: 520px) {
+  .bt-dashboard-header {
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .bt-dashboard-header-left {
+    min-width: 0;
+  }
+
+  .bt-dashboard-user {
+    margin-right: 55px;
+    gap: 8px;
+  }
+
+  .bt-dashboard-avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .bt-dashboard-user-info {
+    display: none;
+  }
+}
