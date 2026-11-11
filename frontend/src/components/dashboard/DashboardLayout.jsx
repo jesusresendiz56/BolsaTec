@@ -154,21 +154,21 @@ const cerrarSesion = () => {
           </div>
 
           <div className="bt-dashboard-user">
-            <div className="bt-dashboard-avatar">
-              {usuario?.nombre?.charAt(0)?.toUpperCase() || "U"}
-            </div>
+  <div className="bt-dashboard-avatar">
+    {usuario?.nombre?.charAt(0)?.toUpperCase() || "U"}
+  </div>
 
-            <div>
-              <strong>{usuario?.nombre || "Usuario"}</strong>
-              <span>
-                {rol === "administrador"
-                  ? "Administrador"
-                  : rol === "empresa"
-                    ? "Empresa"
-                    : "Estudiante"}
-              </span>
-            </div>
-          </div>
+  <div className="bt-dashboard-user-info">
+    <strong>{usuario?.nombre || "Usuario"}</strong>
+    <span>
+      {rol === "administrador"
+        ? "Administrador"
+        : rol === "empresa"
+          ? "Empresa"
+          : "Estudiante"}
+    </span>
+  </div>
+</div>
         </header>
 
         <main className="bt-dashboard-content">

@@ -350,3 +350,45 @@
     font-size: 21px;
   }
 }
+/* ========================================
+   INFORMACIÓN DEL USUARIO
+======================================== */
+
+.bt-dashboard-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.bt-dashboard-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 220px;
+}
+
+.bt-dashboard-user-info strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bt-dashboard-user-info span {
+  font-size: 14px;
+}
+
+/* ========================================
+   PANTALLAS PEQUEÑAS
+======================================== */
+
+@media (max-width: 768px) {
+  .bt-dashboard-user-info {
+    max-width: 145px;
+  }
+
+  .bt-dashboard-user {
+    gap: 10px;
+  }
+}
