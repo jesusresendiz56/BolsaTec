@@ -1,7 +1,7 @@
 
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
 import {
   GraduationCap,
   LayoutDashboard,
@@ -20,8 +20,9 @@ import {
 } from "lucide-react";
 
 import { sessionDestroy } from "../../services/session";
-import "./DashboardLayout.css";
+import ThemeToggle from "../ThemeToggle";
 
+import "./DashboardLayout.css";
 
 const iconos = {
   dashboard: LayoutDashboard,
@@ -45,24 +46,27 @@ function DashboardLayout({
   children,
 }) {
   const navigate = useNavigate();
+
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [seccionActiva, setSeccionActiva] = useState("dashboard");
 
-  
+  // ========================================
+  // CERRAR SESIÓN
+  // ========================================
 
+  const cerrarSesion = () => {
+    if (rol === "administrador") {
+      sessionDestroy("administrador");
+      navigate("/admin/login", { replace: true });
+    } else {
+      sessionDestroy("usuario");
+      navigate("/login", { replace: true });
+    }
+  };
 
-const cerrarSesion = () => {
-  if (rol === "administrador") {
-    sessionDestroy("administrador");
-    navigate("/admin/login", { replace: true });
-  } else {
-    sessionDestroy("usuario");
-    navigate("/login", { replace: true });
-  }
-};
-
-
-
+  // ========================================
+  // SELECCIONAR SECCIÓN
+  // ========================================
 
   const seleccionarSeccion = (id) => {
     setSeccionActiva(id);
@@ -71,6 +75,8 @@ const cerrarSesion = () => {
 
   return (
     <div className="bt-dashboard">
+      {/* MENÚ LATERAL */}
+
       <aside
         className={
           menuAbierto
@@ -80,6 +86,7 @@ const cerrarSesion = () => {
       >
         <Link to="/" className="bt-dashboard-logo">
           <GraduationCap size={28} />
+
           <span>
             Bolsa<strong>Tec</strong>
           </span>
@@ -95,7 +102,8 @@ const cerrarSesion = () => {
 
         <nav className="bt-sidebar-nav">
           {menu.map((item) => {
-            const Icono = iconos[item.icono] || LayoutDashboard;
+            const Icono =
+              iconos[item.icono] || LayoutDashboard;
 
             return (
               <button
@@ -106,7 +114,9 @@ const cerrarSesion = () => {
                     ? "bt-sidebar-item activo"
                     : "bt-sidebar-item"
                 }
-                onClick={() => seleccionarSeccion(item.id)}
+                onClick={() =>
+                  seleccionarSeccion(item.id)
+                }
               >
                 <Icono size={19} />
                 <span>{item.nombre}</span>
@@ -127,24 +137,41 @@ const cerrarSesion = () => {
         </div>
       </aside>
 
+      {/* FONDO DEL MENÚ MÓVIL */}
+
       {menuAbierto && (
         <button
+          type="button"
           className="bt-sidebar-overlay"
           onClick={() => setMenuAbierto(false)}
           aria-label="Cerrar menú"
         />
       )}
 
+      {/* CONTENIDO PRINCIPAL */}
+
       <div className="bt-dashboard-main">
         <header className="bt-dashboard-header">
+          {/* TÍTULO */}
+
           <div className="bt-dashboard-header-left">
             <button
               type="button"
               className="bt-dashboard-menu-button"
-              onClick={() => setMenuAbierto(!menuAbierto)}
-              aria-label="Abrir menú"
+              onClick={() =>
+                setMenuAbierto(!menuAbierto)
+              }
+              aria-label={
+                menuAbierto
+                  ? "Cerrar menú"
+                  : "Abrir menú"
+              }
             >
-              {menuAbierto ? <X size={23} /> : <Menu size={23} />}
+              {menuAbierto ? (
+                <X size={23} />
+              ) : (
+                <Menu size={23} />
+              )}
             </button>
 
             <div>
@@ -153,22 +180,33 @@ const cerrarSesion = () => {
             </div>
           </div>
 
-          <div className="bt-dashboard-user">
-  <div className="bt-dashboard-avatar">
-    {usuario?.nombre?.charAt(0)?.toUpperCase() || "U"}
-  </div>
+          {/* BOTÓN DE TEMA Y USUARIO */}
 
-  <div className="bt-dashboard-user-info">
-    <strong>{usuario?.nombre || "Usuario"}</strong>
-    <span>
-      {rol === "administrador"
-        ? "Administrador"
-        : rol === "empresa"
-          ? "Empresa"
-          : "Estudiante"}
-    </span>
-  </div>
-</div>
+          <div className="bt-dashboard-header-right">
+            <ThemeToggle />
+
+            <div className="bt-dashboard-user">
+              <div className="bt-dashboard-avatar">
+                {usuario?.nombre
+                  ?.charAt(0)
+                  ?.toUpperCase() || "U"}
+              </div>
+
+              <div className="bt-dashboard-user-info">
+                <strong>
+                  {usuario?.nombre || "Usuario"}
+                </strong>
+
+                <span>
+                  {rol === "administrador"
+                    ? "Administrador"
+                    : rol === "empresa"
+                      ? "Empresa"
+                      : "Estudiante"}
+                </span>
+              </div>
+            </div>
+          </div>
         </header>
 
         <main className="bt-dashboard-content">

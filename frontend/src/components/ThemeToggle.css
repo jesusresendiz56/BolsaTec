@@ -52,19 +52,14 @@
 }
 
 /* ========================================
-   DASHBOARD: BOTÓN EN EL ENCABEZADO
+   BOTÓN DENTRO DEL DASHBOARD
 ======================================== */
-
-/*
-  Cuando el botón está dentro del encabezado,
-  deja de utilizar posición fija.
-*/
 
 .bt-dashboard-header .bt-global-theme-toggle {
   position: static;
   top: auto;
   right: auto;
-  z-index: 1;
+  z-index: auto;
   margin: 0;
 }
 
