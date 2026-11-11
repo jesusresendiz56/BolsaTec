@@ -1,5 +1,10 @@
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
 
 // Páginas públicas
 import Home from "./pages/home/Home";
@@ -17,19 +22,40 @@ import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
 // Protección de rutas
 import ProtectedRoute from "./components/dashboard/ProtectedRoute";
 
-// Botón global de modo oscuro
+// Botón de modo oscuro
 import ThemeToggle from "./components/ThemeToggle";
 
-function App() {
-  return (
-    <BrowserRouter>
+// ========================================
+// RUTAS Y BOTÓN DE MODO OSCURO
+// ========================================
 
-      {/* BOTÓN DE MODO CLARO / OSCURO */}
-      <ThemeToggle />
+function AppContent() {
+  const location = useLocation();
+
+  // Rutas que ya tienen un botón de tema
+  // dentro de DashboardLayout.jsx
+  const rutasDashboard = [
+    "/dashboard/estudiante",
+    "/dashboard/empresa",
+    "/admin/dashboard",
+  ];
+
+  const esDashboard = rutasDashboard.some(
+    (ruta) =>
+      location.pathname === ruta ||
+      location.pathname.startsWith(`${ruta}/`)
+  );
+
+  return (
+    <>
+      {/* Mostrar el botón global solamente
+          fuera de los dashboards */}
+
+      {!esDashboard && <ThemeToggle />}
 
       <Routes>
-
         {/* PÁGINAS PÚBLICAS */}
+
         <Route
           path="/"
           element={<Home />}
@@ -46,12 +72,14 @@ function App() {
         />
 
         {/* LOGIN DEL ADMINISTRADOR */}
+
         <Route
           path="/admin/login"
           element={<AdminLogin />}
         />
 
         {/* DASHBOARD DEL ESTUDIANTE */}
+
         <Route
           path="/dashboard/estudiante"
           element={
@@ -62,6 +90,7 @@ function App() {
         />
 
         {/* DASHBOARD DE EMPRESA */}
+
         <Route
           path="/dashboard/empresa"
           element={
@@ -72,6 +101,7 @@ function App() {
         />
 
         {/* DASHBOARD DEL ADMINISTRADOR */}
+
         <Route
           path="/admin/dashboard"
           element={
@@ -80,8 +110,19 @@ function App() {
             </ProtectedRoute>
           }
         />
-
       </Routes>
+    </>
+  );
+}
+
+// ========================================
+// APLICACIÓN PRINCIPAL
+// ========================================
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }
