@@ -96,3 +96,59 @@
   font-size: 13px;
   line-height: 1.4;
 }
+
+/* ========================================
+   SELECTOR DE UBICACIÓN (empresa)
+======================================== */
+
+.bt-selector-ubicacion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bt-selector-ubicacion-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bt-selector-ubicacion-acciones button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 13px;
+  border: 1px solid var(--bt-primary, #0e7490);
+  border-radius: 9px;
+  background: var(--bt-primary, #0e7490);
+  color: #ffffff;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.bt-selector-ubicacion-acciones button.secundario {
+  background: transparent;
+  color: var(--bt-text, #1e293b);
+  border-color: var(--bt-border-strong, #cbd5e1);
+}
+
+.bt-selector-ubicacion-acciones button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bt-selector-mapa {
+  height: 260px;
+  cursor: crosshair;
+}
+
+.bt-selector-coordenadas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--bt-muted, #64748b);
+  font-size: 12px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+}
