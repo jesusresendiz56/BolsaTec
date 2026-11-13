@@ -295,7 +295,107 @@ const obtenerPostulaciones = async (req, res) => {
   }
 };
 
+// ========================================
+// CANCELAR POSTULACIÓN
+// Solo mientras la empresa no haya tomado
+// una decisión (aceptada / rechazada).
+// ========================================
+
+const ESTADOS_CANCELABLES = ["enviada", "vista", "entrevista"];
+
+const cancelarPostulacion = async (req, res) => {
+  try {
+    const idPostulacion = Number(req.params.id);
+
+    if (!Number.isSafeInteger(idPostulacion) || idPostulacion <= 0) {
+      return res.status(400).json({
+        mensaje: "Identificador de postulación no válido"
+      });
+    }
+
+    // Verificar que la postulación es del estudiante
+    const consulta = await pool.query(
+      `SELECT
+         p.id_postulacion,
+         p.id_vacante,
+         p.estado,
+         v.titulo AS titulo_vacante,
+         e.id_usuario AS id_usuario_empresa,
+         us.nombre AS nombre_estudiante
+       FROM postulaciones p
+       INNER JOIN estudiantes est
+         ON est.id_estudiante = p.id_estudiante
+       INNER JOIN usuarios us
+         ON us.id_usuario = est.id_usuario
+       INNER JOIN vacantes v
+         ON v.id_vacante = p.id_vacante
+       INNER JOIN empresas e
+         ON e.id_empresa = v.id_empresa
+       WHERE p.id_postulacion = $1
+         AND est.id_usuario = $2`,
+      [idPostulacion, req.usuario.id_usuario]
+    );
+
+    if (!consulta.rows.length) {
+      return res.status(404).json({
+        mensaje: "Postulación no encontrada"
+      });
+    }
+
+    const postulacion = consulta.rows[0];
+
+    if (!ESTADOS_CANCELABLES.includes(postulacion.estado)) {
+      return res.status(409).json({
+        mensaje:
+          postulacion.estado === "aceptada"
+            ? "No puedes cancelar una postulación que ya fue aceptada"
+            : "No puedes cancelar una postulación que ya fue rechazada"
+      });
+    }
+
+    // Borrar solo si el estado no cambió mientras tanto
+    const borrado = await pool.query(
+      `DELETE FROM postulaciones
+       WHERE id_postulacion = $1
+         AND estado = ANY($2::text[])`,
+      [idPostulacion, ESTADOS_CANCELABLES]
+    );
+
+    if (!borrado.rowCount) {
+      return res.status(409).json({
+        mensaje: "El estado de la postulación cambió. Actualiza e intenta de nuevo."
+      });
+    }
+
+    // Avisar a la empresa (no bloquea la respuesta)
+    crearNotificacion(
+      postulacion.id_usuario_empresa,
+      `${postulacion.nombre_estudiante} canceló su postulación ` +
+      `a la vacante "${postulacion.titulo_vacante}".`
+    ).catch((error) => {
+      console.error(
+        "Notificación de cancelación: error -",
+        error.message
+      );
+    });
+
+    return res.json({
+      mensaje: "Postulación cancelada correctamente",
+      id_postulacion: postulacion.id_postulacion,
+      id_vacante: postulacion.id_vacante
+    });
+
+  } catch (error) {
+    console.error("Error al cancelar postulación:", error);
+
+    return res.status(500).json({
+      mensaje: "No se pudo cancelar la postulación"
+    });
+  }
+};
+
 module.exports = {
   crearPostulacion,
-  obtenerPostulaciones
+  obtenerPostulaciones,
+  cancelarPostulacion
 };

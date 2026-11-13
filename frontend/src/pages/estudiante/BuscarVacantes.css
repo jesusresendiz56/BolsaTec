@@ -229,8 +229,8 @@
 .bt-vacante-modal {
   position: relative;
   width: 100%;
-  max-width: 650px;
-  max-height: 85vh;
+  max-width: 860px;
+  max-height: 88vh;
   overflow-y: auto;
   padding: 28px;
   display: flex;
@@ -313,4 +313,85 @@
 .bt-vacante-detalles:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+}
+
+/* ========================================
+   DETALLE: INFORMACIÓN + MAPA
+======================================== */
+
+.bt-vacante-modal-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.bt-vacante-modal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.bt-vacante-modal-info p {
+  margin: 0;
+}
+
+/* ========================================
+   CANCELAR POSTULACIÓN
+======================================== */
+
+.bt-vacante-acciones-postulado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.bt-vacante-cancelar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border: 1px solid #dc2626;
+  border-radius: 10px;
+  background: transparent;
+  color: #dc2626;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bt-vacante-cancelar:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.bt-vacante-cancelar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bt-vacante-nota {
+  margin: 0;
+  color: var(--bt-muted, #64748b);
+  font-size: 14px;
+}
+
+[data-theme="dark"] .bt-vacante-cancelar {
+  border-color: #f87171;
+  color: #f87171;
+}
+
+@media (max-width: 760px) {
+  .bt-vacante-modal-cuerpo {
+    grid-template-columns: 1fr;
+  }
+
+  .bt-vacante-acciones-postulado {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
