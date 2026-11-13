@@ -3,6 +3,7 @@ const pool = require("../config/database");
 const supabase = require("../config/supabase");
 const { enviarCorreo } = require("../services/brevoService");
 const { crearNotificacion } = require("../services/notificacionService");
+const { generarCorreoEstado } = require("../services/correosPostulacion");
 
 const ESTADOS_POSTULACION = [
   "enviada",
@@ -11,14 +12,6 @@ const ESTADOS_POSTULACION = [
   "aceptada",
   "rechazada"
 ];
-
-const NOMBRES_ESTADO = {
-  enviada: "Enviada",
-  vista: "Vista por la empresa",
-  entrevista: "En entrevista",
-  aceptada: "Aceptada",
-  rechazada: "Rechazada"
-};
 
 // ========================================
 // NOTIFICAR CAMBIO DE ESTADO AL ESTUDIANTE
@@ -31,6 +24,7 @@ const notificarCambioEstado = async (idPostulacion) => {
          p.estado,
          v.titulo AS titulo_vacante,
          e.nombre_empresa,
+         ue.correo AS correo_empresa,
          us.id_usuario AS id_usuario_estudiante,
          us.nombre AS nombre_estudiante,
          us.correo AS correo_estudiante
@@ -39,6 +33,8 @@ const notificarCambioEstado = async (idPostulacion) => {
          ON v.id_vacante = p.id_vacante
        INNER JOIN empresas e
          ON e.id_empresa = v.id_empresa
+       INNER JOIN usuarios ue
+         ON ue.id_usuario = e.id_usuario
        INNER JOIN estudiantes est
          ON est.id_estudiante = p.id_estudiante
        INNER JOIN usuarios us
@@ -50,24 +46,27 @@ const notificarCambioEstado = async (idPostulacion) => {
     if (!resultado.rows.length) return;
 
     const datos = resultado.rows[0];
-    const nombreEstado =
-      NOMBRES_ESTADO[datos.estado] || datos.estado;
 
-    const mensaje =
-      `Tu postulación a "${datos.titulo_vacante}" ` +
-      `de "${datos.nombre_empresa}" cambió a: ${nombreEstado}.`;
+    const correo = generarCorreoEstado({
+      estado: datos.estado,
+      nombreEstudiante: datos.nombre_estudiante,
+      tituloVacante: datos.titulo_vacante,
+      nombreEmpresa: datos.nombre_empresa,
+      correoEmpresa: datos.correo_empresa
+    });
+
+    if (!correo) return;
 
     const tareas = await Promise.allSettled([
-      crearNotificacion(datos.id_usuario_estudiante, mensaje),
+      crearNotificacion(
+        datos.id_usuario_estudiante,
+        correo.notificacion
+      ),
       enviarCorreo({
         destinatario: datos.correo_estudiante,
-        asunto: "Actualización de tu postulación - BolsaTec",
-        mensaje:
-          `Hola ${datos.nombre_estudiante},\n\n` +
-          `${mensaje}\n\n` +
-          `Consulta el detalle en la sección ` +
-          `"Mis postulaciones" de BolsaTec.\n\n` +
-          `BolsaTec - Tu futuro profesional comienza aquí.`
+        asunto: correo.asunto,
+        mensaje: correo.texto,
+        html: correo.html
       })
     ]);
 
@@ -346,6 +345,7 @@ const cambiarEstadoCandidato = async (req, res) => {
        WHERE p.id_postulacion = $2
          AND p.id_vacante = v.id_vacante
          AND e.id_usuario = $3
+         AND p.estado IS DISTINCT FROM $1
        RETURNING
          p.id_postulacion,
          p.id_vacante,
@@ -360,8 +360,28 @@ const cambiarEstadoCandidato = async (req, res) => {
     );
 
     if (!resultado.rows.length) {
-      return res.status(404).json({
-        mensaje: "Postulación no encontrada"
+      // Puede que la postulación ya tuviera ese estado:
+      // en ese caso no se envía otro correo.
+      const actual = await pool.query(
+        `SELECT p.id_postulacion, p.id_vacante, p.id_estudiante,
+                p.estado, p.fecha_postulacion
+         FROM postulaciones p
+         INNER JOIN vacantes v ON v.id_vacante = p.id_vacante
+         INNER JOIN empresas e ON e.id_empresa = v.id_empresa
+         WHERE p.id_postulacion = $1
+           AND e.id_usuario = $2`,
+        [idPostulacion, req.usuario.id_usuario]
+      );
+
+      if (!actual.rows.length) {
+        return res.status(404).json({
+          mensaje: "Postulación no encontrada"
+        });
+      }
+
+      return res.json({
+        mensaje: "La postulación ya tenía ese estado",
+        postulacion: actual.rows[0]
       });
     }
 
