@@ -1,193 +1,125 @@
 import { useEffect, useState } from "react";
-import {
-  APIProvider,
-  Map,
-  AdvancedMarker,
-  Pin,
-  useMapsLibrary,
-} from "@vis.gl/react-google-maps";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
 import { ExternalLink, MapPin } from "lucide-react";
 
+import "leaflet/dist/leaflet.css";
 import "./MapaUbicacion.css";
 
-// Clave de Google Maps (Vercel / .env):
-// VITE_GOOGLE_MAPS_API_KEY=...
-// VITE_GOOGLE_MAPS_MAP_ID=... (opcional)
-const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
-const MAP_ID = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || "DEMO_MAP_ID";
-
-// Las coordenadas de cada dirección se guardan para
-// no volver a consultar la Geocoding API.
-const cacheCoordenadas = new globalThis.Map();
-
-// Google llama a window.gm_authFailure cuando la clave
-// no es válida o no tiene habilitadas las APIs.
-let errorDeClave = false;
-
-if (typeof window !== "undefined") {
-  window.gm_authFailure = () => {
-    errorDeClave = true;
-    window.dispatchEvent(new Event("bt-maps-auth-error"));
-  };
-}
-
-const MENSAJE_CLAVE =
-  "La clave de Google Maps no es válida o no tiene habilitadas " +
-  "Maps JavaScript API y Geocoding API.";
-
 // ========================================
-// MAPA CON MARCADOR (usa la Geocoding API)
+// MAPA CON LEAFLET + OPENSTREETMAP
+// - Mapa: teselas de OpenStreetMap (gratis, sin clave)
+// - Dirección → coordenadas: Nominatim (OpenStreetMap)
 // ========================================
 
-function MapaConMarcador({ direccion }) {
-  const geocoding = useMapsLibrary("geocoding");
-  const [resultado, setResultado] = useState(() => ({
-    direccion,
-    posicion: cacheCoordenadas.get(direccion) || null,
+const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
+
+// Marcador propio (evita el problema de las imágenes
+// por defecto de Leaflet con Vite)
+const iconoMarcador = L.divIcon({
+  className: "bt-mapa-marcador",
+  html: '<span class="bt-mapa-marcador-pin"></span>',
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+  popupAnchor: [0, -28],
+});
+
+// Guardar coordenadas para no repetir consultas a
+// Nominatim (su política pide no saturar el servicio).
+const cacheCoordenadas = new Map();
+
+const buscarCoordenadas = async (direccion, signal) => {
+  if (cacheCoordenadas.has(direccion)) {
+    return cacheCoordenadas.get(direccion);
+  }
+
+  const parametros = new URLSearchParams({
+    q: direccion,
+    format: "jsonv2",
+    limit: "1",
+    countrycodes: "mx",
+    "accept-language": "es",
+  });
+
+  const respuesta = await fetch(`${NOMINATIM_URL}?${parametros}`, {
+    signal,
+    headers: { Accept: "application/json" },
+  });
+
+  if (!respuesta.ok) {
+    throw new Error(`Nominatim respondió ${respuesta.status}`);
+  }
+
+  const datos = await respuesta.json();
+  const lugar = Array.isArray(datos) ? datos[0] : null;
+
+  const posicion = lugar
+    ? { lat: Number(lugar.lat), lng: Number(lugar.lon) }
+    : null;
+
+  cacheCoordenadas.set(direccion, posicion);
+  return posicion;
+};
+
+function MapaUbicacion({ direccion }) {
+  const texto = direccion?.trim() || "";
+
+  const [estado, setEstado] = useState({
+    direccion: "",
+    posicion: null,
     error: "",
-  }));
-
-  const [fallaClave, setFallaClave] = useState(errorDeClave);
+  });
 
   useEffect(() => {
-    const alFallar = () => setFallaClave(true);
-    window.addEventListener("bt-maps-auth-error", alFallar);
-    return () =>
-      window.removeEventListener("bt-maps-auth-error", alFallar);
-  }, []);
+    if (!texto) return;
 
-  useEffect(() => {
-    if (!geocoding || cacheCoordenadas.has(direccion)) return;
+    const controlador = new AbortController();
 
-    let activo = true;
+    // Si no responde en 12 s, cancelar
+    const limite = setTimeout(() => controlador.abort(), 12000);
 
-    const geocoder = new geocoding.Geocoder();
-
-    geocoder
-      .geocode({ address: direccion, region: "mx" })
-      .then(({ results }) => {
-        if (!activo) return;
-
-        const ubicacion = results?.[0]?.geometry?.location;
-
-        if (!ubicacion) {
-          setResultado({
-            direccion,
+    buscarCoordenadas(texto, controlador.signal)
+      .then((posicion) => {
+        setEstado({
+          direccion: texto,
+          posicion,
+          error: posicion
+            ? ""
+            : "No se encontró esta dirección en el mapa.",
+        });
+      })
+      .catch((err) => {
+        if (controlador.signal.aborted && err.name === "AbortError") {
+          setEstado({
+            direccion: texto,
             posicion: null,
-            error: "No se encontró la dirección en el mapa.",
+            error: "El mapa tardó demasiado en cargar.",
           });
           return;
         }
 
-        const posicion = {
-          lat: ubicacion.lat(),
-          lng: ubicacion.lng(),
-        };
+        console.error("Error al ubicar la dirección:", err);
 
-        cacheCoordenadas.set(direccion, posicion);
-        setResultado({ direccion, posicion, error: "" });
+        setEstado({
+          direccion: texto,
+          posicion: null,
+          error: "No se pudo cargar el mapa en este momento.",
+        });
       })
-      .catch((err) => {
-        console.error("Error de geocodificación:", err);
-
-        if (activo) {
-          setResultado({
-            direccion,
-            posicion: null,
-            error: "No se pudo ubicar la dirección en el mapa.",
-          });
-        }
-      });
+      .finally(() => clearTimeout(limite));
 
     return () => {
-      activo = false;
+      clearTimeout(limite);
+      controlador.abort();
     };
-  }, [geocoding, direccion]);
-
-  // Si en 12 s no hay mapa (script bloqueado, sin red,
-  // clave rechazada), mostrar aviso en lugar de cargar
-  // indefinidamente.
-  useEffect(() => {
-    if (cacheCoordenadas.has(direccion)) return;
-
-    const limite = setTimeout(() => {
-      setResultado((previo) =>
-        previo.direccion === direccion && previo.posicion
-          ? previo
-          : {
-              direccion,
-              posicion: null,
-              error: "No se pudo cargar el mapa en este momento.",
-            }
-      );
-    }, 12000);
-
-    return () => clearTimeout(limite);
-  }, [direccion]);
-
-  // Resultado de una dirección anterior: usar la caché
-  // o esperar a la nueva consulta.
-  const actual =
-    resultado.direccion === direccion
-      ? resultado
-      : {
-          posicion: cacheCoordenadas.get(direccion) || null,
-          error: "",
-        };
-
-  if (fallaClave) {
-    return (
-      <div className="bt-mapa-aviso">
-        <MapPin size={22} />
-        {MENSAJE_CLAVE}
-      </div>
-    );
-  }
-
-  if (actual.error) {
-    return (
-      <div className="bt-mapa-aviso">
-        <MapPin size={22} />
-        {actual.error}
-      </div>
-    );
-  }
-
-  if (!actual.posicion) {
-    return <div className="bt-mapa-aviso">Cargando mapa...</div>;
-  }
-
-  return (
-    <Map
-      key={direccion}
-      mapId={MAP_ID}
-      defaultCenter={actual.posicion}
-      defaultZoom={16}
-      gestureHandling="cooperative"
-      disableDefaultUI={false}
-      streetViewControl={false}
-      mapTypeControl={false}
-      className="bt-mapa-lienzo"
-    >
-      <AdvancedMarker position={actual.posicion} title={direccion}>
-        <Pin
-          background="#0E7490"
-          borderColor="#0B2B33"
-          glyphColor="#FFFFFF"
-        />
-      </AdvancedMarker>
-    </Map>
-  );
-}
-
-// ========================================
-// COMPONENTE PÚBLICO
-// ========================================
-
-function MapaUbicacion({ direccion }) {
-  const texto = direccion?.trim();
+  }, [texto]);
 
   if (!texto) return null;
+
+  const actual =
+    estado.direccion === texto
+      ? estado
+      : { posicion: null, error: "" };
 
   const urlGoogleMaps =
     "https://www.google.com/maps/search/?api=1&query=" +
@@ -195,16 +127,31 @@ function MapaUbicacion({ direccion }) {
 
   return (
     <div className="bt-mapa">
-      {API_KEY ? (
-        <APIProvider apiKey={API_KEY} language="es" region="MX">
-          <MapaConMarcador direccion={texto} />
-        </APIProvider>
-      ) : (
+      {actual.error ? (
         <div className="bt-mapa-aviso">
           <MapPin size={22} />
-          Mapa no disponible: falta configurar
-          VITE_GOOGLE_MAPS_API_KEY.
+          {actual.error}
         </div>
+      ) : !actual.posicion ? (
+        <div className="bt-mapa-aviso">Cargando mapa...</div>
+      ) : (
+        <MapContainer
+          key={texto}
+          center={actual.posicion}
+          zoom={16}
+          scrollWheelZoom={false}
+          className="bt-mapa-lienzo"
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+            maxZoom={19}
+          />
+
+          <Marker position={actual.posicion} icon={iconoMarcador}>
+            <Popup>{texto}</Popup>
+          </Marker>
+        </MapContainer>
       )}
 
       <a href={urlGoogleMaps} target="_blank" rel="noopener noreferrer">
