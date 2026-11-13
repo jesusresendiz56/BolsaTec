@@ -33,7 +33,7 @@
   justify-content: center;
   gap: 8px;
   padding: 10px 15px;
-  border: 1px solid var(--bt-border, #cbd5e1);
+  border: 1px solid var(--bt-border, var(--bt-border-strong));
   border-radius: 9px;
   background: var(--bt-surface, #fff);
   color: var(--bt-text, #1e293b);
@@ -63,7 +63,7 @@
 .bt-vacantes-modal select,
 .bt-vacantes-modal textarea {
   padding: 11px;
-  border: 1px solid var(--bt-border, #cbd5e1);
+  border: 1px solid var(--bt-border, var(--bt-border-strong));
   border-radius: 8px;
   background: var(--bt-input, #fff);
   color: var(--bt-text, #1e293b);
@@ -77,7 +77,7 @@
 
 .bt-vacantes-tabla-contenedor {
   overflow-x: auto;
-  border: 1px solid var(--bt-border, #e2e8f0);
+  border: 1px solid var(--bt-border, var(--bt-border));
   border-radius: 12px;
   background: var(--bt-surface, #fff);
 }
@@ -91,7 +91,7 @@
 .bt-vacantes-tabla th,
 .bt-vacantes-tabla td {
   padding: 15px;
-  border-bottom: 1px solid var(--bt-border, #e2e8f0);
+  border-bottom: 1px solid var(--bt-border, var(--bt-border));
 }
 
 .bt-vacantes-tabla th {
@@ -118,7 +118,7 @@
   align-items: center;
   justify-content: center;
   padding: 7px;
-  border: 1px solid var(--bt-border, #cbd5e1);
+  border: 1px solid var(--bt-border, var(--bt-border-strong));
   border-radius: 7px;
   background: var(--bt-surface, #fff);
   color: var(--bt-text, #1e293b);

@@ -27,7 +27,7 @@
 
 .bt-perfil-estudiante-card {
   background: var(--bt-surface, #fff);
-  border: 1px solid var(--bt-border, #e2e8f0);
+  border: 1px solid var(--bt-border, var(--bt-border));
   border-radius: 14px;
   padding: 25px;
 }
@@ -36,7 +36,7 @@
   justify-content: flex-start;
   padding-bottom: 22px;
   margin-bottom: 24px;
-  border-bottom: 1px solid var(--bt-border, #e2e8f0);
+  border-bottom: 1px solid var(--bt-border, var(--bt-border));
   color: var(--bt-primary, #0e7490);
 }
 
@@ -62,7 +62,7 @@
 .bt-perfil-estudiante textarea {
   width: 100%;
   padding: 12px;
-  border: 1px solid var(--bt-border, #cbd5e1);
+  border: 1px solid var(--bt-border, var(--bt-border-strong));
   border-radius: 9px;
   background: var(--bt-input, #fff);
   color: var(--bt-text, #1e293b);
@@ -96,7 +96,7 @@
   gap: 8px;
   padding: 11px 16px;
   border-radius: 9px;
-  border: 1px solid var(--bt-border, #cbd5e1);
+  border: 1px solid var(--bt-border, var(--bt-border-strong));
   background: var(--bt-surface, #fff);
   color: var(--bt-text, #1e293b);
   cursor: pointer;

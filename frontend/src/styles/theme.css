@@ -11,6 +11,14 @@
   --bt-input: #FFFFFF;
   --bt-primary: #0E7490;
   --bt-sidebar: #0B2B33;
+
+  /* Tokens adicionales (mismos valores que el diseño claro) */
+  --bt-surface-muted: #F1F5F9;
+  --bt-heading: #0B2B33;
+  --bt-text-soft: #334155;
+  --bt-text-2: #475569;
+  --bt-border-strong: #CBD5E1;
+  --bt-highlight: #ECFEFF;
 }
 
 :root[data-theme="dark"] {
@@ -36,6 +44,14 @@
   /* Colores de BolsaTec */
   --bt-primary: #22A7C4;
   --bt-sidebar: #010409;
+
+  /* Tokens adicionales */
+  --bt-surface-muted: #21262D;
+  --bt-heading: #F0F6FC;
+  --bt-text-soft: #C9D1D9;
+  --bt-text-2: #ADBAC7;
+  --bt-border-strong: #3D444D;
+  --bt-highlight: rgba(34, 167, 196, 0.12);
 }
 
 
@@ -373,4 +389,19 @@ html[data-theme="dark"] .bt-stat-card {
   background-color: #161B22;
   border-color: #30363D;
   color: #E6EDF3;
+}
+
+/* ======================================
+   PÁGINA DE INICIO: TEXTOS EN CIAN
+   (más brillo para contraste en oscuro)
+====================================== */
+
+html[data-theme="dark"] .bt-hero-copy h1 span,
+html[data-theme="dark"] .bt-logo span:not(.bt-logo-icon),
+html[data-theme="dark"] .bt-section-label,
+html[data-theme="dark"] .bt-visual-label,
+html[data-theme="dark"] .bt-btn-outline,
+html[data-theme="dark"] .bt-nav-links > a:hover,
+html[data-theme="dark"] .bt-hero-link:hover {
+  color: var(--bt-primary);
 }

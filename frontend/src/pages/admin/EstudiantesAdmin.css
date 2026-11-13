@@ -1,6 +1,6 @@
 
 .bt-estudiantes-admin {
-  color: #1E293B;
+  color: var(--bt-text);
 }
 
 .bt-estudiantes-top {
@@ -12,13 +12,13 @@
 }
 
 .bt-estudiantes-top h2 {
-  color: #0B2B33;
+  color: var(--bt-heading);
   margin: 0 0 8px;
   font-size: 24px;
 }
 
 .bt-estudiantes-top p {
-  color: #64748B;
+  color: var(--bt-muted);
   margin: 0;
   font-size: 14px;
 }
@@ -43,9 +43,9 @@
 }
 
 .bt-ea-outline {
-  background: white;
-  border: 1px solid #CBD5E1;
-  color: #334155;
+  background: var(--bt-surface);
+  border: 1px solid var(--bt-border-strong);
+  color: var(--bt-text-soft);
 }
 
 .bt-estudiantes-toolbar {
@@ -58,8 +58,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: white;
-  border: 1px solid #CBD5E1;
+  background: var(--bt-surface);
+  border: 1px solid var(--bt-border-strong);
   border-radius: 9px;
   padding: 0 13px;
   flex: 1;
@@ -71,13 +71,13 @@
   outline: none;
   border: none;
   background: transparent;
-  color: #1E293B;
+  color: var(--bt-text);
 }
 
 .bt-ea-table-wrapper {
   overflow-x: auto;
-  background: white;
-  border: 1px solid #E2E8F0;
+  background: var(--bt-surface);
+  border: 1px solid var(--bt-border);
   border-radius: 13px;
 }
 
@@ -89,21 +89,21 @@
 }
 
 .bt-ea-table th {
-  background: #F8FAFC;
-  color: #475569;
+  background: var(--bt-surface-alt);
+  color: var(--bt-text-2);
   padding: 16px;
   font-size: 12px;
-  border-bottom: 1px solid #E2E8F0;
+  border-bottom: 1px solid var(--bt-border);
 }
 
 .bt-ea-table td {
   padding: 16px;
   font-size: 13px;
-  border-bottom: 1px solid #F1F5F9;
+  border-bottom: 1px solid var(--bt-border);
 }
 
 .bt-ea-table tbody tr:hover {
-  background: #F8FAFC;
+  background: var(--bt-surface-alt);
 }
 
 .bt-ea-badge {
@@ -132,8 +132,8 @@
   border: none;
   border-radius: 7px;
   padding: 9px;
-  background: #F1F5F9;
-  color: #0E7490;
+  background: var(--bt-surface-muted);
+  color: var(--bt-primary);
   cursor: pointer;
 }
 
@@ -148,7 +148,7 @@
 .bt-ea-total {
   margin-top: 14px;
   font-size: 13px;
-  color: #64748B;
+  color: var(--bt-muted);
 }
 
 .bt-ea-success,
@@ -185,7 +185,7 @@
   max-width: 520px;
   max-height: 90vh;
   overflow-y: auto;
-  background: white;
+  background: var(--bt-surface);
   border-radius: 15px;
   padding: 26px;
   box-shadow: 0 20px 60px rgba(0,0,0,.2);
@@ -200,7 +200,7 @@
 
 .bt-ea-modal-header h3 {
   margin: 0;
-  color: #0B2B33;
+  color: var(--bt-heading);
 }
 
 .bt-ea-modal-header button {
@@ -226,11 +226,11 @@
 .bt-ea-modal input,
 .bt-ea-modal textarea {
   width: 100%;
-  border: 1px solid #CBD5E1;
+  border: 1px solid var(--bt-border-strong);
   border-radius: 8px;
   padding: 11px;
   font: inherit;
-  color: #1E293B;
+  color: var(--bt-text);
 }
 
 .bt-ea-modal input:focus,

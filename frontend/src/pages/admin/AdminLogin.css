@@ -53,7 +53,7 @@
 }
 
 .admin-login-card {
-  background: white;
+  background: var(--bt-surface);
   border-radius: 18px;
   padding: 35px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.18);
@@ -63,7 +63,7 @@
   width: 55px;
   height: 55px;
   background: #CFFAFE;
-  color: #0E7490;
+  color: var(--bt-primary);
   border-radius: 14px;
   display: flex;
   align-items: center;
@@ -72,13 +72,13 @@
 }
 
 .admin-login-card h2 {
-  color: #0B2B33;
+  color: var(--bt-heading);
   font-size: 23px;
   margin: 0 0 10px;
 }
 
 .admin-login-description {
-  color: #64748B;
+  color: var(--bt-muted);
   line-height: 1.6;
   font-size: 14px;
   margin-bottom: 25px;
@@ -90,7 +90,7 @@
 
 .admin-form-group label {
   display: block;
-  color: #1E293B;
+  color: var(--bt-text);
   font-size: 14px;
   font-weight: 600;
   margin-bottom: 9px;
@@ -100,11 +100,11 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  border: 1px solid #CBD5E1;
+  border: 1px solid var(--bt-border-strong);
   border-radius: 9px;
   padding: 0 13px;
-  color: #64748B;
-  background: white;
+  color: var(--bt-muted);
+  background: var(--bt-surface);
 }
 
 .admin-input-container:focus-within {
@@ -120,7 +120,7 @@
   outline: none;
   background: transparent;
   font-size: 14px;
-  color: #1E293B;
+  color: var(--bt-text);
 }
 
 .admin-show-password {
@@ -129,7 +129,7 @@
   justify-content: center;
   border: none;
   background: transparent;
-  color: #64748B;
+  color: var(--bt-muted);
   cursor: pointer;
   padding: 5px;
 }
