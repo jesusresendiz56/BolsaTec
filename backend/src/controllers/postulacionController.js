@@ -2,6 +2,7 @@
 const pool = require("../config/database");
 const { enviarCorreo } = require("../services/brevoService");
 const { crearNotificacion } = require("../services/notificacionService");
+const { generarCorreoCancelacion } = require("../services/correosPostulacion");
 
 // ========================================
 // NOTIFICACIONES DE NUEVA POSTULACIÓN
@@ -321,6 +322,8 @@ const cancelarPostulacion = async (req, res) => {
          p.estado,
          v.titulo AS titulo_vacante,
          e.id_usuario AS id_usuario_empresa,
+         e.nombre_empresa,
+         ue.correo AS correo_empresa,
          us.nombre AS nombre_estudiante
        FROM postulaciones p
        INNER JOIN estudiantes est
@@ -331,6 +334,8 @@ const cancelarPostulacion = async (req, res) => {
          ON v.id_vacante = p.id_vacante
        INNER JOIN empresas e
          ON e.id_empresa = v.id_empresa
+       INNER JOIN usuarios ue
+         ON ue.id_usuario = e.id_usuario
        WHERE p.id_postulacion = $1
          AND est.id_usuario = $2`,
       [idPostulacion, req.usuario.id_usuario]
@@ -367,17 +372,39 @@ const cancelarPostulacion = async (req, res) => {
       });
     }
 
-    // Avisar a la empresa (no bloquea la respuesta)
-    crearNotificacion(
-      postulacion.id_usuario_empresa,
-      `${postulacion.nombre_estudiante} canceló su postulación ` +
-      `a la vacante "${postulacion.titulo_vacante}".`
-    ).catch((error) => {
-      console.error(
-        "Notificación de cancelación: error -",
-        error.message
-      );
+    // Avisar a la empresa: notificación interna y correo
+    // (no bloquea la respuesta)
+    const aviso = generarCorreoCancelacion({
+      nombreEmpresa: postulacion.nombre_empresa,
+      nombreEstudiante: postulacion.nombre_estudiante,
+      tituloVacante: postulacion.titulo_vacante
     });
+
+    crearNotificacion(postulacion.id_usuario_empresa, aviso.notificacion)
+      .catch((error) => {
+        console.error(
+          "Notificación de cancelación: error -",
+          error.message
+        );
+      });
+
+    enviarCorreo({
+      destinatario: postulacion.correo_empresa,
+      asunto: aviso.asunto,
+      mensaje: aviso.texto,
+      html: aviso.html
+    })
+      .then(() => {
+        console.log(
+          `Correo de cancelación enviado (postulación ${idPostulacion})`
+        );
+      })
+      .catch((error) => {
+        console.error(
+          "Correo de cancelación: error -",
+          error.message
+        );
+      });
 
     return res.json({
       mensaje: "Postulación cancelada correctamente",

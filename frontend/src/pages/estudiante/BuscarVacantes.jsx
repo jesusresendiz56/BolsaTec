@@ -680,7 +680,19 @@ function BuscarVacantes() {
             )}
             </div>
 
-            <MapaUbicacion direccion={direccion} />
+            <MapaUbicacion
+              direccion={direccion}
+              latitud={vacanteSeleccionada.latitud}
+              longitud={vacanteSeleccionada.longitud}
+              campos={{
+                direccion_calle: vacanteSeleccionada.direccion_calle,
+                direccion_numero: vacanteSeleccionada.direccion_numero,
+                direccion_colonia: vacanteSeleccionada.direccion_colonia,
+                direccion_cp: vacanteSeleccionada.direccion_cp,
+                direccion_ciudad: vacanteSeleccionada.direccion_ciudad,
+                direccion_estado: vacanteSeleccionada.direccion_estado,
+              }}
+            />
             </div>
 
             <h3>Descripción de la vacante</h3>
