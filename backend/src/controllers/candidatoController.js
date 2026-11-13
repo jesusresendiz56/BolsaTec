@@ -1,6 +1,171 @@
 
 const pool = require("../config/database");
 const supabase = require("../config/supabase");
+const { enviarCorreo } = require("../services/brevoService");
+const { crearNotificacion } = require("../services/notificacionService");
+
+const ESTADOS_POSTULACION = [
+  "enviada",
+  "vista",
+  "entrevista",
+  "aceptada",
+  "rechazada"
+];
+
+const NOMBRES_ESTADO = {
+  enviada: "Enviada",
+  vista: "Vista por la empresa",
+  entrevista: "En entrevista",
+  aceptada: "Aceptada",
+  rechazada: "Rechazada"
+};
+
+// ========================================
+// NOTIFICAR CAMBIO DE ESTADO AL ESTUDIANTE
+// ========================================
+
+const notificarCambioEstado = async (idPostulacion) => {
+  try {
+    const resultado = await pool.query(
+      `SELECT
+         p.estado,
+         v.titulo AS titulo_vacante,
+         e.nombre_empresa,
+         us.id_usuario AS id_usuario_estudiante,
+         us.nombre AS nombre_estudiante,
+         us.correo AS correo_estudiante
+       FROM postulaciones p
+       INNER JOIN vacantes v
+         ON v.id_vacante = p.id_vacante
+       INNER JOIN empresas e
+         ON e.id_empresa = v.id_empresa
+       INNER JOIN estudiantes est
+         ON est.id_estudiante = p.id_estudiante
+       INNER JOIN usuarios us
+         ON us.id_usuario = est.id_usuario
+       WHERE p.id_postulacion = $1`,
+      [idPostulacion]
+    );
+
+    if (!resultado.rows.length) return;
+
+    const datos = resultado.rows[0];
+    const nombreEstado =
+      NOMBRES_ESTADO[datos.estado] || datos.estado;
+
+    const mensaje =
+      `Tu postulación a "${datos.titulo_vacante}" ` +
+      `de "${datos.nombre_empresa}" cambió a: ${nombreEstado}.`;
+
+    const tareas = await Promise.allSettled([
+      crearNotificacion(datos.id_usuario_estudiante, mensaje),
+      enviarCorreo({
+        destinatario: datos.correo_estudiante,
+        asunto: "Actualización de tu postulación - BolsaTec",
+        mensaje:
+          `Hola ${datos.nombre_estudiante},\n\n` +
+          `${mensaje}\n\n` +
+          `Consulta el detalle en la sección ` +
+          `"Mis postulaciones" de BolsaTec.\n\n` +
+          `BolsaTec - Tu futuro profesional comienza aquí.`
+      })
+    ]);
+
+    tareas.forEach((tarea, indice) => {
+      if (tarea.status === "rejected") {
+        console.error(
+          indice === 0
+            ? "Notificación de cambio de estado: error -"
+            : "Correo de cambio de estado: error -",
+          tarea.reason?.message || tarea.reason
+        );
+      }
+    });
+  } catch (error) {
+    console.error(
+      "Error al notificar cambio de estado:",
+      error.message
+    );
+  }
+};
+
+// ========================================
+// CONSULTAR POSTULACIONES DE LA EMPRESA
+// (agrupadas por vacante)
+// ========================================
+
+const obtenerPostulacionesEmpresa = async (req, res) => {
+  try {
+    const idUsuario = req.usuario.id_usuario;
+
+    const [vacantes, postulaciones] = await Promise.all([
+      pool.query(
+        `SELECT
+           v.id_vacante,
+           v.titulo,
+           v.estado AS estado_vacante,
+           COUNT(p.id_postulacion)::int AS total,
+           COUNT(*) FILTER (WHERE p.estado = 'enviada')::int AS enviada,
+           COUNT(*) FILTER (WHERE p.estado = 'vista')::int AS vista,
+           COUNT(*) FILTER (WHERE p.estado = 'entrevista')::int AS entrevista,
+           COUNT(*) FILTER (WHERE p.estado = 'aceptada')::int AS aceptada,
+           COUNT(*) FILTER (WHERE p.estado = 'rechazada')::int AS rechazada
+         FROM vacantes v
+         INNER JOIN empresas e
+           ON e.id_empresa = v.id_empresa
+         LEFT JOIN postulaciones p
+           ON p.id_vacante = v.id_vacante
+         WHERE e.id_usuario = $1
+         GROUP BY v.id_vacante, v.titulo, v.estado
+         ORDER BY total DESC, v.id_vacante DESC`,
+        [idUsuario]
+      ),
+      pool.query(
+        `SELECT
+           p.id_postulacion,
+           p.id_vacante,
+           p.estado,
+           p.fecha_postulacion,
+           v.titulo AS titulo_vacante,
+           u.nombre AS nombre_estudiante,
+           u.correo AS correo_estudiante,
+           est.carrera,
+           est.semestre,
+           (est.cv_url IS NOT NULL) AS tiene_curriculum
+         FROM postulaciones p
+         INNER JOIN vacantes v
+           ON v.id_vacante = p.id_vacante
+         INNER JOIN empresas e
+           ON e.id_empresa = v.id_empresa
+         INNER JOIN estudiantes est
+           ON est.id_estudiante = p.id_estudiante
+         INNER JOIN usuarios u
+           ON u.id_usuario = est.id_usuario
+         WHERE e.id_usuario = $1
+         ORDER BY
+           p.fecha_postulacion DESC,
+           p.id_postulacion DESC`,
+        [idUsuario]
+      )
+    ]);
+
+    return res.json({
+      vacantes: vacantes.rows,
+      postulaciones: postulaciones.rows,
+      total: postulaciones.rowCount
+    });
+
+  } catch (error) {
+    console.error(
+      "Error al consultar postulaciones de la empresa:",
+      error
+    );
+
+    return res.status(500).json({
+      mensaje: "No se pudieron consultar las postulaciones"
+    });
+  }
+};
 
 // ========================================
 // CONSULTAR CANDIDATOS DE LA EMPRESA
@@ -166,15 +331,7 @@ const cambiarEstadoCandidato = async (req, res) => {
       });
     }
 
-    const estadosPermitidos = [
-      "enviada",
-      "vista",
-      "entrevista",
-      "aceptada",
-      "rechazada"
-    ];
-
-    if (!estadosPermitidos.includes(estado)) {
+    if (!ESTADOS_POSTULACION.includes(estado)) {
       return res.status(400).json({
         mensaje: "Estado de postulación no válido"
       });
@@ -207,6 +364,9 @@ const cambiarEstadoCandidato = async (req, res) => {
         mensaje: "Postulación no encontrada"
       });
     }
+
+    // Avisar al estudiante sin bloquear la respuesta.
+    void notificarCambioEstado(idPostulacion);
 
     return res.json({
       mensaje: "Estado de postulación actualizado correctamente",
@@ -329,6 +489,7 @@ const obtenerCurriculumCandidato = async (req, res) => {
   }
 };
 module.exports = {
+  obtenerPostulacionesEmpresa,
   obtenerCandidatos,
   obtenerDetalleCandidato,
   cambiarEstadoCandidato,

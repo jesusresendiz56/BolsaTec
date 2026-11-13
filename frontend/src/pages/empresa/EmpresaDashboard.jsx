@@ -15,6 +15,7 @@ import { sessionGet } from "../../services/session";
 import VacantesEmpresa from "./VacantesEmpresa";
 import PerfilEmpresa from "./PerfilEmpresa";
 import CandidatosEmpresa from "./CandidatosEmpresa";
+import PostulacionesEmpresa from "./PostulacionesEmpresa";
 
 const menu = [
   { id: "dashboard", nombre: "Dashboard", icono: "dashboard" },
@@ -26,10 +27,6 @@ const menu = [
 ];
 
 const secciones = {
-  postulaciones: {
-    titulo: "Postulaciones recibidas",
-    descripcion: "Revisa las solicitudes recibidas.",
-  },
   notificaciones: {
     titulo: "Notificaciones",
     descripcion: "Consulta los avisos de tu empresa.",
@@ -144,6 +141,12 @@ function EmpresaDashboard() {
     if (seccion === "candidatos") {
       return (
         <CandidatosEmpresa onActualizar={obtenerEstadisticas} />
+      );
+    }
+
+    if (seccion === "postulaciones") {
+      return (
+        <PostulacionesEmpresa onActualizar={obtenerEstadisticas} />
       );
     }
 

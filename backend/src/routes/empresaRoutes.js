@@ -18,6 +18,7 @@ const {
 } = require("../controllers/empresaController");
 
 const {
+  obtenerPostulacionesEmpresa,
   obtenerCandidatos,
   obtenerDetalleCandidato,
   cambiarEstadoCandidato,
@@ -86,6 +87,25 @@ router.patch(
 // Consultar currículum PDF del candidato
 router.get(
   "/candidatos/:id/curriculum",
+  obtenerCurriculumCandidato
+);
+
+// ========================================
+// MÓDULO DE POSTULACIONES
+// ========================================
+
+// Consultar postulaciones agrupadas por vacante
+router.get("/postulaciones", obtenerPostulacionesEmpresa);
+
+// Actualizar estado de una postulación
+router.patch(
+  "/postulaciones/:id/estado",
+  cambiarEstadoCandidato
+);
+
+// Consultar currículum PDF del postulante
+router.get(
+  "/postulaciones/:id/curriculum",
   obtenerCurriculumCandidato
 );
 

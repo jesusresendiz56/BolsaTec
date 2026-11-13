@@ -1,0 +1,355 @@
+.bt-postemp {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  color: var(--bt-text);
+}
+
+.bt-postemp-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.bt-postemp-encabezado h2 {
+  margin: 0 0 8px;
+  color: var(--bt-text);
+  font-size: 24px;
+}
+
+.bt-postemp-encabezado p {
+  margin: 0;
+  color: var(--bt-muted);
+}
+
+/* BOTONES */
+
+.bt-postemp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 14px;
+  border: 1px solid var(--bt-border);
+  border-radius: 10px;
+  background: var(--bt-surface);
+  color: var(--bt-text);
+  cursor: pointer;
+  font: inherit;
+  white-space: nowrap;
+}
+
+.bt-postemp-btn.principal {
+  border-color: var(--bt-primary);
+  background: var(--bt-primary);
+  color: #fff;
+}
+
+.bt-postemp-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* TOTALES */
+
+.bt-postemp-totales {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.bt-postemp-totales button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--bt-border);
+  border-left: 4px solid var(--bt-muted);
+  border-radius: 12px;
+  background: var(--bt-surface);
+  color: var(--bt-text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.bt-postemp-totales button span {
+  color: var(--bt-muted);
+  font-size: 13px;
+}
+
+.bt-postemp-totales button strong {
+  font-size: 24px;
+}
+
+.bt-postemp-totales button.activo {
+  outline: 2px solid var(--bt-primary);
+  outline-offset: -1px;
+}
+
+.bt-postemp-totales .estado-enviada { border-left-color: #2563eb; }
+.bt-postemp-totales .estado-vista { border-left-color: #d97706; }
+.bt-postemp-totales .estado-entrevista { border-left-color: #7c3aed; }
+.bt-postemp-totales .estado-aceptada { border-left-color: #059669; }
+.bt-postemp-totales .estado-rechazada { border-left-color: #dc2626; }
+
+/* ALERTAS */
+
+.bt-postemp-alerta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 10px;
+}
+
+.bt-postemp-alerta.error {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.bt-postemp-alerta.exito {
+  background: #d1fae5;
+  color: #047857;
+}
+
+/* CUERPO */
+
+.bt-postemp-cuerpo {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.bt-postemp-vacantes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--bt-border);
+  border-radius: 16px;
+  background: var(--bt-surface);
+}
+
+.bt-postemp-vacantes h3 {
+  margin: 0 0 8px;
+  color: var(--bt-text);
+  font-size: 16px;
+}
+
+.bt-postemp-vacantes button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--bt-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+}
+
+.bt-postemp-vacantes button span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.bt-postemp-vacantes button small {
+  color: var(--bt-muted);
+}
+
+.bt-postemp-vacantes button strong {
+  flex-shrink: 0;
+  min-width: 28px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bt-surface-alt);
+  text-align: center;
+  font-size: 13px;
+}
+
+.bt-postemp-vacantes button:hover {
+  background: var(--bt-surface-alt);
+}
+
+.bt-postemp-vacantes button.activo {
+  background: var(--bt-primary);
+  color: #fff;
+}
+
+.bt-postemp-vacantes button.activo small {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.bt-postemp-vacantes button.activo strong {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.bt-postemp-nota {
+  margin: 6px 0 0;
+  color: var(--bt-muted);
+  font-size: 14px;
+}
+
+/* LISTA */
+
+.bt-postemp-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.bt-postemp-busqueda {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  border: 1px solid var(--bt-border);
+  border-radius: 12px;
+  background: var(--bt-input);
+  color: var(--bt-muted);
+}
+
+.bt-postemp-busqueda input {
+  width: 100%;
+  padding: 12px 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--bt-text);
+  font: inherit;
+}
+
+.bt-postemp-tarjeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--bt-border);
+  border-radius: 14px;
+  background: var(--bt-surface);
+}
+
+.bt-postemp-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.bt-postemp-titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.bt-postemp-titulo h4 {
+  margin: 0;
+  color: var(--bt-text);
+  font-size: 17px;
+}
+
+.bt-postemp-info p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 5px 0;
+  color: var(--bt-muted);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.bt-postemp-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.bt-postemp-badge.estado-enviada { background: #dbeafe; color: #1d4ed8; }
+.bt-postemp-badge.estado-vista { background: #fef3c7; color: #92400e; }
+.bt-postemp-badge.estado-entrevista { background: #ede9fe; color: #6d28d9; }
+.bt-postemp-badge.estado-aceptada { background: #d1fae5; color: #047857; }
+.bt-postemp-badge.estado-rechazada { background: #fee2e2; color: #b91c1c; }
+
+.bt-postemp-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.bt-postemp-acciones select {
+  padding: 10px 12px;
+  border: 1px solid var(--bt-border);
+  border-radius: 10px;
+  background: var(--bt-input);
+  color: var(--bt-text);
+  font: inherit;
+}
+
+.bt-postemp-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 45px 20px;
+  border: 1px solid var(--bt-border);
+  border-radius: 16px;
+  background: var(--bt-surface);
+  color: var(--bt-muted);
+  text-align: center;
+}
+
+.bt-postemp-vacio h3,
+.bt-postemp-vacio p {
+  margin: 0;
+}
+
+.bt-postemp-vacio h3 {
+  color: var(--bt-text);
+}
+
+/* RESPONSIVO */
+
+@media (max-width: 1100px) {
+  .bt-postemp-totales {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .bt-postemp-cuerpo {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .bt-postemp-encabezado,
+  .bt-postemp-tarjeta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bt-postemp-totales {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bt-postemp-acciones {
+    justify-content: stretch;
+  }
+
+  .bt-postemp-acciones > * {
+    flex: 1;
+  }
+}
