@@ -25,6 +25,12 @@ const {
   obtenerCurriculumCandidato
 } = require("../controllers/candidatoController");
 
+const {
+  obtenerNotificaciones,
+  marcarNotificacionLeida,
+  marcarTodasLeidas
+} = require("../controllers/notificacionController");
+
 // ========================================
 // PERMITIR ÚNICAMENTE EMPRESAS
 // ========================================
@@ -107,6 +113,17 @@ router.patch(
 router.get(
   "/postulaciones/:id/curriculum",
   obtenerCurriculumCandidato
+);
+
+// ========================================
+// NOTIFICACIONES DE LA EMPRESA
+// ========================================
+
+router.get("/notificaciones", obtenerNotificaciones);
+router.patch("/notificaciones/leer-todas", marcarTodasLeidas);
+router.patch(
+  "/notificaciones/:id/leer",
+  marcarNotificacionLeida
 );
 
 module.exports = router;

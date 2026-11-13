@@ -16,6 +16,8 @@ import VacantesEmpresa from "./VacantesEmpresa";
 import PerfilEmpresa from "./PerfilEmpresa";
 import CandidatosEmpresa from "./CandidatosEmpresa";
 import PostulacionesEmpresa from "./PostulacionesEmpresa";
+import NotificacionesEstudiante from "../estudiante/NotificacionesEstudiante";
+import "../estudiante/notificaciones.css";
 
 const menu = [
   { id: "dashboard", nombre: "Dashboard", icono: "dashboard" },
@@ -25,13 +27,6 @@ const menu = [
   { id: "postulaciones", nombre: "Postulaciones", icono: "postulaciones" },
   { id: "notificaciones", nombre: "Notificaciones", icono: "notificaciones" },
 ];
-
-const secciones = {
-  notificaciones: {
-    titulo: "Notificaciones",
-    descripcion: "Consulta los avisos de tu empresa.",
-  },
-};
 
 function EmpresaDashboard() {
   const usuario = sessionGet("empresa")?.usuario;
@@ -150,6 +145,15 @@ function EmpresaDashboard() {
       );
     }
 
+    if (seccion === "notificaciones") {
+      return (
+        <NotificacionesEstudiante
+          rol="empresa"
+          onActualizar={obtenerEstadisticas}
+        />
+      );
+    }
+
     if (seccion === "dashboard") {
       return (
         <>
@@ -249,20 +253,7 @@ function EmpresaDashboard() {
       );
     }
 
-    const datos = secciones[seccion];
-
-    if (!datos) return null;
-
-    return (
-      <div className="bt-dashboard-panel">
-        <h3>{datos.titulo}</h3>
-        <p>{datos.descripcion}</p>
-        <p>
-          Este módulo se conectará con el backend
-          para consultar y administrar su información.
-        </p>
-      </div>
-    );
+    return null;
   };
 
   return (

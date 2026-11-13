@@ -14,7 +14,16 @@ const API_URL = (
   "http://localhost:3000"
 ).replace(/\/$/, "");
 
-function NotificacionesEstudiante({ onActualizar }) {
+const TEXTO_VACIO = {
+  estudiante:
+    "Aquí aparecerán los avisos sobre tus postulaciones y novedades de BolsaTec.",
+  empresa:
+    "Aquí aparecerán los avisos de nuevas postulaciones a tus vacantes y novedades de BolsaTec.",
+};
+
+// Componente compartido por estudiante y empresa.
+// El backend usa las mismas rutas en /api/<rol>/notificaciones.
+function NotificacionesEstudiante({ onActualizar, rol = "estudiante" }) {
   const [notificaciones, setNotificaciones] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [procesando, setProcesando] = useState(false);
@@ -29,14 +38,14 @@ function NotificacionesEstudiante({ onActualizar }) {
       setCargando(true);
       setError("");
 
-      const sesion = sessionGet("estudiante");
+      const sesion = sessionGet(rol);
 
       if (!sesion?.token) {
         throw new Error("Debes iniciar sesión");
       }
 
       const respuesta = await fetch(
-        `${API_URL}/api/estudiante/notificaciones`,
+        `${API_URL}/api/${rol}/notificaciones`,
         {
           headers: {
             Authorization: `Bearer ${sesion.token}`,
@@ -64,7 +73,8 @@ function NotificacionesEstudiante({ onActualizar }) {
 
   useEffect(() => {
     obtenerNotificaciones();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rol]);
 
   // ========================================
   // MARCAR UNA NOTIFICACIÓN COMO LEÍDA
@@ -75,10 +85,10 @@ function NotificacionesEstudiante({ onActualizar }) {
       setProcesando(true);
       setError("");
 
-      const sesion = sessionGet("estudiante");
+      const sesion = sessionGet(rol);
 
       const respuesta = await fetch(
-        `${API_URL}/api/estudiante/notificaciones/${idNotificacion}/leer`,
+        `${API_URL}/api/${rol}/notificaciones/${idNotificacion}/leer`,
         {
           method: "PATCH",
           headers: {
@@ -121,10 +131,10 @@ function NotificacionesEstudiante({ onActualizar }) {
       setProcesando(true);
       setError("");
 
-      const sesion = sessionGet("estudiante");
+      const sesion = sessionGet(rol);
 
       const respuesta = await fetch(
-        `${API_URL}/api/estudiante/notificaciones/leer-todas`,
+        `${API_URL}/api/${rol}/notificaciones/leer-todas`,
         {
           method: "PATCH",
           headers: {
@@ -225,10 +235,7 @@ function NotificacionesEstudiante({ onActualizar }) {
         <div className="bt-notificaciones-vacio">
           <Bell size={36} />
           <h4>No tienes notificaciones</h4>
-          <p>
-            Aquí aparecerán los avisos sobre tus
-            postulaciones y novedades de BolsaTec.
-          </p>
+          <p>{TEXTO_VACIO[rol] || TEXTO_VACIO.estudiante}</p>
         </div>
       ) : (
         <div className="bt-notificaciones-lista">
