@@ -405,3 +405,80 @@ html[data-theme="dark"] .bt-nav-links > a:hover,
 html[data-theme="dark"] .bt-hero-link:hover {
   color: var(--bt-primary);
 }
+
+/* ======================================
+   PALETA OSCURA NEUTRA (#0D0D0D)
+   Bloque final: tiene prioridad sobre
+   los estilos oscuros anteriores.
+====================================== */
+
+:root[data-theme="dark"] {
+  --bt-page: #0D0D0D;
+  --bt-surface: #171717;
+  --bt-surface-alt: #1F1F1F;
+  --bt-surface-muted: #262626;
+  --bt-input: #1C1C1C;
+  --bt-border: #2E2E2E;
+  --bt-border-strong: #3A3A3A;
+  --bt-heading: #FAFAFA;
+  --bt-text: #EDEDED;
+  --bt-text-soft: #D4D4D4;
+  --bt-text-2: #B5B5B5;
+  --bt-muted: #A3A3A3;
+}
+
+/* Fondos de página */
+html[data-theme="dark"],
+html[data-theme="dark"] body,
+html[data-theme="dark"] #root,
+html[data-theme="dark"] .bt-dashboard,
+html[data-theme="dark"] .bt-dashboard-main,
+html[data-theme="dark"] .bt-dashboard-content,
+html[data-theme="dark"] .auth-layout,
+html[data-theme="dark"] .auth-right,
+html[data-theme="dark"] .login-container,
+html[data-theme="dark"] .bt-home {
+  background-color: var(--bt-page);
+  color: var(--bt-text);
+}
+
+html[data-theme="dark"] .bt-dashboard {
+  --bt-background: var(--bt-page);
+  --bt-text: #EDEDED;
+}
+
+/* Encabezado del dashboard */
+html[data-theme="dark"] .bt-dashboard-header {
+  background: var(--bt-surface);
+  border-bottom-color: var(--bt-border);
+}
+
+html[data-theme="dark"] .bt-dashboard-header p,
+html[data-theme="dark"] .bt-dashboard-user-info span {
+  color: var(--bt-muted);
+}
+
+/* Tarjetas del dashboard */
+html[data-theme="dark"] .bt-dashboard-panel,
+html[data-theme="dark"] .bt-dashboard-welcome,
+html[data-theme="dark"] .bt-stat-card {
+  background: var(--bt-surface);
+  border-color: var(--bt-border);
+  color: var(--bt-text);
+}
+
+html[data-theme="dark"] .bt-dashboard-panel p,
+html[data-theme="dark"] .bt-dashboard-welcome p,
+html[data-theme="dark"] .bt-stat-card p {
+  color: var(--bt-muted);
+}
+
+/* Login */
+html[data-theme="dark"] .login-input {
+  background-color: var(--bt-input);
+  border-color: var(--bt-border);
+}
+
+html[data-theme="dark"] .login-roles {
+  background-color: var(--bt-surface-alt);
+}
