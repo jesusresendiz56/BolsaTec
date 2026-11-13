@@ -15,77 +15,86 @@ const ESTADOS_POSTULACION = [
 
 // ========================================
 // NOTIFICAR CAMBIO DE ESTADO AL ESTUDIANTE
+// 1) Notificación interna: se espera y se informa
+//    a la empresa si falla.
+// 2) Correo con Brevo: se envía en segundo plano.
 // ========================================
 
 const notificarCambioEstado = async (idPostulacion) => {
-  try {
-    const resultado = await pool.query(
-      `SELECT
-         p.estado,
-         v.titulo AS titulo_vacante,
-         e.nombre_empresa,
-         ue.correo AS correo_empresa,
-         us.id_usuario AS id_usuario_estudiante,
-         us.nombre AS nombre_estudiante,
-         us.correo AS correo_estudiante
-       FROM postulaciones p
-       INNER JOIN vacantes v
-         ON v.id_vacante = p.id_vacante
-       INNER JOIN empresas e
-         ON e.id_empresa = v.id_empresa
-       INNER JOIN usuarios ue
-         ON ue.id_usuario = e.id_usuario
-       INNER JOIN estudiantes est
-         ON est.id_estudiante = p.id_estudiante
-       INNER JOIN usuarios us
-         ON us.id_usuario = est.id_usuario
-       WHERE p.id_postulacion = $1`,
-      [idPostulacion]
-    );
+  const resultado = await pool.query(
+    `SELECT
+       p.estado,
+       v.titulo AS titulo_vacante,
+       e.nombre_empresa,
+       ue.correo AS correo_empresa,
+       us.id_usuario AS id_usuario_estudiante,
+       us.nombre AS nombre_estudiante,
+       us.correo AS correo_estudiante
+     FROM postulaciones p
+     INNER JOIN vacantes v
+       ON v.id_vacante = p.id_vacante
+     INNER JOIN empresas e
+       ON e.id_empresa = v.id_empresa
+     INNER JOIN usuarios ue
+       ON ue.id_usuario = e.id_usuario
+     INNER JOIN estudiantes est
+       ON est.id_estudiante = p.id_estudiante
+     INNER JOIN usuarios us
+       ON us.id_usuario = est.id_usuario
+     WHERE p.id_postulacion = $1`,
+    [idPostulacion]
+  );
 
-    if (!resultado.rows.length) return;
-
-    const datos = resultado.rows[0];
-
-    const correo = generarCorreoEstado({
-      estado: datos.estado,
-      nombreEstudiante: datos.nombre_estudiante,
-      tituloVacante: datos.titulo_vacante,
-      nombreEmpresa: datos.nombre_empresa,
-      correoEmpresa: datos.correo_empresa
-    });
-
-    if (!correo) return;
-
-    const tareas = await Promise.allSettled([
-      crearNotificacion(
-        datos.id_usuario_estudiante,
-        correo.notificacion
-      ),
-      enviarCorreo({
-        destinatario: datos.correo_estudiante,
-        asunto: correo.asunto,
-        mensaje: correo.texto,
-        html: correo.html
-      })
-    ]);
-
-    tareas.forEach((tarea, indice) => {
-      if (tarea.status === "rejected") {
-        console.error(
-          indice === 0
-            ? "Notificación de cambio de estado: error -"
-            : "Correo de cambio de estado: error -",
-          tarea.reason?.message || tarea.reason
-        );
-      }
-    });
-  } catch (error) {
-    console.error(
-      "Error al notificar cambio de estado:",
-      error.message
-    );
+  if (!resultado.rows.length) {
+    throw new Error("No se encontraron los datos de la postulación");
   }
+
+  const datos = resultado.rows[0];
+
+  const correo = generarCorreoEstado({
+    estado: datos.estado,
+    nombreEstudiante: datos.nombre_estudiante,
+    tituloVacante: datos.titulo_vacante,
+    nombreEmpresa: datos.nombre_empresa,
+    correoEmpresa: datos.correo_empresa
+  });
+
+  if (!correo) {
+    throw new Error(`Estado sin plantilla: ${datos.estado}`);
+  }
+
+  // Correo en segundo plano (no bloquea la respuesta)
+  enviarCorreo({
+    destinatario: datos.correo_estudiante,
+    asunto: correo.asunto,
+    mensaje: correo.texto,
+    html: correo.html
+  })
+    .then(() => {
+      console.log(
+        `Correo de cambio de estado enviado (postulación ${idPostulacion})`
+      );
+    })
+    .catch((error) => {
+      console.error(
+        `Correo de cambio de estado: error (postulación ${idPostulacion}) -`,
+        error.message
+      );
+    });
+
+  // Notificación interna (se espera)
+  const notificacion = await crearNotificacion(
+    datos.id_usuario_estudiante,
+    correo.notificacion
+  );
+
+  console.log(
+    `Notificación de cambio de estado creada: ` +
+    `id_notificacion=${notificacion.id_notificacion}, ` +
+    `id_usuario=${notificacion.id_usuario}`
+  );
+
+  return notificacion;
 };
 
 // ========================================
@@ -385,12 +394,31 @@ const cambiarEstadoCandidato = async (req, res) => {
       });
     }
 
-    // Avisar al estudiante sin bloquear la respuesta.
-    void notificarCambioEstado(idPostulacion);
+    // Avisar al estudiante (notificación interna + correo).
+    // El estado ya quedó guardado aunque el aviso falle.
+    let avisoError = null;
+
+    try {
+      await notificarCambioEstado(idPostulacion);
+    } catch (error) {
+      console.error(
+        `Notificación de cambio de estado: error (postulación ${idPostulacion}) -`,
+        error.message
+      );
+      avisoError = error.message;
+    }
 
     return res.json({
       mensaje: "Estado de postulación actualizado correctamente",
-      postulacion: resultado.rows[0]
+      postulacion: resultado.rows[0],
+      notificacion_creada: !avisoError,
+      ...(avisoError
+        ? {
+            advertencia:
+              "El estado se guardó, pero no se pudo crear la notificación del estudiante: " +
+              avisoError
+          }
+        : {})
     });
 
   } catch (error) {

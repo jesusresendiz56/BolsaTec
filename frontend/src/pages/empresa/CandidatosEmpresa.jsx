@@ -345,7 +345,7 @@ function CandidatosEmpresa({ onActualizar }) {
       setError("");
       setMensaje("");
 
-      await solicitarAPI(
+      const respuesta = await solicitarAPI(
         `/api/empresa/candidatos/${seleccionado.id_postulacion}/estado`,
         {
           method: "PATCH",
@@ -355,9 +355,13 @@ function CandidatosEmpresa({ onActualizar }) {
         }
       );
 
-      setMensaje(
-        "Estado de la postulación actualizado correctamente."
-      );
+      if (respuesta.advertencia) {
+        setError(respuesta.advertencia);
+      } else {
+        setMensaje(
+          "Estado actualizado. Se notificó al estudiante por correo y en BolsaTec."
+        );
+      }
 
       setSeleccionado(null);
       setEstadoNuevo("");
