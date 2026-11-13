@@ -12,7 +12,32 @@ import {
 } from "lucide-react";
 
 import { sessionGet } from "../../services/session";
+import SelectorUbicacion from "../../components/SelectorUbicacion";
 import "./VacantesEmpresa.css";
+
+const ESTADOS_MEXICO = [
+  "Aguascalientes", "Baja California", "Baja California Sur",
+  "Campeche", "Chiapas", "Chihuahua", "Ciudad de México",
+  "Coahuila", "Colima", "Durango", "Estado de México",
+  "Guanajuato", "Guerrero", "Hidalgo", "Jalisco", "Michoacán",
+  "Morelos", "Nayarit", "Nuevo León", "Oaxaca", "Puebla",
+  "Querétaro", "Quintana Roo", "San Luis Potosí", "Sinaloa",
+  "Sonora", "Tabasco", "Tamaulipas", "Tlaxcala", "Veracruz",
+  "Yucatán", "Zacatecas",
+];
+
+// Texto completo de la dirección (igual que en el backend)
+const componerDireccion = (f) =>
+  [
+    [f.direccion_calle, f.direccion_numero].filter(Boolean).join(" "),
+    f.direccion_colonia,
+    f.direccion_cp ? `C.P. ${f.direccion_cp}` : "",
+    f.direccion_ciudad,
+    f.direccion_estado,
+  ]
+    .map((parte) => parte?.trim())
+    .filter(Boolean)
+    .join(", ");
 
 const API_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:3000"
@@ -24,6 +49,14 @@ const formularioInicial = {
   modalidad: "presencial",
   tipo: "practicas",
   ubicacion: "",
+  direccion_calle: "",
+  direccion_numero: "",
+  direccion_colonia: "",
+  direccion_cp: "",
+  direccion_ciudad: "",
+  direccion_estado: "",
+  latitud: null,
+  longitud: null,
   salario_min: "",
   salario_max: "",
 };
@@ -114,6 +147,16 @@ function VacantesEmpresa({ onActualizar }) {
       modalidad: vacante.modalidad || "presencial",
       tipo: vacante.tipo || "practicas",
       ubicacion: vacante.ubicacion || "",
+      direccion_calle: vacante.direccion_calle || "",
+      direccion_numero: vacante.direccion_numero || "",
+      direccion_colonia: vacante.direccion_colonia || "",
+      direccion_cp: vacante.direccion_cp || "",
+      direccion_ciudad: vacante.direccion_ciudad || "",
+      direccion_estado: vacante.direccion_estado || "",
+      latitud:
+        vacante.latitud != null ? Number(vacante.latitud) : null,
+      longitud:
+        vacante.longitud != null ? Number(vacante.longitud) : null,
       salario_min: vacante.salario_min ?? "",
       salario_max: vacante.salario_max ?? "",
     });
@@ -465,14 +508,135 @@ function VacantesEmpresa({ onActualizar }) {
                 </label>
               </div>
 
-              <label>
-                Ubicación
-                <input
-                  name="ubicacion"
-                  value={formulario.ubicacion}
-                  onChange={actualizarCampo}
+              <fieldset className="bt-vacantes-direccion">
+                <legend>Dirección de la vacante</legend>
+
+                {vacanteEditando &&
+                  formulario.ubicacion &&
+                  !componerDireccion(formulario) && (
+                    <p className="bt-vacantes-direccion-nota">
+                      Dirección anterior: «{formulario.ubicacion}».
+                      Complétala con los campos para que el mapa sea
+                      más exacto.
+                    </p>
+                  )}
+
+                <div className="bt-vacantes-form-fila">
+                  <label className="crece">
+                    Calle
+                    <input
+                      name="direccion_calle"
+                      value={formulario.direccion_calle}
+                      onChange={actualizarCampo}
+                      maxLength={150}
+                      placeholder="Ej. Calle 7"
+                    />
+                  </label>
+
+                  <label className="corto">
+                    Número
+                    <input
+                      name="direccion_numero"
+                      value={formulario.direccion_numero}
+                      onChange={actualizarCampo}
+                      maxLength={30}
+                      placeholder="Ej. 25 Int. 3"
+                    />
+                  </label>
+                </div>
+
+                <div className="bt-vacantes-form-fila">
+                  <label className="crece">
+                    Colonia
+                    <input
+                      name="direccion_colonia"
+                      value={formulario.direccion_colonia}
+                      onChange={actualizarCampo}
+                      maxLength={120}
+                      placeholder="Ej. Pantitlán"
+                    />
+                  </label>
+
+                  <label className="corto">
+                    Código postal
+                    <input
+                      name="direccion_cp"
+                      value={formulario.direccion_cp}
+                      onChange={(evento) =>
+                        setFormulario((anterior) => ({
+                          ...anterior,
+                          direccion_cp: evento.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, 5),
+                        }))
+                      }
+                      inputMode="numeric"
+                      pattern="\d{5}"
+                      title="5 dígitos"
+                      placeholder="08100"
+                    />
+                  </label>
+                </div>
+
+                <div className="bt-vacantes-form-fila">
+                  <label>
+                    Municipio o alcaldía
+                    <input
+                      name="direccion_ciudad"
+                      value={formulario.direccion_ciudad}
+                      onChange={actualizarCampo}
+                      maxLength={120}
+                      placeholder="Ej. Iztacalco"
+                    />
+                  </label>
+
+                  <label>
+                    Estado
+                    <select
+                      name="direccion_estado"
+                      value={formulario.direccion_estado}
+                      onChange={actualizarCampo}
+                    >
+                      <option value="">Selecciona</option>
+                      {ESTADOS_MEXICO.map((estado) => (
+                        <option key={estado} value={estado}>
+                          {estado}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <SelectorUbicacion
+                  texto={
+                    componerDireccion(formulario) || formulario.ubicacion
+                  }
+                  campos={{
+                    direccion_calle: formulario.direccion_calle,
+                    direccion_numero: formulario.direccion_numero,
+                    direccion_colonia: formulario.direccion_colonia,
+                    direccion_cp: formulario.direccion_cp,
+                    direccion_ciudad: formulario.direccion_ciudad,
+                    direccion_estado: formulario.direccion_estado,
+                  }}
+                  posicion={
+                    formulario.latitud != null &&
+                    formulario.longitud != null
+                      ? {
+                          lat: formulario.latitud,
+                          lng: formulario.longitud,
+                        }
+                      : null
+                  }
+                  onCambiar={(pos) =>
+                    setFormulario((anterior) => ({
+                      ...anterior,
+                      latitud: pos ? pos.lat : null,
+                      longitud: pos ? pos.lng : null,
+                    }))
+                  }
                 />
-              </label>
+              </fieldset>
 
               <div className="bt-vacantes-form-fila">
                 <label>

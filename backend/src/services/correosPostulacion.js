@@ -189,4 +189,75 @@ const generarCorreoEstado = ({
   };
 };
 
-module.exports = { generarCorreoEstado };
+// ========================================
+// CORREO A LA EMPRESA: POSTULACIÓN CANCELADA
+// ========================================
+
+const generarCorreoCancelacion = ({
+  nombreEmpresa,
+  nombreEstudiante,
+  tituloVacante,
+}) => {
+  const d = {
+    empresa: escapar(nombreEmpresa),
+    estudiante: escapar(nombreEstudiante),
+    vacante: escapar(tituloVacante),
+  };
+
+  const urlLogin = `${URL_FRONTEND}/login`;
+
+  const html = `<!doctype html>
+<html lang="es">
+<body style="margin:0;padding:0;background:#F1F5F9;font-family:Arial,Helvetica,sans-serif;color:#1E293B;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F1F5F9;padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFFFF;border-radius:14px;overflow:hidden;border:1px solid #E2E8F0;">
+        <tr><td style="background:#0B2B33;padding:20px 28px;color:#FFFFFF;font-size:22px;font-weight:bold;">
+          Bolsa<span style="color:#22D3EE;">Tec</span>
+        </td></tr>
+        <tr><td style="padding:28px;">
+          <span style="display:inline-block;padding:5px 12px;border-radius:999px;background:#64748B;color:#FFFFFF;font-size:12px;font-weight:bold;">
+            Cancelada
+          </span>
+          <h1 style="margin:18px 0 8px;font-size:22px;color:#0B2B33;">Un candidato canceló su postulación</h1>
+          <p style="margin:0 0 16px;font-size:15px;line-height:1.6;">Hola ${d.empresa},</p>
+          <p style="margin:0 0 14px;font-size:15px;line-height:1.6;">
+            <strong>${d.estudiante}</strong> canceló su postulación a la vacante <strong>${d.vacante}</strong>.
+          </p>
+          <p style="margin:0 0 14px;font-size:15px;line-height:1.6;">
+            Ya no aparecerá en tu lista de postulaciones ni de candidatos para esta vacante.
+          </p>
+          <p style="margin:24px 0 0;">
+            <a href="${urlLogin}" style="display:inline-block;padding:12px 22px;border-radius:10px;background:#0E7490;color:#FFFFFF;text-decoration:none;font-weight:bold;font-size:14px;">
+              Ver mis postulaciones
+            </a>
+          </p>
+        </td></tr>
+        <tr><td style="padding:18px 28px;border-top:1px solid #E2E8F0;color:#64748B;font-size:12px;">
+          BolsaTec - Tu futuro profesional comienza aquí.<br>
+          Recibes este correo porque publicaste una vacante en BolsaTec.
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const texto =
+    `Hola ${nombreEmpresa},\n\n` +
+    `${nombreEstudiante} canceló su postulación a la vacante "${tituloVacante}".\n\n` +
+    "Ya no aparecerá en tu lista de postulaciones ni de candidatos para esta vacante.\n\n" +
+    `Ingresa a BolsaTec: ${urlLogin}\n\n` +
+    "BolsaTec - Tu futuro profesional comienza aquí.";
+
+  return {
+    asunto: `${nombreEstudiante} canceló su postulación a "${tituloVacante}" - BolsaTec`,
+    notificacion:
+      `${nombreEstudiante} canceló su postulación ` +
+      `a la vacante "${tituloVacante}".`,
+    html,
+    texto,
+  };
+};
+
+module.exports = { generarCorreoEstado, generarCorreoCancelacion };

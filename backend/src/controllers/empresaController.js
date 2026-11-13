@@ -120,6 +120,93 @@ const obtenerVacantes = async (req, res) => {
 };
 
 // ========================================
+// DIRECCIÓN DETALLADA Y COORDENADAS
+// ========================================
+
+const CAMPOS_DIRECCION = {
+  direccion_calle: 150,
+  direccion_numero: 30,
+  direccion_colonia: 120,
+  direccion_cp: 5,
+  direccion_ciudad: 120,
+  direccion_estado: 60
+};
+
+// Valida los campos de dirección y arma el texto de
+// "ubicacion" que se muestra en la vacante.
+const procesarDireccion = (body = {}) => {
+  const campos = {};
+
+  for (const [campo, maximo] of Object.entries(CAMPOS_DIRECCION)) {
+    const valor = body[campo];
+
+    if (valor != null && typeof valor !== "string") {
+      return { error: "Los datos de la dirección no son válidos" };
+    }
+
+    const limpio = valor?.trim() || null;
+
+    if (limpio && limpio.length > maximo) {
+      return { error: "Uno de los campos de la dirección es demasiado largo" };
+    }
+
+    campos[campo] = limpio;
+  }
+
+  if (campos.direccion_cp && !/^\d{5}$/.test(campos.direccion_cp)) {
+    return { error: "El código postal debe tener 5 dígitos" };
+  }
+
+  // Coordenadas: ambas o ninguna
+  const lat = body.latitud === "" || body.latitud == null
+    ? null
+    : Number(body.latitud);
+  const lng = body.longitud === "" || body.longitud == null
+    ? null
+    : Number(body.longitud);
+
+  if ((lat === null) !== (lng === null)) {
+    return { error: "La ubicación en el mapa está incompleta" };
+  }
+
+  if (
+    lat !== null &&
+    (!Number.isFinite(lat) || lat < -90 || lat > 90 ||
+     !Number.isFinite(lng) || lng < -180 || lng > 180)
+  ) {
+    return { error: "La ubicación en el mapa no es válida" };
+  }
+
+  // Texto completo: "Calle 7 25, Pantitlán, 08100, Iztacalco, CDMX"
+  const calleNumero = [campos.direccion_calle, campos.direccion_numero]
+    .filter(Boolean)
+    .join(" ");
+
+  const compuesta = [
+    calleNumero,
+    campos.direccion_colonia,
+    campos.direccion_cp ? `C.P. ${campos.direccion_cp}` : null,
+    campos.direccion_ciudad,
+    campos.direccion_estado
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  // Si no se usaron los campos nuevos, conservar el texto libre
+  const ubicacion =
+    compuesta ||
+    (typeof body.ubicacion === "string" ? body.ubicacion.trim() : "") ||
+    null;
+
+  return {
+    ubicacion,
+    campos,
+    latitud: lat === null ? null : Number(lat.toFixed(6)),
+    longitud: lng === null ? null : Number(lng.toFixed(6))
+  };
+};
+
+// ========================================
 // CREAR VACANTE
 // ========================================
 
@@ -179,6 +266,12 @@ const crearVacante = async (req, res) => {
       });
     }
 
+    const direccion = procesarDireccion(req.body);
+
+    if (direccion.error) {
+      return res.status(400).json({ mensaje: direccion.error });
+    }
+
     const resultado = await pool.query(
       `INSERT INTO vacantes (
         id_empresa,
@@ -189,9 +282,18 @@ const crearVacante = async (req, res) => {
         ubicacion,
         salario_min,
         salario_max,
-        estado
+        estado,
+        direccion_calle,
+        direccion_numero,
+        direccion_colonia,
+        direccion_cp,
+        direccion_ciudad,
+        direccion_estado,
+        latitud,
+        longitud
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'activa')
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'activa',
+              $9, $10, $11, $12, $13, $14, $15, $16)
       RETURNING *`,
       [
         empresa.id_empresa,
@@ -199,9 +301,17 @@ const crearVacante = async (req, res) => {
         descripcion.trim(),
         modalidad,
         tipo,
-        ubicacion?.trim() || null,
+        direccion.ubicacion,
         minimo,
-        maximo
+        maximo,
+        direccion.campos.direccion_calle,
+        direccion.campos.direccion_numero,
+        direccion.campos.direccion_colonia,
+        direccion.campos.direccion_cp,
+        direccion.campos.direccion_ciudad,
+        direccion.campos.direccion_estado,
+        direccion.latitud,
+        direccion.longitud
       ]
     );
 
@@ -292,6 +402,12 @@ const editarVacante = async (req, res) => {
       });
     }
 
+    const direccion = procesarDireccion(req.body);
+
+    if (direccion.error) {
+      return res.status(400).json({ mensaje: direccion.error });
+    }
+
     const resultado = await pool.query(
       `UPDATE vacantes
        SET
@@ -301,7 +417,15 @@ const editarVacante = async (req, res) => {
          tipo = $4,
          ubicacion = $5,
          salario_min = $6,
-         salario_max = $7
+         salario_max = $7,
+         direccion_calle = $10,
+         direccion_numero = $11,
+         direccion_colonia = $12,
+         direccion_cp = $13,
+         direccion_ciudad = $14,
+         direccion_estado = $15,
+         latitud = $16,
+         longitud = $17
        WHERE id_vacante = $8
          AND id_empresa = $9
        RETURNING *`,
@@ -310,11 +434,19 @@ const editarVacante = async (req, res) => {
         descripcion.trim(),
         modalidad,
         tipo,
-        ubicacion?.trim() || null,
+        direccion.ubicacion,
         minimo,
         maximo,
         idVacante,
-        empresa.id_empresa
+        empresa.id_empresa,
+        direccion.campos.direccion_calle,
+        direccion.campos.direccion_numero,
+        direccion.campos.direccion_colonia,
+        direccion.campos.direccion_cp,
+        direccion.campos.direccion_ciudad,
+        direccion.campos.direccion_estado,
+        direccion.latitud,
+        direccion.longitud
       ]
     );
 
