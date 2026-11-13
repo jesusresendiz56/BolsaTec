@@ -89,3 +89,10 @@
 [data-theme="dark"] .bt-mapa-lienzo .leaflet-control-attribution a {
   color: #22a7c4;
 }
+
+.bt-mapa-nota {
+  margin: 0;
+  color: var(--bt-muted, #64748b);
+  font-size: 13px;
+  line-height: 1.4;
+}
