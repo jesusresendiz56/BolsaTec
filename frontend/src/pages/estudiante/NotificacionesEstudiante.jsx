@@ -33,9 +33,11 @@ function NotificacionesEstudiante({ onActualizar, rol = "estudiante" }) {
   // CONSULTAR NOTIFICACIONES
   // ========================================
 
-  const obtenerNotificaciones = async () => {
+  // silencioso = true: actualización automática sin
+  // mostrar "Cargando..." ni borrar la lista.
+  const obtenerNotificaciones = async (silencioso = false) => {
     try {
-      setCargando(true);
+      if (!silencioso) setCargando(true);
       setError("");
 
       const sesion = sessionGet(rol);
@@ -62,17 +64,55 @@ function NotificacionesEstudiante({ onActualizar, rol = "estudiante" }) {
         );
       }
 
-      setNotificaciones(datos.notificaciones || []);
+      const nuevas = datos.notificaciones || [];
+
+      setNotificaciones((anteriores) => {
+        // Si llegaron notificaciones nuevas, actualizar
+        // también el contador del dashboard.
+        const idsPrevios = new Set(
+          anteriores.map((n) => n.id_notificacion)
+        );
+
+        if (
+          silencioso &&
+          nuevas.some((n) => !idsPrevios.has(n.id_notificacion))
+        ) {
+          onActualizar?.();
+        }
+
+        return nuevas;
+      });
     } catch (err) {
       console.error("Error al consultar notificaciones:", err);
-      setError(err.message);
+      if (!silencioso) setError(err.message);
     } finally {
-      setCargando(false);
+      if (!silencioso) setCargando(false);
     }
   };
 
   useEffect(() => {
     obtenerNotificaciones();
+
+    // Revisar si hay notificaciones nuevas cada 30 s
+    // y al volver a la pestaña.
+    const intervalo = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        obtenerNotificaciones(true);
+      }
+    }, 30000);
+
+    const alVolver = () => {
+      if (document.visibilityState === "visible") {
+        obtenerNotificaciones(true);
+      }
+    };
+
+    document.addEventListener("visibilitychange", alVolver);
+
+    return () => {
+      clearInterval(intervalo);
+      document.removeEventListener("visibilitychange", alVolver);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rol]);
 
@@ -200,7 +240,7 @@ function NotificacionesEstudiante({ onActualizar, rol = "estudiante" }) {
           <button
             type="button"
             className="bt-notificaciones-btn"
-            onClick={obtenerNotificaciones}
+            onClick={() => obtenerNotificaciones()}
             disabled={cargando || procesando}
           >
             <RefreshCw size={16} />

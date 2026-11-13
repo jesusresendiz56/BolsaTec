@@ -191,7 +191,7 @@ function PostulacionesEmpresa({ onActualizar }) {
       setError("");
       setMensaje("");
 
-      await solicitarAPI(
+      const respuesta = await solicitarAPI(
         `/api/empresa/postulaciones/${postulacion.id_postulacion}/estado`,
         {
           method: "PATCH",
@@ -199,11 +199,15 @@ function PostulacionesEmpresa({ onActualizar }) {
         }
       );
 
-      setMensaje(
-        `La postulación de ${postulacion.nombre_estudiante} ` +
-          `cambió a "${nombreEstado(estado)}". ` +
-          "Se notificó al estudiante."
-      );
+      if (respuesta.advertencia) {
+        setError(respuesta.advertencia);
+      } else {
+        setMensaje(
+          `La postulación de ${postulacion.nombre_estudiante} ` +
+            `cambió a "${nombreEstado(estado)}". ` +
+            "Se notificó al estudiante por correo y en BolsaTec."
+        );
+      }
 
       await obtenerPostulaciones();
       onActualizar?.();
