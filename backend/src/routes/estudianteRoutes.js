@@ -20,7 +20,8 @@ const {
 
 const {
   crearPostulacion,
-  obtenerPostulaciones
+  obtenerPostulaciones,
+  cancelarPostulacion
 } = require("../controllers/postulacionController");
 
 const {
@@ -83,6 +84,7 @@ router.get("/vacantes", obtenerVacantes);
 
 router.post("/postulaciones", crearPostulacion);
 router.get("/postulaciones", obtenerPostulaciones);
+router.delete("/postulaciones/:id", cancelarPostulacion);
 
 // ========================================
 // NOTIFICACIONES DEL ESTUDIANTE

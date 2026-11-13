@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   Search,
   MapPin,
+  XCircle,
   BriefcaseBusiness,
   Building2,
   RefreshCw,
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { sessionGet } from "../../services/session";
+import MapaUbicacion from "../../components/MapaUbicacion";
 import "./BuscarVacantes.css";
 
 const API_URL = (
@@ -79,7 +81,10 @@ function BuscarVacantes() {
   // ESTADOS DE POSTULACIONES
   // ========================================
 
-  const [idsPostulados, setIdsPostulados] = useState([]);
+  // { [id_vacante]: { id_postulacion, estado } }
+  const [postuladas, setPostuladas] = useState({});
+  const idsPostulados = Object.keys(postuladas).map(Number);
+  const [cancelando, setCancelando] = useState(false);
   const [enviandoPostulacion, setEnviandoPostulacion] =
     useState(false);
 
@@ -186,8 +191,16 @@ function BuscarVacantes() {
         ? datos.postulaciones
         : [];
 
-      setIdsPostulados(
-        postulaciones.map((item) => Number(item.id_vacante))
+      setPostuladas(
+        Object.fromEntries(
+          postulaciones.map((item) => [
+            Number(item.id_vacante),
+            {
+              id_postulacion: item.id_postulacion,
+              estado: item.estado,
+            },
+          ])
+        )
       );
     } catch (err) {
       console.error(
@@ -232,7 +245,7 @@ function BuscarVacantes() {
   };
 
   const cerrarDetalles = () => {
-    if (enviandoPostulacion) return;
+    if (enviandoPostulacion || cancelando) return;
 
     setVacanteSeleccionada(null);
     setMensajePostulacion("");
@@ -292,9 +305,7 @@ function BuscarVacantes() {
           datos.mensaje ===
             "Ya te postulaste a esta vacante"
         ) {
-          setIdsPostulados((anteriores) => [
-            ...new Set([...anteriores, idVacante]),
-          ]);
+          consultarPostulaciones();
         }
 
         throw new Error(
@@ -302,9 +313,13 @@ function BuscarVacantes() {
         );
       }
 
-      setIdsPostulados((anteriores) => [
-        ...new Set([...anteriores, idVacante]),
-      ]);
+      setPostuladas((anteriores) => ({
+        ...anteriores,
+        [idVacante]: {
+          id_postulacion: datos.postulacion?.id_postulacion,
+          estado: datos.postulacion?.estado || "enviada",
+        },
+      }));
 
       setMensajePostulacion(
         datos.mensaje ||
@@ -323,14 +338,85 @@ function BuscarVacantes() {
   };
 
   // ========================================
+  // CANCELAR POSTULACIÓN
+  // ========================================
+
+  const cancelarPostulacion = async () => {
+    if (!vacanteSeleccionada || cancelando) return;
+
+    const idVacante = Number(vacanteSeleccionada.id_vacante);
+    const postulacion = postuladas[idVacante];
+
+    if (!postulacion?.id_postulacion) return;
+
+    const confirmar = window.confirm(
+      `¿Seguro que quieres cancelar tu postulación a "${vacanteSeleccionada.titulo}"?`
+    );
+
+    if (!confirmar) return;
+
+    try {
+      setCancelando(true);
+      setMensajePostulacion("");
+      setErrorPostulacion("");
+
+      const sesion = sessionGet("estudiante");
+
+      if (!sesion?.token) {
+        throw new Error("Debes iniciar sesión como estudiante");
+      }
+
+      const respuesta = await fetch(
+        `${API_URL}/api/estudiante/postulaciones/${postulacion.id_postulacion}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${sesion.token}`,
+          },
+        }
+      );
+
+      const datos = await respuesta.json().catch(() => ({}));
+
+      if (!respuesta.ok) {
+        throw new Error(
+          datos.mensaje || "No se pudo cancelar la postulación"
+        );
+      }
+
+      setPostuladas((anteriores) => {
+        const copia = { ...anteriores };
+        delete copia[idVacante];
+        return copia;
+      });
+
+      setMensajePostulacion(
+        datos.mensaje || "Postulación cancelada correctamente"
+      );
+    } catch (err) {
+      setErrorPostulacion(err.message);
+    } finally {
+      setCancelando(false);
+    }
+  };
+
+  // ========================================
   // INTERFAZ
   // ========================================
 
-  const yaPostulado =
-    vacanteSeleccionada &&
-    idsPostulados.includes(
-      Number(vacanteSeleccionada.id_vacante)
+  const postulacionActual = vacanteSeleccionada
+    ? postuladas[Number(vacanteSeleccionada.id_vacante)]
+    : null;
+
+  const yaPostulado = Boolean(postulacionActual);
+
+  const puedeCancelar =
+    yaPostulado &&
+    ["enviada", "vista", "entrevista"].includes(
+      postulacionActual.estado
     );
+
+  const direccion = vacanteSeleccionada?.ubicacion?.trim();
 
   return (
     <div className="bt-vacantes">
@@ -544,7 +630,7 @@ function BuscarVacantes() {
               type="button"
               className="bt-vacante-cerrar"
               onClick={cerrarDetalles}
-              disabled={enviandoPostulacion}
+              disabled={enviandoPostulacion || cancelando}
               aria-label="Cerrar detalles"
             >
               <X size={21} />
@@ -557,6 +643,8 @@ function BuscarVacantes() {
               {vacanteSeleccionada.nombre_empresa}
             </p>
 
+            <div className="bt-vacante-modal-cuerpo">
+            <div className="bt-vacante-modal-info">
             <div className="bt-vacante-etiquetas">
               <span>
                 {modalidades[
@@ -590,6 +678,10 @@ function BuscarVacantes() {
                 ).toLocaleDateString("es-MX")}
               </p>
             )}
+            </div>
+
+            <MapaUbicacion direccion={direccion} />
+            </div>
 
             <h3>Descripción de la vacante</h3>
 
@@ -617,28 +709,49 @@ function BuscarVacantes() {
               </div>
             )}
 
-            <button
-              type="button"
-              className="bt-vacante-detalles"
-              onClick={postularme}
-              disabled={
-                enviandoPostulacion || yaPostulado
-              }
-            >
-              {yaPostulado ? (
-                <>
+            {yaPostulado ? (
+              <div className="bt-vacante-acciones-postulado">
+                <p className="bt-postulacion-estado">
                   <CheckCircle2 size={18} />
                   Ya te postulaste
-                </>
-              ) : enviandoPostulacion ? (
-                "Enviando postulación..."
-              ) : (
-                <>
-                  <Send size={18} />
-                  Postularme
-                </>
-              )}
-            </button>
+                </p>
+
+                {puedeCancelar ? (
+                  <button
+                    type="button"
+                    className="bt-vacante-cancelar"
+                    onClick={cancelarPostulacion}
+                    disabled={cancelando}
+                  >
+                    <XCircle size={18} />
+                    {cancelando
+                      ? "Cancelando..."
+                      : "Cancelar postulación"}
+                  </button>
+                ) : (
+                  <p className="bt-vacante-nota">
+                    La empresa ya respondió a tu postulación,
+                    por lo que no se puede cancelar.
+                  </p>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="bt-vacante-detalles"
+                onClick={postularme}
+                disabled={enviandoPostulacion}
+              >
+                {enviandoPostulacion ? (
+                  "Enviando postulación..."
+                ) : (
+                  <>
+                    <Send size={18} />
+                    Postularme
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -1,0 +1,43 @@
+.bt-mapa {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bt-mapa-lienzo,
+.bt-mapa-aviso {
+  width: 100%;
+  height: 240px;
+  border: 1px solid var(--bt-border, #e2e8f0);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.bt-mapa-aviso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  background: var(--bt-surface-alt, #f8fafc);
+  color: var(--bt-muted, #64748b);
+  font-size: 14px;
+  text-align: center;
+}
+
+.bt-mapa a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  color: var(--bt-primary, #0e7490);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.bt-mapa a:hover {
+  text-decoration: underline;
+}

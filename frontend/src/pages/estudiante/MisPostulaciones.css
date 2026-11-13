@@ -252,3 +252,54 @@
     width: 100%;
   }
 }
+
+/* ========================================
+   CANCELAR POSTULACIÓN
+======================================== */
+
+.bt-postulacion-acciones {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.bt-postulacion-cancelar {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border: 1px solid #dc2626;
+  border-radius: 9px;
+  background: transparent;
+  color: #dc2626;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bt-postulacion-cancelar:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.bt-postulacion-cancelar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bt-postulacion-mensaje {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 13px 14px;
+  border-radius: 10px;
+  background: rgba(5, 150, 105, 0.12);
+  color: #059669;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .bt-postulacion-cancelar {
+  border-color: #f87171;
+  color: #f87171;
+}

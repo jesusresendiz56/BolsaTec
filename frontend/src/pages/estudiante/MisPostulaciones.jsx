@@ -84,6 +84,8 @@ function MisPostulaciones() {
   const [filtroEstado, setFiltroEstado] = useState("");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [mensaje, setMensaje] = useState("");
+  const [cancelandoId, setCancelandoId] = useState(null);
 
   // ========================================
   // CONSULTAR POSTULACIONES REALES
@@ -142,6 +144,65 @@ function MisPostulaciones() {
   useEffect(() => {
     consultarPostulaciones();
   }, []);
+
+  // ========================================
+  // CANCELAR POSTULACIÓN
+  // ========================================
+
+  const cancelarPostulacion = async (postulacion) => {
+    if (cancelandoId) return;
+
+    const confirmar = window.confirm(
+      `¿Seguro que quieres cancelar tu postulación a "${postulacion.titulo}"?`
+    );
+
+    if (!confirmar) return;
+
+    try {
+      setCancelandoId(postulacion.id_postulacion);
+      setError("");
+      setMensaje("");
+
+      const sesion = sessionGet("estudiante");
+
+      if (!sesion?.token) {
+        throw new Error("Debes iniciar sesión como estudiante");
+      }
+
+      const respuesta = await fetch(
+        `${API_URL}/api/estudiante/postulaciones/${postulacion.id_postulacion}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${sesion.token}`,
+          },
+        }
+      );
+
+      const datos = await respuesta.json().catch(() => ({}));
+
+      if (!respuesta.ok) {
+        throw new Error(
+          datos.mensaje || "No se pudo cancelar la postulación"
+        );
+      }
+
+      setPostulaciones((anteriores) =>
+        anteriores.filter(
+          (item) =>
+            item.id_postulacion !== postulacion.id_postulacion
+        )
+      );
+
+      setMensaje(
+        `Cancelaste tu postulación a "${postulacion.titulo}".`
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setCancelandoId(null);
+    }
+  };
 
   // ========================================
   // FILTRAR POSTULACIONES
@@ -273,6 +334,13 @@ function MisPostulaciones() {
           </div>
         )}
 
+      {mensaje && (
+        <p className="bt-postulacion-mensaje" role="status">
+          <CheckCircle2 size={17} />
+          {mensaje}
+        </p>
+      )}
+
       {/* ========================================
           LISTADO DE POSTULACIONES
       ======================================== */}
@@ -361,6 +429,27 @@ function MisPostulaciones() {
                         Tu historial de postulación
                         permanece disponible.
                       </p>
+                    )}
+
+                    {["enviada", "vista", "entrevista"].includes(
+                      postulacion.estado
+                    ) && (
+                      <div className="bt-postulacion-acciones">
+                        <button
+                          type="button"
+                          className="bt-postulacion-cancelar"
+                          onClick={() =>
+                            cancelarPostulacion(postulacion)
+                          }
+                          disabled={Boolean(cancelandoId)}
+                        >
+                          <XCircle size={16} />
+                          {cancelandoId ===
+                          postulacion.id_postulacion
+                            ? "Cancelando..."
+                            : "Cancelar postulación"}
+                        </button>
+                      </div>
                     )}
                   </article>
                 );
