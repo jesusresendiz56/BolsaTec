@@ -11,8 +11,8 @@
 .bt-vacante-card,
 .bt-vacante-modal,
 .bt-vacantes-mensaje {
-  background: var(--bt-card, #ffffff);
-  border: 1px solid var(--bt-border, #e2e8f0);
+  background: var(--bt-surface);
+  border: 1px solid var(--bt-border, var(--bt-border));
   border-radius: 14px;
 }
 
@@ -45,7 +45,7 @@
   align-items: center;
   gap: 10px;
   padding: 0 12px;
-  border: 1px solid var(--bt-border, #cbd5e1);
+  border: 1px solid var(--bt-border, var(--bt-border-strong));
   border-radius: 9px;
   background: var(--bt-input, #ffffff);
 }
@@ -62,7 +62,7 @@
 .bt-vacantes-filtros select {
   padding: 12px;
   border-radius: 9px;
-  border: 1px solid var(--bt-border, #cbd5e1);
+  border: 1px solid var(--bt-border, var(--bt-border-strong));
   background: var(--bt-input, #ffffff);
   color: var(--bt-text, #1e293b);
   min-width: 175px;
@@ -96,7 +96,7 @@
 
 .bt-vacantes-botones .bt-vacantes-secundario {
   background: var(--bt-input, #f1f5f9);
-  border: 1px solid var(--bt-border, #cbd5e1);
+  border: 1px solid var(--bt-border, var(--bt-border-strong));
   color: var(--bt-text, #1e293b);
 }
 
@@ -117,7 +117,7 @@
   gap: 7px;
   background: transparent;
   border: none;
-  color: #0e7490;
+  color: var(--bt-primary);
   cursor: pointer;
 }
 
@@ -147,7 +147,7 @@
   align-items: center;
   border-radius: 12px;
   background: #cffafe;
-  color: #0e7490;
+  color: var(--bt-primary);
 }
 
 .bt-vacante-card h3 {

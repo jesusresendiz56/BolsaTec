@@ -20,13 +20,13 @@
 
 .bt-candidatos-encabezado h2 {
   margin: 0 0 8px;
-  color: #0b2b33;
+  color: var(--bt-heading);
   font-size: 24px;
 }
 
 .bt-candidatos-encabezado p,
 .bt-candidato-informacion p {
-  color: #64748b;
+  color: var(--bt-muted);
 }
 
 .bt-candidatos-btn {
@@ -35,10 +35,10 @@
   justify-content: center;
   gap: 8px;
   padding: 11px 16px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--bt-border-strong);
   border-radius: 10px;
-  background: #fff;
-  color: #0b2b33;
+  background: var(--bt-surface);
+  color: var(--bt-heading);
   cursor: pointer;
   font: inherit;
   white-space: nowrap;
@@ -66,27 +66,27 @@
   flex-direction: column;
   gap: 10px;
   padding: 22px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--bt-border);
   border-radius: 16px;
-  background: #fff;
-  color: #0e7490;
+  background: var(--bt-surface);
+  color: var(--bt-primary);
 }
 
 .bt-candidatos-resumen span {
-  color: #64748b;
+  color: var(--bt-muted);
   font-size: 14px;
 }
 
 .bt-candidatos-resumen strong {
-  color: #0b2b33;
+  color: var(--bt-heading);
   font-size: 28px;
 }
 
 .bt-candidatos-filtros {
   padding: 20px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--bt-border);
   border-radius: 16px;
-  background: #fff;
+  background: var(--bt-surface);
 }
 
 .bt-candidatos-busqueda {
@@ -95,7 +95,7 @@
   flex: 1;
   gap: 10px;
   padding: 0 12px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--bt-border-strong);
   border-radius: 10px;
 }
 
@@ -111,10 +111,10 @@
 .bt-candidatos-filtros select,
 .bt-candidato-cambio-estado select {
   padding: 12px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--bt-border-strong);
   border-radius: 10px;
-  background: #fff;
-  color: #0b2b33;
+  background: var(--bt-surface);
+  color: var(--bt-heading);
   font: inherit;
 }
 
@@ -126,9 +126,9 @@
 
 .bt-candidato-tarjeta {
   padding: 22px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--bt-border);
   border-radius: 16px;
-  background: #fff;
+  background: var(--bt-surface);
 }
 
 .bt-candidato-avatar {
@@ -139,7 +139,7 @@
   height: 56px;
   border-radius: 14px;
   background: #cffafe;
-  color: #0e7490;
+  color: var(--bt-primary);
   font-size: 23px;
   font-weight: 700;
 }
@@ -156,7 +156,7 @@
 
 .bt-candidato-titulo h3 {
   margin: 0;
-  color: #0b2b33;
+  color: var(--bt-heading);
 }
 
 .bt-candidato-informacion p {
@@ -173,7 +173,7 @@
   padding: 5px 11px;
   border-radius: 999px;
   background: #e2e8f0;
-  color: #334155;
+  color: var(--bt-text-soft);
   font-size: 12px;
   font-weight: 700;
 }
@@ -212,10 +212,10 @@
   align-items: center;
   gap: 12px;
   padding: 45px 20px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--bt-border);
   border-radius: 16px;
-  background: #fff;
-  color: #64748b;
+  background: var(--bt-surface);
+  color: var(--bt-muted);
   text-align: center;
 }
 
@@ -258,13 +258,13 @@
   max-height: 90vh;
   overflow-y: auto;
   border-radius: 18px;
-  background: #fff;
+  background: var(--bt-surface);
   padding: 26px;
 }
 
 .bt-candidato-modal-cabecera h2 {
   margin: 0;
-  color: #0b2b33;
+  color: var(--bt-heading);
 }
 
 .bt-candidato-modal-cabecera > button {
@@ -272,20 +272,20 @@
   place-items: center;
   width: 38px;
   height: 38px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--bt-border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--bt-surface);
   cursor: pointer;
 }
 
 .bt-candidato-modal-contenido {
   margin: 24px 0;
-  color: #334155;
+  color: var(--bt-text-soft);
 }
 
 .bt-candidato-modal-contenido h3,
 .bt-candidato-modal-contenido h4 {
-  color: #0b2b33;
+  color: var(--bt-heading);
 }
 
 .bt-candidato-cambio-estado {
@@ -298,7 +298,7 @@
 .bt-candidato-modal-acciones {
   justify-content: flex-end;
   padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--bt-border);
 }
 
 @media (max-width: 850px) {

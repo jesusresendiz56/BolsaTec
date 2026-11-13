@@ -15,8 +15,8 @@
 .bt-postulaciones-resumen-card,
 .bt-postulacion-card,
 .bt-postulaciones-mensaje {
-  background: var(--bt-card, #ffffff);
-  border: 1px solid var(--bt-border, #e2e8f0);
+  background: var(--bt-surface);
+  border: 1px solid var(--bt-border, var(--bt-border));
   border-radius: 14px;
 }
 
@@ -74,7 +74,7 @@
 }
 
 .bt-postulaciones-resumen-card svg {
-  color: #0e7490;
+  color: var(--bt-primary);
 }
 
 .bt-postulaciones-resumen-card span {
@@ -99,7 +99,7 @@
   min-width: 190px;
   padding: 11px 13px;
   border-radius: 9px;
-  border: 1px solid var(--bt-border, #cbd5e1);
+  border: 1px solid var(--bt-border, var(--bt-border-strong));
   background: var(--bt-input, #ffffff);
   color: var(--bt-text, #1e293b);
 }
@@ -140,7 +140,7 @@
   height: 48px;
   border-radius: 12px;
   background: #cffafe;
-  color: #0e7490;
+  color: var(--bt-primary);
 }
 
 .bt-postulacion-titulo h3 {
@@ -226,7 +226,7 @@
 }
 
 .bt-postulaciones-mensaje svg {
-  color: #0e7490;
+  color: var(--bt-primary);
 }
 
 .bt-postulaciones-error {
