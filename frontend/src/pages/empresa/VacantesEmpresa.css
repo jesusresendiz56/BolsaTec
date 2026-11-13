@@ -221,3 +221,50 @@
     align-items: stretch;
   }
 }
+
+/* ========================================
+   DIRECCIÓN Y MAPA
+======================================== */
+
+.bt-vacantes-modal {
+  width: min(100%, 720px);
+}
+
+.bt-vacantes-direccion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--bt-border, #e2e8f0);
+  border-radius: 12px;
+  min-width: 0;
+}
+
+.bt-vacantes-direccion legend {
+  padding: 0 6px;
+  color: var(--bt-heading, #0b2b33);
+  font-weight: 700;
+}
+
+.bt-vacantes-direccion .bt-vacantes-form-fila > label {
+  flex: 1;
+  min-width: 0;
+}
+
+.bt-vacantes-direccion .bt-vacantes-form-fila > label.crece {
+  flex: 2;
+}
+
+.bt-vacantes-direccion .bt-vacantes-form-fila > label.corto {
+  flex: 1;
+}
+
+.bt-vacantes-direccion-nota {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--bt-highlight, #ecfeff);
+  color: var(--bt-text, #1e293b);
+  font-size: 13px;
+}
