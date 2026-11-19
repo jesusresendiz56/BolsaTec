@@ -13,6 +13,13 @@ const ESTADOS = [
   { valor: "rechazada", nombre: "Rechazada" },
 ];
 
+const normalizar = (texto) =>
+  String(texto ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
 const nombreEstado = (estado) =>
   ESTADOS.find((e) => e.valor === estado)?.nombre || estado;
 
@@ -22,6 +29,7 @@ function PostulacionesAdmin() {
   const [postulaciones, setPostulaciones] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [filtroEstado, setFiltroEstado] = useState("");
+  const [filtroEmpresa, setFiltroEmpresa] = useState("");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
@@ -51,29 +59,61 @@ function PostulacionesAdmin() {
     };
   }, [solicitar]);
 
+  // Empresas con postulaciones (y cuántas tiene cada una)
+  const empresas = useMemo(() => {
+    const totales = new Map();
+    postulaciones.forEach((p) => {
+      totales.set(p.nombre_empresa, (totales.get(p.nombre_empresa) || 0) + 1);
+    });
+    return [...totales.entries()].sort((a, b) =>
+      String(a[0]).localeCompare(String(b[0]), "es")
+    );
+  }, [postulaciones]);
+
+  // Postulaciones de la empresa elegida (o todas)
+  const deEmpresa = useMemo(
+    () =>
+      filtroEmpresa
+        ? postulaciones.filter((p) => p.nombre_empresa === filtroEmpresa)
+        : postulaciones,
+    [postulaciones, filtroEmpresa]
+  );
+
   const conteo = useMemo(() => {
     const totales = {};
-    postulaciones.forEach((p) => {
+    deEmpresa.forEach((p) => {
       totales[p.estado] = (totales[p.estado] || 0) + 1;
     });
     return totales;
-  }, [postulaciones]);
+  }, [deEmpresa]);
 
   const filtradas = useMemo(() => {
-    const texto = busqueda.trim().toLowerCase();
+    const palabras = normalizar(busqueda).split(/\s+/).filter(Boolean);
 
-    return postulaciones.filter(
-      (p) =>
-        (!filtroEstado || p.estado === filtroEstado) &&
+    return deEmpresa.filter((p) => {
+      if (filtroEstado && p.estado !== filtroEstado) return false;
+      if (!palabras.length) return true;
+
+      const texto = normalizar(
         [
           p.nombre_estudiante,
           p.correo_estudiante,
           p.carrera,
           p.titulo_vacante,
           p.nombre_empresa,
-        ].some((valor) => String(valor || "").toLowerCase().includes(texto))
-    );
-  }, [postulaciones, busqueda, filtroEstado]);
+        ].join(" ")
+      );
+      return palabras.every((palabra) => texto.includes(palabra));
+    });
+  }, [deEmpresa, busqueda, filtroEstado]);
+
+  const hayFiltros = Boolean(busqueda.trim() || filtroEstado || filtroEmpresa);
+
+  const limpiarFiltros = () => {
+    setBusqueda("");
+    setFiltroEstado("");
+    setFiltroEmpresa("");
+  };
 
   const limpiarAvisos = () => {
     setError("");
@@ -148,7 +188,7 @@ function PostulacionesAdmin() {
           className={filtroEstado === "" ? "bt-adm-chip activo" : "bt-adm-chip"}
           onClick={() => setFiltroEstado("")}
         >
-          Todas ({postulaciones.length})
+          Todas ({deEmpresa.length})
         </button>
         {ESTADOS.map((e) => (
           <button
@@ -174,6 +214,25 @@ function PostulacionesAdmin() {
             onChange={(e) => setBusqueda(e.target.value)}
           />
         </div>
+
+        <select
+          value={filtroEmpresa}
+          onChange={(e) => setFiltroEmpresa(e.target.value)}
+          aria-label="Filtrar por empresa"
+        >
+          <option value="">Todas las empresas</option>
+          {empresas.map(([nombre, total]) => (
+            <option key={nombre} value={nombre}>
+              {nombre} ({total})
+            </option>
+          ))}
+        </select>
+
+        {hayFiltros && (
+          <button className="bt-em-secondary" onClick={limpiarFiltros}>
+            Limpiar
+          </button>
+        )}
 
         <button
           className="bt-em-secondary"
@@ -249,7 +308,16 @@ function PostulacionesAdmin() {
                       </span>
                     )}
                   </td>
-                  <td>{p.nombre_empresa}</td>
+                  <td>
+                    <button
+                      type="button"
+                      className="bt-adm-empresa-link"
+                      title={`Ver solo postulaciones de ${p.nombre_empresa}`}
+                      onClick={() => setFiltroEmpresa(p.nombre_empresa)}
+                    >
+                      {p.nombre_empresa}
+                    </button>
+                  </td>
                   <td>{formatearFecha(p.fecha_postulacion)}</td>
                   <td>
                     <select
@@ -286,6 +354,7 @@ function PostulacionesAdmin() {
 
       <p className="bt-em-total">
         Mostrando {filtradas.length} de {postulaciones.length} postulaciones
+        {filtroEmpresa && ` · Empresa: ${filtroEmpresa}`}
       </p>
     </div>
   );
