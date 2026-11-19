@@ -20,6 +20,7 @@ import {
 
 import { sessionDestroy } from "../../services/session";
 import ThemeToggle from "../ThemeToggle";
+import { VERSION_TEXTO } from "../../services/version";
 
 import "./DashboardLayout.css";
 
@@ -212,6 +213,13 @@ function DashboardLayout({
             ? children(seccionActiva)
             : children}
         </main>
+
+        <footer
+          className="bt-dashboard-version"
+          data-testid="version-app"
+        >
+          BolsaTec {VERSION_TEXTO}
+        </footer>
       </div>
     </div>
   );
