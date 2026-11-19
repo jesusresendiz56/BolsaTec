@@ -1,0 +1,162 @@
+/* Complementos para Vacantes, Postulaciones y Habilidades.
+   La base visual viene de EmpresasAdmin.css (bt-em-*). */
+
+.bt-em-toolbar select {
+  min-width: 170px;
+  padding: 11px 12px;
+  color: var(--bt-text);
+  background: var(--bt-surface);
+  border: 1px solid var(--bt-border-strong);
+  border-radius: 9px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.bt-em-badge.pausada,
+.bt-em-badge.vista {
+  color: #1E40AF;
+  background: #DBEAFE;
+}
+
+.bt-em-badge.cerrada,
+.bt-em-badge.rechazada {
+  color: #B91C1C;
+  background: #FEE2E2;
+}
+
+.bt-em-badge.enviada {
+  color: #374151;
+  background: #E5E7EB;
+}
+
+.bt-em-badge.entrevista {
+  color: #92400E;
+  background: #FEF3C7;
+}
+
+.bt-em-badge.aceptada {
+  color: #047857;
+  background: #D1FAE5;
+}
+
+.bt-adm-estado-select {
+  padding: 7px 8px;
+  color: var(--bt-text);
+  background: var(--bt-surface);
+  border: 1px solid var(--bt-border-strong);
+  border-radius: 7px;
+  font: inherit;
+  font-size: 12px;
+}
+
+.bt-adm-sub {
+  display: block;
+  margin-top: 3px;
+  color: var(--bt-muted);
+  font-size: 12px;
+}
+
+.bt-adm-detalle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0 0 16px;
+}
+
+.bt-adm-detalle div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bt-adm-detalle dt {
+  color: var(--bt-muted);
+  font-size: 12px;
+}
+
+.bt-adm-detalle dd {
+  margin: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.bt-adm-descripcion {
+  white-space: pre-wrap;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--bt-text);
+}
+
+.bt-adm-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.bt-adm-chip {
+  padding: 8px 12px;
+  color: var(--bt-text-soft);
+  background: var(--bt-surface);
+  border: 1px solid var(--bt-border);
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.bt-adm-chip.activo {
+  color: white;
+  background: #0E7490;
+  border-color: #0E7490;
+}
+
+.bt-adm-warning {
+  padding: 12px;
+  margin-bottom: 15px;
+  color: #92400E;
+  background: #FEF3C7;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.bt-adm-barras {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.bt-adm-barra {
+  display: grid;
+  grid-template-columns: 110px 1fr 44px;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.bt-adm-barra-track {
+  height: 10px;
+  background: var(--bt-surface-alt);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.bt-adm-barra-fill {
+  height: 100%;
+  background: #0E7490;
+  border-radius: 6px;
+}
+
+.bt-adm-barra strong {
+  text-align: right;
+}
+
+@media (max-width: 700px) {
+  .bt-adm-detalle {
+    grid-template-columns: 1fr;
+  }
+
+  .bt-em-toolbar select {
+    width: 100%;
+  }
+}
