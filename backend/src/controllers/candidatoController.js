@@ -537,6 +537,8 @@ const obtenerCurriculumCandidato = async (req, res) => {
   }
 };
 module.exports = {
+  ESTADOS_POSTULACION,
+  notificarCambioEstado,
   obtenerPostulacionesEmpresa,
   obtenerCandidatos,
   obtenerDetalleCandidato,
