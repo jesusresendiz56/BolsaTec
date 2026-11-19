@@ -266,6 +266,50 @@
   color: var(--bt-text, #1e293b);
 }
 
+.bt-vacantes-borrar {
+  display: inline-flex;
+  padding: 4px;
+  color: var(--bt-muted, #64748b);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.bt-vacantes-borrar:hover {
+  color: var(--bt-text, #1e293b);
+}
+
+.bt-vacantes-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--bt-text, #1e293b);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* Más específicas que la regla general .bt-vacantes-filtros input */
+.bt-vacantes-filtros .bt-vacantes-busqueda input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+}
+
+.bt-vacantes-busqueda input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.bt-vacantes-filtros .bt-vacantes-check input {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  min-width: 0;
+  margin: 0;
+  accent-color: #0e7490;
+}
+
 @media (max-width: 640px) {
   .bt-vacantes-filtros,
   .bt-vacantes-botones {

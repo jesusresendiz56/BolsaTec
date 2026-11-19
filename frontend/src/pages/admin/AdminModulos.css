@@ -151,6 +151,20 @@
   text-align: right;
 }
 
+.bt-adm-empresa-link {
+  padding: 0;
+  color: var(--bt-primary);
+  background: none;
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bt-adm-empresa-link:hover {
+  text-decoration: underline;
+}
+
 @media (max-width: 700px) {
   .bt-adm-detalle {
     grid-template-columns: 1fr;

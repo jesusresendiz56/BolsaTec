@@ -27,6 +27,13 @@ const TIPOS = {
   tiempo_completo: "Tiempo completo",
 };
 
+const normalizar = (texto) =>
+  String(texto ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
 const direccionCompleta = (v) =>
   [
     [v.direccion_calle, v.direccion_numero].filter(Boolean).join(" "),
@@ -75,16 +82,17 @@ function VacantesAdmin() {
   }, [solicitar]);
 
   const filtradas = useMemo(() => {
-    const texto = busqueda.trim().toLowerCase();
+    const palabras = normalizar(busqueda).split(/\s+/).filter(Boolean);
 
-    return vacantes.filter(
-      (v) =>
-        (!filtroEstado || v.estado === filtroEstado) &&
-        (!filtroModalidad || v.modalidad === filtroModalidad) &&
-        [v.titulo, v.nombre_empresa, v.ubicacion, v.direccion_ciudad].some(
-          (valor) => String(valor || "").toLowerCase().includes(texto)
-        )
-    );
+    return vacantes.filter((v) => {
+      if (filtroEstado && v.estado !== filtroEstado) return false;
+      if (filtroModalidad && v.modalidad !== filtroModalidad) return false;
+
+      const texto = normalizar(
+        [v.titulo, v.nombre_empresa, v.ubicacion, v.direccion_ciudad].join(" ")
+      );
+      return palabras.every((palabra) => texto.includes(palabra));
+    });
   }, [vacantes, busqueda, filtroEstado, filtroModalidad]);
 
   const cambiarEstado = async (vacante, estado) => {

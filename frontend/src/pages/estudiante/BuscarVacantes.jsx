@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Search,
@@ -65,11 +65,62 @@ const mostrarSalario = (vacante) => {
   return "Salario no especificado";
 };
 
+// ========================================
+// BÚSQUEDA SIN ACENTOS NI MAYÚSCULAS
+// "practicas morelia" encuentra "Prácticas ... Morelia"
+// ========================================
+
+const normalizar = (texto) =>
+  String(texto ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+const textoBuscable = (vacante) =>
+  normalizar(
+    [
+      vacante.titulo,
+      vacante.nombre_empresa,
+      vacante.descripcion,
+      vacante.ubicacion,
+      vacante.direccion_colonia,
+      vacante.direccion_ciudad,
+      vacante.direccion_estado,
+      modalidades[vacante.modalidad],
+      tipos[vacante.tipo],
+    ].join(" ")
+  );
+
+const salarioReferencia = (vacante) => {
+  const valores = [vacante.salario_max, vacante.salario_min]
+    .map((v) => (v === null || v === "" ? NaN : Number(v)))
+    .filter(Number.isFinite);
+
+  return valores.length ? Math.max(...valores) : -1;
+};
+
+const ORDENES = {
+  recientes: "Más recientes",
+  salario: "Mejor salario",
+  titulo: "Puesto (A-Z)",
+};
+
+const ubicacionCorta = (vacante) =>
+  vacante.ubicacion ||
+  [vacante.direccion_ciudad, vacante.direccion_estado]
+    .filter(Boolean)
+    .join(", ") ||
+  "No especificada";
+
 function BuscarVacantes() {
   const [vacantes, setVacantes] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [modalidad, setModalidad] = useState("");
   const [tipo, setTipo] = useState("");
+  const [orden, setOrden] = useState("recientes");
+  const [ocultarPostuladas, setOcultarPostuladas] =
+    useState(false);
 
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -98,9 +149,7 @@ function BuscarVacantes() {
   // CONSULTAR VACANTES ACTIVAS
   // ========================================
 
-  const consultarVacantes = async (
-    filtros = { busqueda: "", modalidad: "", tipo: "" }
-  ) => {
+  const consultarVacantes = async () => {
     try {
       setCargando(true);
       setError("");
@@ -111,26 +160,8 @@ function BuscarVacantes() {
         throw new Error("Debes iniciar sesión como estudiante");
       }
 
-      const parametros = new URLSearchParams();
-
-      if (filtros.busqueda.trim()) {
-        parametros.set("busqueda", filtros.busqueda.trim());
-      }
-
-      if (filtros.modalidad) {
-        parametros.set("modalidad", filtros.modalidad);
-      }
-
-      if (filtros.tipo) {
-        parametros.set("tipo", filtros.tipo);
-      }
-
-      const query = parametros.toString();
-
       const respuesta = await fetch(
-        `${API_URL}/api/estudiante/vacantes${
-          query ? `?${query}` : ""
-        }`,
+        `${API_URL}/api/estudiante/vacantes`,
         {
           headers: {
             Authorization: `Bearer ${sesion.token}`,
@@ -222,16 +253,70 @@ function BuscarVacantes() {
   // BUSCADOR Y FILTROS
   // ========================================
 
-  const buscar = (evento) => {
-    evento.preventDefault();
-    consultarVacantes({ busqueda, modalidad, tipo });
-  };
+  // Se cargan todas las vacantes activas una vez y se
+  // filtran al momento, mientras el estudiante escribe.
+
+  const vacantesFiltradas = useMemo(() => {
+    const palabras = normalizar(busqueda)
+      .split(/\s+/)
+      .filter(Boolean);
+
+    const resultado = vacantes.filter((vacante) => {
+      if (modalidad && vacante.modalidad !== modalidad) {
+        return false;
+      }
+
+      if (tipo && vacante.tipo !== tipo) return false;
+
+      if (
+        ocultarPostuladas &&
+        postuladas[Number(vacante.id_vacante)]
+      ) {
+        return false;
+      }
+
+      if (!palabras.length) return true;
+
+      const texto = textoBuscable(vacante);
+      return palabras.every((palabra) =>
+        texto.includes(palabra)
+      );
+    });
+
+    if (orden === "salario") {
+      return [...resultado].sort(
+        (a, b) => salarioReferencia(b) - salarioReferencia(a)
+      );
+    }
+
+    if (orden === "titulo") {
+      return [...resultado].sort((a, b) =>
+        String(a.titulo).localeCompare(String(b.titulo), "es")
+      );
+    }
+
+    return resultado;
+  }, [
+    vacantes,
+    busqueda,
+    modalidad,
+    tipo,
+    orden,
+    ocultarPostuladas,
+    postuladas,
+  ]);
+
+  const hayFiltros =
+    Boolean(busqueda.trim()) ||
+    Boolean(modalidad) ||
+    Boolean(tipo) ||
+    ocultarPostuladas;
 
   const limpiarFiltros = () => {
     setBusqueda("");
     setModalidad("");
     setTipo("");
-    consultarVacantes();
+    setOcultarPostuladas(false);
   };
 
   // ========================================
@@ -431,7 +516,8 @@ function BuscarVacantes() {
 
       <form
         className="bt-vacantes-filtros"
-        onSubmit={buscar}
+        onSubmit={(e) => e.preventDefault()}
+        role="search"
       >
         <div className="bt-vacantes-busqueda">
           <Search size={19} />
@@ -440,9 +526,20 @@ function BuscarVacantes() {
             type="search"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar puesto, empresa o ubicación"
+            placeholder="Puesto, empresa, ciudad o palabra clave (ej. react morelia)"
             aria-label="Buscar vacantes"
           />
+
+          {busqueda && (
+            <button
+              type="button"
+              className="bt-vacantes-borrar"
+              onClick={() => setBusqueda("")}
+              aria-label="Borrar búsqueda"
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
 
         <select
@@ -451,9 +548,11 @@ function BuscarVacantes() {
           aria-label="Filtrar por modalidad"
         >
           <option value="">Todas las modalidades</option>
-          <option value="presencial">Presencial</option>
-          <option value="hibrida">Híbrida</option>
-          <option value="remota">Remota</option>
+          {Object.entries(modalidades).map(([valor, nombre]) => (
+            <option key={valor} value={valor}>
+              {nombre}
+            </option>
+          ))}
         </select>
 
         <select
@@ -462,33 +561,48 @@ function BuscarVacantes() {
           aria-label="Filtrar por tipo"
         >
           <option value="">Todos los tipos</option>
-          <option value="practicas">
-            Prácticas profesionales
-          </option>
-          <option value="medio_tiempo">
-            Medio tiempo
-          </option>
-          <option value="tiempo_completo">
-            Tiempo completo
-          </option>
+          {Object.entries(tipos).map(([valor, nombre]) => (
+            <option key={valor} value={valor}>
+              {nombre}
+            </option>
+          ))}
         </select>
 
-        <div className="bt-vacantes-botones">
-          <button type="submit" disabled={cargando}>
-            <Search size={17} />
-            Buscar
-          </button>
+        <select
+          value={orden}
+          onChange={(e) => setOrden(e.target.value)}
+          aria-label="Ordenar vacantes"
+        >
+          {Object.entries(ORDENES).map(([valor, nombre]) => (
+            <option key={valor} value={valor}>
+              Ordenar: {nombre}
+            </option>
+          ))}
+        </select>
 
-          <button
-            type="button"
-            className="bt-vacantes-secundario"
-            onClick={limpiarFiltros}
-            disabled={cargando}
-          >
-            <X size={17} />
-            Limpiar
-          </button>
-        </div>
+        <label className="bt-vacantes-check">
+          <input
+            type="checkbox"
+            checked={ocultarPostuladas}
+            onChange={(e) =>
+              setOcultarPostuladas(e.target.checked)
+            }
+          />
+          Ocultar las que ya me postulé
+        </label>
+
+        {hayFiltros && (
+          <div className="bt-vacantes-botones">
+            <button
+              type="button"
+              className="bt-vacantes-secundario"
+              onClick={limpiarFiltros}
+            >
+              <X size={17} />
+              Limpiar filtros
+            </button>
+          </div>
+        )}
       </form>
 
       <div className="bt-vacantes-resultados">
@@ -496,13 +610,10 @@ function BuscarVacantes() {
 
         <button
           type="button"
-          onClick={() =>
-            consultarVacantes({
-              busqueda,
-              modalidad,
-              tipo,
-            })
-          }
+          onClick={() => {
+            consultarVacantes();
+            consultarPostulaciones();
+          }}
           disabled={cargando}
           className="bt-vacantes-actualizar"
         >
@@ -528,28 +639,45 @@ function BuscarVacantes() {
 
       {!cargando &&
         !error &&
-        vacantes.length === 0 && (
+        vacantesFiltradas.length === 0 && (
           <div className="bt-vacantes-mensaje">
             <BriefcaseBusiness size={32} />
-            <h4>No se encontraron vacantes</h4>
+            <h4>
+              {vacantes.length === 0
+                ? "Por ahora no hay vacantes publicadas"
+                : "Ninguna vacante coincide con tu búsqueda"}
+            </h4>
 
             <p>
-              Intenta cambiar los filtros o vuelve a
-              consultar más adelante.
+              {vacantes.length === 0
+                ? "Vuelve a consultar más adelante."
+                : "Prueba con otras palabras o quita algunos filtros."}
             </p>
+
+            {hayFiltros && (
+              <button
+                type="button"
+                className="bt-vacante-detalles"
+                onClick={limpiarFiltros}
+              >
+                Ver todas las vacantes
+              </button>
+            )}
           </div>
         )}
 
       {!cargando &&
         !error &&
-        vacantes.length > 0 && (
+        vacantesFiltradas.length > 0 && (
           <>
-            <p className="bt-vacantes-contador">
-              {vacantes.length} vacante(s) encontrada(s)
+            <p className="bt-vacantes-contador" aria-live="polite">
+              {hayFiltros
+                ? `${vacantesFiltradas.length} de ${vacantes.length} vacantes coinciden`
+                : `${vacantes.length} vacante(s) disponible(s)`}
             </p>
 
             <div className="bt-vacantes-grid">
-              {vacantes.map((vacante) => {
+              {vacantesFiltradas.map((vacante) => {
                 const postulada = idsPostulados.includes(
                   Number(vacante.id_vacante)
                 );
@@ -583,8 +711,7 @@ function BuscarVacantes() {
 
                     <p className="bt-vacante-dato">
                       <MapPin size={16} />
-                      {vacante.ubicacion ||
-                        "No especificada"}
+                      {ubicacionCorta(vacante)}
                     </p>
 
                     <p className="bt-vacante-salario">
