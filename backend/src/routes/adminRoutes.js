@@ -38,12 +38,6 @@ const {
   eliminarPostulacion
 } = require("../controllers/adminPostulacionesController");
 
-const {
-  listarHabilidades,
-  crearHabilidad,
-  actualizarHabilidad,
-  eliminarHabilidad
-} = require("../controllers/adminHabilidadesController");
 
 const {
   obtenerEstadisticas,
@@ -92,11 +86,5 @@ router.delete("/vacantes/:id", eliminarVacante);
 router.get("/postulaciones", listarPostulaciones);
 router.patch("/postulaciones/:id/estado", cambiarEstadoPostulacion);
 router.delete("/postulaciones/:id", eliminarPostulacion);
-
-// Catálogo de habilidades
-router.get("/habilidades", listarHabilidades);
-router.post("/habilidades", crearHabilidad);
-router.put("/habilidades/:id", actualizarHabilidad);
-router.delete("/habilidades/:id", eliminarHabilidad);
 
 module.exports = router;

@@ -15,7 +15,6 @@ import {
   LogOut,
   Menu,
   X,
-  Tags,
   ShieldCheck,
 } from "lucide-react";
 
@@ -33,7 +32,6 @@ const iconos = {
   postulaciones: FileText,
   notificaciones: Bell,
   configuracion: Settings,
-  habilidades: Tags,
   verificacion: ShieldCheck,
 };
 
