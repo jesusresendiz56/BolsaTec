@@ -15,7 +15,6 @@ import EstudiantesAdmin from "./EstudiantesAdmin";
 import EmpresasAdmin from "./EmpresasAdmin";
 import VacantesAdmin from "./VacantesAdmin";
 import PostulacionesAdmin from "./PostulacionesAdmin";
-import HabilidadesAdmin from "./HabilidadesAdmin";
 import "./AdminModulos.css";
 
 // ======================================
@@ -28,7 +27,6 @@ const menu = [
   { id: "empresas", nombre: "Empresas", icono: "empresas" },
   { id: "vacantes", nombre: "Vacantes", icono: "vacantes" },
   { id: "postulaciones", nombre: "Postulaciones", icono: "postulaciones" },
-  { id: "habilidades", nombre: "Habilidades", icono: "habilidades" },
 ];
 
 const ESTADOS_POSTULACION = [
@@ -178,7 +176,6 @@ const modulos = {
   empresas: EmpresasAdmin,
   vacantes: VacantesAdmin,
   postulaciones: PostulacionesAdmin,
-  habilidades: HabilidadesAdmin,
 };
 
 function AdminDashboard() {
