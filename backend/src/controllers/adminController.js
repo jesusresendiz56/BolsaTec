@@ -7,19 +7,34 @@ const obtenerEstadisticas = async (req, res) => {
     const resultado = await pool.query(`
       SELECT
         (SELECT COUNT(*) FROM usuarios) AS usuarios,
+        (SELECT COUNT(*) FROM usuarios
+         WHERE rol = 'estudiante') AS estudiantes,
         (SELECT COUNT(*) FROM empresas) AS empresas,
+        (SELECT COUNT(*) FROM empresas
+         WHERE verificada = FALSE) AS empresas_pendientes,
         (SELECT COUNT(*) FROM vacantes) AS vacantes,
-        (SELECT COUNT(*) FROM postulaciones) AS postulaciones
+        (SELECT COUNT(*) FROM vacantes
+         WHERE estado = 'activa') AS vacantes_activas,
+        (SELECT COUNT(*) FROM postulaciones) AS postulaciones,
+        (SELECT COUNT(*) FROM postulaciones
+         WHERE estado = 'enviada') AS postulaciones_enviada,
+        (SELECT COUNT(*) FROM postulaciones
+         WHERE estado = 'vista') AS postulaciones_vista,
+        (SELECT COUNT(*) FROM postulaciones
+         WHERE estado = 'entrevista') AS postulaciones_entrevista,
+        (SELECT COUNT(*) FROM postulaciones
+         WHERE estado = 'aceptada') AS postulaciones_aceptada,
+        (SELECT COUNT(*) FROM postulaciones
+         WHERE estado = 'rechazada') AS postulaciones_rechazada
     `);
 
-    const datos = resultado.rows[0];
+    const datos = Object.fromEntries(
+      Object.entries(resultado.rows[0]).map(
+        ([clave, valor]) => [clave, Number(valor) || 0]
+      )
+    );
 
-    return res.json({
-      usuarios: Number(datos.usuarios),
-      empresas: Number(datos.empresas),
-      vacantes: Number(datos.vacantes),
-      postulaciones: Number(datos.postulaciones)
-    });
+    return res.json(datos);
 
   } catch (error) {
     console.error("Error al obtener estadísticas:", error);
