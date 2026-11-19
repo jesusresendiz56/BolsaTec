@@ -222,6 +222,69 @@
   }
 }
 
+/* En celulares la tabla se muestra como tarjetas para que
+   el estado y los botones de acción queden siempre visibles. */
+@media (max-width: 640px) {
+  .bt-vacantes-tabla-contenedor {
+    overflow-x: visible;
+    border: none;
+    background: transparent;
+  }
+
+  .bt-vacantes-tabla thead {
+    display: none;
+  }
+
+  .bt-vacantes-tabla,
+  .bt-vacantes-tabla tbody,
+  .bt-vacantes-tabla tr,
+  .bt-vacantes-tabla td {
+    display: block;
+    width: 100%;
+  }
+
+  .bt-vacantes-tabla tr {
+    margin-bottom: 14px;
+    padding: 6px 0;
+    border: 1px solid var(--bt-border);
+    border-radius: 12px;
+    background: var(--bt-surface, #fff);
+  }
+
+  .bt-vacantes-tabla td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: none;
+    text-align: right;
+  }
+
+  .bt-vacantes-tabla td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-weight: 600;
+    color: var(--bt-text-2);
+    text-align: left;
+  }
+
+  .bt-vacantes-tabla td[data-label="Vacante"] {
+    display: block;
+    text-align: left;
+    border-bottom: 1px solid var(--bt-border);
+  }
+
+  .bt-vacantes-tabla td[data-label="Vacante"]::before {
+    content: none;
+  }
+
+  .bt-vacantes-tabla td[colspan] {
+    justify-content: center;
+    text-align: center;
+  }
+}
+
 /* ========================================
    DIRECCIÓN Y MAPA
 ======================================== */
