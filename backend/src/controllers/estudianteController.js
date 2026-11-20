@@ -147,6 +147,20 @@ const actualizarPerfil = async (req, res) => {
       });
     }
 
+    const telefonoLimpio = telefono?.replace(/\D/g, "") || "";
+
+    if (telefonoLimpio && telefonoLimpio.length !== 10) {
+      return res.status(400).json({
+        mensaje: "El teléfono debe tener 10 dígitos"
+      });
+    }
+
+    if (descripcion && descripcion.length > 1000) {
+      return res.status(400).json({
+        mensaje: "La descripción no debe superar los 1000 caracteres"
+      });
+    }
+
     const semestreNumero =
       semestre === "" || semestre == null
         ? null
@@ -184,7 +198,7 @@ const actualizarPerfil = async (req, res) => {
         carrera?.trim() || null,
         semestreNumero,
         descripcion?.trim() || null,
-        telefono?.trim() || null,
+        telefonoLimpio || null,
         institucion?.trim() || null,
         req.usuario.id_usuario
       ]
