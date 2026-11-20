@@ -333,15 +333,6 @@
    ESTADOS DE POSTULACIONES
 ======================================== */
 
-.bt-postulacion-estado {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #059669;
-  font-size: 14px;
-  font-weight: 600;
-  margin: 0;
-}
 
 .bt-postulacion-exito {
   display: flex;
@@ -437,5 +428,160 @@
   .bt-vacante-acciones-postulado {
     flex-direction: column;
     align-items: stretch;
+  }
+}
+
+/* ========================================
+   MEJORAS: TARJETAS Y DETALLE
+======================================== */
+
+.bt-vacantes-intro h2 {
+  margin: 0 0 4px;
+  color: var(--bt-heading, #0b2b33);
+}
+
+.bt-vacante-card {
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.bt-vacante-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--bt-primary);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+}
+
+.bt-vacante-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bt-vacante-card-top .bt-vacante-icono {
+  margin-bottom: 0;
+}
+
+.bt-vacante-nueva {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .bt-vacante-nueva {
+  background: rgba(22, 163, 74, 0.18);
+  color: #4ade80;
+}
+
+.bt-vacante-fecha {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--bt-muted, #64748b);
+  font-size: 13px;
+}
+
+.bt-vacante-detalles.secundario {
+  border: 1px solid var(--bt-primary);
+  background: transparent;
+  color: var(--bt-primary);
+}
+
+.bt-vacante-detalles.secundario:hover {
+  background: var(--bt-highlight, #ecfeff);
+}
+
+.bt-postulacion-exito span {
+  flex: 1;
+}
+
+.bt-postulacion-exito-ir {
+  padding: 6px 12px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bt-vacante-estado-detalle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.bt-vacante-estado-detalle p {
+  margin: 0;
+  color: var(--bt-text-soft, #334155);
+  font-size: 14px;
+}
+
+.bt-vacante-confirmar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 14px;
+}
+
+[data-theme="dark"] .bt-vacante-confirmar {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+}
+
+.bt-vacante-confirmar > div {
+  display: flex;
+  gap: 8px;
+}
+
+.bt-vacante-btn {
+  padding: 9px 14px;
+  border: 1px solid var(--bt-border-strong, #cbd5e1);
+  border-radius: 9px;
+  background: var(--bt-surface, #fff);
+  color: var(--bt-text, #1e293b);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bt-vacante-btn.peligro {
+  border-color: #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
+.bt-vacante-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .bt-vacante-confirmar > div {
+    width: 100%;
+  }
+
+  .bt-vacante-confirmar .bt-vacante-btn {
+    flex: 1;
+  }
+
+  .bt-postulacion-exito {
+    flex-wrap: wrap;
   }
 }

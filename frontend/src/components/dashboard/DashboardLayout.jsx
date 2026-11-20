@@ -70,6 +70,7 @@ function DashboardLayout({
   const seleccionarSeccion = (id) => {
     setSeccionActiva(id);
     setMenuAbierto(false);
+    window.scrollTo({ top: 0 });
   };
 
   return (
@@ -119,6 +120,14 @@ function DashboardLayout({
               >
                 <Icono size={19} />
                 <span>{item.nombre}</span>
+                {item.badge > 0 && (
+                  <span
+                    className="bt-sidebar-badge"
+                    aria-label={`${item.badge} sin leer`}
+                  >
+                    {item.badge > 99 ? "99+" : item.badge}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -210,7 +219,7 @@ function DashboardLayout({
 
         <main className="bt-dashboard-content">
           {typeof children === "function"
-            ? children(seccionActiva)
+            ? children(seccionActiva, seleccionarSeccion)
             : children}
         </main>
 

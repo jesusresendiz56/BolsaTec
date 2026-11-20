@@ -174,3 +174,122 @@
     width: 100%;
   }
 }
+
+/* ======================================
+   MEJORAS DEL PANEL DE ADMINISTRACIÓN
+====================================== */
+
+/* Columna de acciones siempre visible al desplazar la tabla */
+.bt-em-table th:last-child,
+.bt-em-table td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: var(--bt-surface, #ffffff);
+  box-shadow: -8px 0 10px -8px rgba(15, 23, 42, 0.18);
+}
+
+.bt-em-table thead th:last-child {
+  background: var(--bt-surface-alt, #f8fafc);
+}
+
+/* Pestañas de filtro */
+.bt-adm-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-bottom: 14px;
+}
+
+.bt-adm-tabs button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border: 1px solid var(--bt-border, #e2e8f0);
+  border-radius: 999px;
+  background: var(--bt-surface, #fff);
+  color: var(--bt-text-soft, #334155);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bt-adm-tabs button span {
+  min-width: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--bt-surface-muted, #f1f5f9);
+  color: var(--bt-muted, #64748b);
+  font-size: 12px;
+  line-height: 20px;
+  text-align: center;
+}
+
+.bt-adm-tabs button.activo {
+  border-color: var(--bt-primary);
+  background: var(--bt-primary);
+  color: #fff;
+}
+
+.bt-adm-tabs button.activo span {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+/* Dashboard: barras con el color de cada estado */
+.bt-adm-barra-fill.enviada { background: #0ea5e9; }
+.bt-adm-barra-fill.vista { background: #8b5cf6; }
+.bt-adm-barra-fill.entrevista { background: #f59e0b; }
+.bt-adm-barra-fill.aceptada { background: #16a34a; }
+.bt-adm-barra-fill.rechazada { background: #ef4444; }
+
+.bt-adm-stat-detalle {
+  display: block;
+  margin-top: 4px;
+  color: var(--bt-muted, #64748b);
+  font-size: 13px;
+}
+
+.bt-adm-stat-detalle.alerta {
+  color: #b45309;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .bt-adm-stat-detalle.alerta {
+  color: #fbbf24;
+}
+
+.bt-adm-pendientes {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  border-left: 4px solid #f59e0b !important;
+}
+
+.bt-adm-pendientes > div:not(.bt-stat-icon) {
+  flex: 1;
+  min-width: 220px;
+}
+
+.bt-adm-pendientes .bt-stat-icon {
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.bt-adm-pendientes h3 {
+  margin: 0 0 4px;
+}
+
+.bt-adm-pendientes p {
+  margin: 0;
+}
+
+/* Correos largos: se parten en varias líneas para no ensanchar la tabla */
+.bt-em-correo {
+  max-width: 220px;
+  overflow-wrap: anywhere;
+}
