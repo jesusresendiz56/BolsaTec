@@ -1,0 +1,157 @@
+{
+  "version": {
+    "aplicacion": "BolsaTec API",
+    "version": "1.1.0",
+    "commit": "ff16a03",
+    "iniciado": "2026-11-19T20:52:23.829Z"
+  },
+  "servidor": "http://localhost:3000",
+  "fecha": "2026-11-19T20:52:58.029Z",
+  "cuentas": {
+    "empresaA": "prueba.empresa.a.1795121576465@bolsatec.test",
+    "empresaB": "prueba.empresa.b.1795121576465@bolsatec.test",
+    "estudiante": "prueba.estudiante.1795121576465@bolsatec.test"
+  },
+  "casos": [
+    {
+      "id": "CP-01",
+      "descripcion": "Empresa A inicia sesión",
+      "actor": "Empresa A",
+      "pasos": "POST /api/auth/login con el correo y contraseña de Empresa A",
+      "datos": "correo=prueba.empresa.a.1795121576465@bolsatec.test",
+      "esperado": "HTTP 200, token JWT y rol \"empresa\"",
+      "obtenido": "HTTP 200, rol \"empresa\", token recibido",
+      "resultado": "APROBADO"
+    },
+    {
+      "id": "CP-02",
+      "descripcion": "Empresa A publica una vacante",
+      "actor": "Empresa A",
+      "pasos": "POST /api/empresa/vacantes con token de Empresa A",
+      "datos": "titulo=\"Desarrollador Web Jr (prueba 1795121576465)\", modalidad=hibrida, tipo=practicas, salario 6000–8000",
+      "esperado": "HTTP 201, vacante creada con estado \"activa\"",
+      "obtenido": "HTTP 201 \"Vacante publicada correctamente\", id_vacante=38, estado=\"activa\"",
+      "resultado": "APROBADO"
+    },
+    {
+      "id": "CP-03",
+      "descripcion": "Empresa A ve la vacante en \"Mis vacantes\"",
+      "actor": "Empresa A",
+      "pasos": "GET /api/empresa/vacantes con token de Empresa A",
+      "datos": "id_vacante=38",
+      "esperado": "HTTP 200 y la lista incluye la vacante",
+      "obtenido": "HTTP 200, 1 vacante(s), incluye la vacante 38",
+      "resultado": "APROBADO"
+    },
+    {
+      "id": "CP-04",
+      "descripcion": "Empresa A edita su vacante",
+      "actor": "Empresa A",
+      "pasos": "PUT /api/empresa/vacantes/38 con token de Empresa A",
+      "datos": "titulo=\"Desarrollador Web Jr EDITADA (prueba 1795121576465)\", salario_max=9000",
+      "esperado": "HTTP 200, título y salario actualizados",
+      "obtenido": "HTTP 200 \"Vacante actualizada correctamente\", titulo=\"Desarrollador Web Jr EDITADA (prueba 1795121576465)\", salario_max=9000.00",
+      "resultado": "APROBADO"
+    },
+    {
+      "id": "CP-05",
+      "descripcion": "Empresa A pausa su vacante",
+      "actor": "Empresa A",
+      "pasos": "PATCH /api/empresa/vacantes/38/estado con token de Empresa A",
+      "datos": "estado=pausada",
+      "esperado": "HTTP 200, estado \"pausada\"",
+      "obtenido": "HTTP 200 \"Estado actualizado correctamente\", estado=\"pausada\"",
+      "resultado": "APROBADO"
+    },
+    {
+      "id": "CP-06",
+      "descripcion": "Empresa A reactiva su vacante",
+      "actor": "Empresa A",
+      "pasos": "PATCH /api/empresa/vacantes/38/estado con token de Empresa A",
+      "datos": "estado=activa",
+      "esperado": "HTTP 200, estado \"activa\"",
+      "obtenido": "HTTP 200 \"Estado actualizado correctamente\", estado=\"activa\"",
+      "resultado": "APROBADO"
+    },
+    {
+      "id": "CP-07",
+      "descripcion": "Empresa B NO ve la vacante de Empresa A en \"Mis vacantes\"",
+      "actor": "Empresa B",
+      "pasos": "Iniciar sesión como Empresa B; GET /api/empresa/vacantes con su token",
+      "datos": "correo=prueba.empresa.b.1795121576465@bolsatec.test",
+      "esperado": "HTTP 200 y la lista NO incluye la vacante de A",
+      "obtenido": "HTTP 200, 0 vacante(s), no incluye la vacante 38",
+      "resultado": "APROBADO"
+    },
+    {
+      "id": "CP-08",
+      "descripcion": "Empresa B intenta editar la vacante de Empresa A",
+      "actor": "Empresa B",
+      "pasos": "PUT /api/empresa/vacantes/38 con token de Empresa B; después Empresa A consulta su vacante",
+      "datos": "titulo=\"MODIFICADA POR OTRA EMPRESA\", salario 1–1",
+      "esperado": "HTTP 404 \"Vacante no encontrada\" y la vacante de A sin cambios",
+      "obtenido": "HTTP 404 \"Vacante no encontrada\"; vacante de A sin cambios",
+      "resultado": "APROBADO"
+    },
+    {
+      "id": "CP-09",
+      "descripcion": "Empresa B intenta cerrar la vacante de Empresa A",
+      "actor": "Empresa B",
+      "pasos": "PATCH /api/empresa/vacantes/38/estado con token de Empresa B",
+      "datos": "estado=cerrada",
+      "esperado": "HTTP 404 y la vacante sigue \"activa\"",
+      "obtenido": "HTTP 404 \"Vacante no encontrada\"; vacante de A sigue \"activa\"",
+      "resultado": "APROBADO"
+    },
+    {
+      "id": "CP-10",
+      "descripcion": "Empresa B intenta eliminar la vacante de Empresa A",
+      "actor": "Empresa B",
+      "pasos": "DELETE /api/empresa/vacantes/38 con token de Empresa B",
+      "datos": "id_vacante=38",
+      "esperado": "HTTP 404 y la vacante sigue existiendo",
+      "obtenido": "HTTP 404 \"Vacante no encontrada\"; vacante de A sigue existiendo",
+      "resultado": "APROBADO"
+    },
+    {
+      "id": "CP-11",
+      "descripcion": "Una cuenta de estudiante intenta editar la vacante",
+      "actor": "Estudiante",
+      "pasos": "PUT /api/empresa/vacantes/38 con token de estudiante",
+      "datos": "correo=prueba.estudiante.1795121576465@bolsatec.test",
+      "esperado": "HTTP 403 \"Acceso permitido únicamente a empresas\" y la vacante sin cambios",
+      "obtenido": "HTTP 403 \"Acceso permitido únicamente a empresas\"; vacante sin cambios",
+      "resultado": "APROBADO"
+    },
+    {
+      "id": "CP-12",
+      "descripcion": "Petición sin iniciar sesión intenta eliminar la vacante",
+      "actor": "Anónimo",
+      "pasos": "DELETE /api/empresa/vacantes/38 sin encabezado Authorization",
+      "datos": "(sin token)",
+      "esperado": "HTTP 401 \"Debes iniciar sesión\" y la vacante sigue existiendo",
+      "obtenido": "HTTP 401 \"Debes iniciar sesión\"; vacante sigue existiendo",
+      "resultado": "APROBADO"
+    },
+    {
+      "id": "CP-13",
+      "descripcion": "Token JWT alterado intenta editar la vacante",
+      "actor": "Anónimo",
+      "pasos": "PUT /api/empresa/vacantes/38 con la firma del token de B modificada",
+      "datos": "token con los últimos 4 caracteres cambiados",
+      "esperado": "HTTP 401 \"Token inválido\" y la vacante sin cambios",
+      "obtenido": "HTTP 401 \"Token inválido\"; vacante sin cambios",
+      "resultado": "APROBADO"
+    },
+    {
+      "id": "CP-14",
+      "descripcion": "Empresa A elimina su propia vacante",
+      "actor": "Empresa A",
+      "pasos": "DELETE /api/empresa/vacantes/38 con token de Empresa A; después consulta su lista",
+      "datos": "id_vacante=38",
+      "esperado": "HTTP 200 \"Vacante eliminada correctamente\" y ya no aparece en su lista",
+      "obtenido": "HTTP 200 \"Vacante eliminada correctamente\"; ya no aparece en la lista",
+      "resultado": "APROBADO"
+    }
+  ]
+}

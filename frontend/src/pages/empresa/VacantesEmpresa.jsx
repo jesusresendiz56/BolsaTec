@@ -357,15 +357,15 @@ function VacantesEmpresa({ onActualizar }) {
             ) : (
               vacantesFiltradas.map((vacante) => (
                 <tr key={vacante.id_vacante}>
-                  <td>
+                  <td data-label="Vacante">
                     <strong>{vacante.titulo}</strong>
                     <small>{vacante.ubicacion || "Sin ubicación"}</small>
                   </td>
 
-                  <td>{vacante.modalidad}</td>
-                  <td>{vacante.tipo.replaceAll("_", " ")}</td>
+                  <td data-label="Modalidad">{vacante.modalidad}</td>
+                  <td data-label="Tipo">{vacante.tipo.replaceAll("_", " ")}</td>
 
-                  <td>
+                  <td data-label="Estado">
                     <span
                       className={`bt-vacantes-estado estado-${vacante.estado}`}
                     >
@@ -373,9 +373,9 @@ function VacantesEmpresa({ onActualizar }) {
                     </span>
                   </td>
 
-                  <td>{vacante.total_postulaciones}</td>
+                  <td data-label="Postulaciones">{vacante.total_postulaciones}</td>
 
-                  <td>
+                  <td data-label="Acciones">
                     <div className="bt-vacantes-acciones">
                       <button
                         type="button"
