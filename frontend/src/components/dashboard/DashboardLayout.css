@@ -302,6 +302,9 @@
   padding: 35px;
   max-width: 1500px;
   margin: 0 auto;
+  /* Correos y textos largos bajan de línea en vez de
+     ensanchar la página en celulares. */
+  overflow-wrap: break-word;
 }
 
 /* Versión de la aplicación (evidencia de pruebas) */
