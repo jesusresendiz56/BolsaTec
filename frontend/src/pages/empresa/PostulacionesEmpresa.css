@@ -90,8 +90,8 @@
 }
 
 .bt-postemp-totales .estado-enviada { border-left-color: #2563eb; }
-.bt-postemp-totales .estado-vista { border-left-color: #d97706; }
-.bt-postemp-totales .estado-entrevista { border-left-color: #7c3aed; }
+.bt-postemp-totales .estado-vista { border-left-color: #7c3aed; }
+.bt-postemp-totales .estado-entrevista { border-left-color: #d97706; }
 .bt-postemp-totales .estado-aceptada { border-left-color: #059669; }
 .bt-postemp-totales .estado-rechazada { border-left-color: #dc2626; }
 
@@ -278,8 +278,8 @@
 }
 
 .bt-postemp-badge.estado-enviada { background: #dbeafe; color: #1d4ed8; }
-.bt-postemp-badge.estado-vista { background: #fef3c7; color: #92400e; }
-.bt-postemp-badge.estado-entrevista { background: #ede9fe; color: #6d28d9; }
+.bt-postemp-badge.estado-vista { background: #ede9fe; color: #6d28d9; }
+.bt-postemp-badge.estado-entrevista { background: #fef3c7; color: #b45309; }
 .bt-postemp-badge.estado-aceptada { background: #d1fae5; color: #047857; }
 .bt-postemp-badge.estado-rechazada { background: #fee2e2; color: #b91c1c; }
 
@@ -353,3 +353,10 @@
     flex: 1;
   }
 }
+
+/* Estados en modo oscuro */
+[data-theme="dark"] .bt-postemp-badge.estado-enviada { background: rgba(14, 165, 233, 0.16); color: #7dd3fc; }
+[data-theme="dark"] .bt-postemp-badge.estado-vista { background: rgba(139, 92, 246, 0.18); color: #c4b5fd; }
+[data-theme="dark"] .bt-postemp-badge.estado-entrevista { background: rgba(245, 158, 11, 0.16); color: #fcd34d; }
+[data-theme="dark"] .bt-postemp-badge.estado-aceptada { background: rgba(22, 163, 74, 0.16); color: #86efac; }
+[data-theme="dark"] .bt-postemp-badge.estado-rechazada { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }

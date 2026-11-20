@@ -39,6 +39,18 @@ const componerDireccion = (f) =>
     .filter(Boolean)
     .join(", ");
 
+const MODALIDADES = {
+  presencial: "Presencial",
+  hibrida: "Híbrida",
+  remota: "Remota",
+};
+
+const TIPOS = {
+  practicas: "Prácticas profesionales",
+  medio_tiempo: "Medio tiempo",
+  tiempo_completo: "Tiempo completo",
+};
+
 const API_URL = (
   import.meta.env.VITE_API_URL || "http://localhost:3000"
 ).replace(/\/$/, "");
@@ -362,8 +374,8 @@ function VacantesEmpresa({ onActualizar }) {
                     <small>{vacante.ubicacion || "Sin ubicación"}</small>
                   </td>
 
-                  <td data-label="Modalidad">{vacante.modalidad}</td>
-                  <td data-label="Tipo">{vacante.tipo.replaceAll("_", " ")}</td>
+                  <td data-label="Modalidad">{MODALIDADES[vacante.modalidad] || vacante.modalidad}</td>
+                  <td data-label="Tipo">{TIPOS[vacante.tipo] || vacante.tipo}</td>
 
                   <td data-label="Estado">
                     <span
