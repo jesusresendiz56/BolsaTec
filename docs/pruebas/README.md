@@ -8,8 +8,8 @@ Cada ejecución queda ligada a una versión concreta del sistema:
 
 | Dónde | Qué muestra |
 |---|---|
-| `GET /api/version` | `{ "version": "1.1.0", "commit": "ff16a03", ... }` |
-| Pie de página de los paneles | `BolsaTec v1.1.0 · ff16a03 · 2026-11-19` (versión · commit · fecha de compilación) |
+| `GET /api/version` | `{ "version": "1.1.0", "commit": "5205f81", ... }` |
+| Pie de página de los paneles | `BolsaTec v1.1.0 · 5205f81 · 2026-11-20` (versión · commit · fecha de compilación) |
 
 La versión sale de `package.json` y el commit de git (o de `VERCEL_GIT_COMMIT_SHA` / `RENDER_GIT_COMMIT` al desplegar). Los reportes y las capturas incluyen ambos datos.
 
@@ -48,7 +48,21 @@ En los casos de bloqueo (CP-08 a CP-13), la prueba no solo revisa el código HTT
 | Navegador, **escritorio** (1366×768) | Recorrido completo en la interfaz | [`evidencia/README.md`](evidencia/README.md), capturas `escritorio-*.png` |
 | Navegador, **móvil** (Pixel 7, 412×915) | El mismo recorrido con el menú móvil | [`evidencia/README.md`](evidencia/README.md), capturas `movil-*.png` |
 
-Última ejecución: **v1.1.0, commit `ff16a03`, 2026-11-19**. API: 14 de 14 casos aprobados; navegador: 22 de 22 pasos aprobados (11 en escritorio y 11 en móvil).
+### Ejecución en producción (la válida para la entrega)
+
+| Dato | Valor |
+|---|---|
+| Versión | **v1.1.0, commit `5205f81`** (frontend y backend; se ve en el pie de página y en `/api/version`) |
+| Frontend | https://bolsa-tec.vercel.app |
+| API | https://bolsatec.onrender.com |
+| Fecha | 2026-11-20 |
+| Navegador | Chromium (Playwright): escritorio 1366×768 y móvil Pixel 7 (412×915) |
+| API | **14 de 14** casos aprobados — [`resultados/vacantes-propiedad-2026-11-20-08-28-46.md`](resultados/vacantes-propiedad-2026-11-20-08-28-46.md) |
+| Navegador | **22 de 22** pasos aprobados (11 escritorio + 11 móvil) — [`evidencia/README.md`](evidencia/README.md) |
+
+Antes se hizo una ejecución en una base de datos local con la v1.1.0, commit `ff16a03` (14 de 14): [`resultados/vacantes-propiedad-2026-11-19-20-52-58.md`](resultados/vacantes-propiedad-2026-11-19-20-52-58.md).
+
+Las pruebas en producción dejan cuentas de prueba `prueba.*@bolsatec.test` en la base de datos (las vacantes de prueba se eliminan al final). Se pueden desactivar desde el panel de administrador.
 
 > El modo móvil es una emulación de Chromium (tamaño de pantalla, táctil y user agent de un Pixel 7). Para completar la evidencia en un **teléfono real**, usen la plantilla de la sección 6.
 
@@ -66,7 +80,7 @@ En los casos de bloqueo (CP-08 a CP-13), la prueba no solo revisa el código HTT
    cd backend && API_URL=http://localhost:3000 npm run test:vacantes
    ```
 
-4. Evidencia en escritorio y móvil (requiere Playwright):
+4. Evidencia en escritorio y móvil (requiere Playwright). Si la red sale por un proxy, agreguen `NODE_USE_ENV_PROXY=1` (Node 22.21 o superior):
 
    ```bash
    cd frontend && npm install --no-save playwright && npx playwright install chromium
