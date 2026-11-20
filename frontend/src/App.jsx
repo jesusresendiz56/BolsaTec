@@ -23,7 +23,7 @@ import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
 import ProtectedRoute from "./components/dashboard/ProtectedRoute";
 
 // Botón de modo oscuro
-import ThemeToggle from "./components/ThemeToggle";
+import ControlesTema from "./components/ControlesTema";
 
 // ========================================
 // RUTAS Y BOTÓN DE MODO OSCURO
@@ -51,7 +51,7 @@ function AppContent() {
       {/* Mostrar el botón global solamente
           fuera de los dashboards */}
 
-      {!esDashboard && <ThemeToggle />}
+      {!esDashboard && <ControlesTema />}
 
       <Routes>
         {/* PÁGINAS PÚBLICAS */}
