@@ -19,6 +19,10 @@ import {
 } from "lucide-react";
 
 import { sessionGet } from "../../services/session";
+import {
+  calcularAvancePerfil,
+  MIN_DESCRIPCION,
+} from "../../services/perfilEstudiante";
 import "./PerfilEstudiante.css";
 
 const API_URL = (
@@ -27,7 +31,6 @@ const API_URL = (
 
 const MAX_PDF = 5 * 1024 * 1024;
 const MAX_DESCRIPCION = 1000;
-const MIN_DESCRIPCION = 50;
 
 const perfilInicial = {
   carrera: "",
@@ -255,20 +258,7 @@ function PerfilEstudiante({ onActualizar }) {
   const hayErrores = Object.keys(errores).length > 0;
 
   // Qué tan completo está el perfil (con lo ya guardado)
-  const pasos = [
-    { id: "carrera", texto: "Carrera", listo: Boolean(guardado.carrera.trim()) },
-    { id: "semestre", texto: "Semestre", listo: guardado.semestre !== "" },
-    { id: "institucion", texto: "Institución", listo: Boolean(guardado.institucion.trim()) },
-    { id: "telefono", texto: "Teléfono", listo: Boolean(guardado.telefono.trim()) },
-    {
-      id: "descripcion",
-      texto: `Descripción (mín. ${MIN_DESCRIPCION} caracteres)`,
-      listo: guardado.descripcion.trim().length >= MIN_DESCRIPCION,
-    },
-    { id: "cv", texto: "Currículum en PDF", listo: Boolean(cvUrl) },
-  ];
-  const completados = pasos.filter((p) => p.listo).length;
-  const porcentaje = Math.round((completados / pasos.length) * 100);
+  const { pasos, completados, porcentaje } = calcularAvancePerfil(guardado, cvUrl);
 
   // ---------- Formulario ----------
 
