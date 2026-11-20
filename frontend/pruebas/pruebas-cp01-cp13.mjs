@@ -251,14 +251,14 @@ const ejecutarEn = async (browser, d, version) => {
       for (const valor of ["1", "15"]) {
         await semestre.fill(valor);
         await page.getByRole("button", { name: "Guardar cambios" }).click();
-        const ok = page.locator(".bt-perfil-estudiante-exito");
+        const ok = page.locator(".bt-perfil-est-aviso.exito");
         await ok.waitFor();
         res.push(`${valor}: «${(await ok.textContent()).trim()}»`);
         await page.waitForTimeout(600);
       }
       const perfil = await api("GET", "/estudiante/perfil", { token: tokenEstudiante });
       const guardado = perfil.datos?.estudiante?.semestre ?? perfil.datos?.perfil?.semestre ?? perfil.datos?.semestre;
-      await page.locator(".bt-perfil-estudiante-exito").scrollIntoViewIfNeeded();
+      await page.locator(".bt-perfil-est-aviso.exito").scrollIntoViewIfNeeded();
       return { obtenido: `Semestre ${res.join("; semestre ")}. Valor guardado: ${guardado}.`, aprobado: Number(guardado) === 15 };
     }
   });
@@ -273,7 +273,10 @@ const ejecutarEn = async (browser, d, version) => {
       const semestre = page.locator('input[name="semestre"]');
       await semestre.fill("16");
       await page.getByRole("button", { name: "Guardar cambios" }).click();
-      const mensajeNavegador = await semestre.evaluate((el) => el.validationMessage);
+      // v1.2.0: el formulario marca el campo en rojo con su propio mensaje
+      const mensajeCampo = page.locator('input[name="semestre"] ~ small.error');
+      await mensajeCampo.waitFor();
+      const mensajeNavegador = (await mensajeCampo.textContent()).trim();
       const perfilAntes = await api("GET", "/estudiante/perfil", { token: tokenEstudiante });
       const datosPerfil = perfilAntes.datos?.estudiante || perfilAntes.datos?.perfil || perfilAntes.datos || {};
       const servidor = await fetchDesdePagina(page, "PUT", "/estudiante/perfil", {
@@ -285,13 +288,13 @@ const ejecutarEn = async (browser, d, version) => {
       await semestre.scrollIntoViewIfNeeded();
       await panel(page, [
         "PRUEBA CP05 · Semestre = 16",
-        `Validación del navegador: «${mensajeNavegador}»`,
+        `Validación del formulario: «${mensajeNavegador}»`,
         `Validación del servidor (PUT /api/estudiante/perfil): HTTP ${servidor.status} ${JSON.stringify(servidor.datos)}`,
         `Semestre guardado después del intento: ${guardado}`,
         `Resultado: ${Number(guardado) === 15 ? "NO SE GUARDÓ ✔" : "SE GUARDÓ ✘"}`
       ]);
       return {
-        obtenido: `Navegador: «${mensajeNavegador}». Servidor: HTTP ${servidor.status} «${servidor.datos?.mensaje}». El semestre sigue en ${guardado}.`,
+        obtenido: `Formulario: «${mensajeNavegador}». Servidor: HTTP ${servidor.status} «${servidor.datos?.mensaje}». El semestre sigue en ${guardado}.`,
         aprobado: Number(guardado) === 15 && servidor.status === 400
       };
     }
@@ -300,15 +303,15 @@ const ejecutarEn = async (browser, d, version) => {
   // CP06
   await caso({
     id: "CP06", nombre: "Currículum PDF válido",
-    pasos: "Mi perfil → «Seleccionar PDF» → elegir el archivo → «Subir currículum».",
+    pasos: "Mi perfil → zona «Sube tu currículum» → elegir el archivo → revisar la vista previa → «Subir currículum».",
     datos: "Curriculum_prueba.pdf (1 página, < 1 KB).",
     esperado: "El archivo se asocia al estudiante autenticado.",
     ejecutar: async () => {
       await page.reload();
       await irASeccion(page, "Mi perfil");
       await page.locator('input[type="file"]').setInputFiles(pdfPrueba);
-      await page.getByRole("button", { name: /Subir currículum|Reemplazar PDF/ }).click();
-      const ok = page.locator(".bt-perfil-estudiante-exito");
+      await page.getByRole("button", { name: /Subir currículum|Reemplazar currículum/ }).click();
+      const ok = page.locator(".bt-perfil-est-aviso.exito");
       await ok.waitFor({ timeout: 30000 });
       const texto = (await ok.textContent()).trim();
       const cv = await api("GET", "/estudiante/curriculum", { token: tokenEstudiante });
@@ -320,12 +323,12 @@ const ejecutarEn = async (browser, d, version) => {
   // CP07
   await caso({
     id: "CP07", nombre: "Archivo que no es PDF",
-    pasos: "Mi perfil → «Seleccionar PDF» → elegir un archivo .txt.",
+    pasos: "Mi perfil → zona «Sube tu currículum» → elegir un archivo .txt.",
     datos: "Curriculum_prueba.txt (texto plano).",
     esperado: "El archivo se rechaza y se informa el formato permitido.",
     ejecutar: async () => {
       await page.locator('input[type="file"]').setInputFiles(txtPrueba);
-      const err = page.locator(".bt-perfil-estudiante-error");
+      const err = page.locator(".bt-cv-error");
       await err.waitFor();
       const texto = (await err.textContent()).trim();
       await err.scrollIntoViewIfNeeded();
@@ -448,8 +451,10 @@ const ejecutarEn = async (browser, d, version) => {
       await modal.getByRole("button", { name: "Postularme" }).click();
       const r = await respuesta;
       const cuerpo = await r.json().catch(() => ({}));
-      await modal.getByText("Ya te postulaste").first().waitFor();
-      return { obtenido: `HTTP ${r.status()} «${cuerpo.mensaje}»; el detalle cambia a «Ya te postulaste».`, aprobado: r.status() === 201 };
+      const estado = modal.locator(".bt-vacante-estado-detalle .bt-postulacion-estado");
+      await estado.waitFor();
+      const textoEstado = (await estado.textContent()).trim();
+      return { obtenido: `HTTP ${r.status()} «${cuerpo.mensaje}»; el detalle muestra el estado «${textoEstado}».`, aprobado: r.status() === 201 && textoEstado === "Enviada" };
     }
   });
 
@@ -471,7 +476,7 @@ const ejecutarEn = async (browser, d, version) => {
         `Postulaciones del estudiante a esta vacante: ${cuantas}`,
         `Resultado: ${r.status === 409 && cuantas === 1 ? "DUPLICADO RECHAZADO ✔" : "ERROR ✘"}`
       ]);
-      return { obtenido: `HTTP ${r.status} «${r.datos?.mensaje}»; el estudiante sigue con ${cuantas} postulación a esa vacante; el botón muestra «Ya te postulaste».`, aprobado: r.status === 409 && cuantas === 1 };
+      return { obtenido: `HTTP ${r.status} «${r.datos?.mensaje}»; el estudiante sigue con ${cuantas} postulación a esa vacante.`, aprobado: r.status === 409 && cuantas === 1 };
     }
   });
 
