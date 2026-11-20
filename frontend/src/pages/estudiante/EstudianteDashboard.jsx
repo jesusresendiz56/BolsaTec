@@ -368,7 +368,7 @@ function EstudianteDashboard() {
     >
       {(seccion) => (
         <>
-          {seccion !== "dashboard" && (
+          {seccion !== "dashboard" && seccion !== "perfil" && (
             <div className="bt-dashboard-panel">
               <h3>{titulos[seccion]}</h3>
 
