@@ -316,7 +316,7 @@ function SelectorUbicacion({ texto, campos, posicion, onCambiar }) {
       </div>
 
       {posicion && (
-        <p className="bt-selector-coordenadas">
+        <p className="bt-selector-coordenadas" translate="no">
           <LocateFixed size={14} />
           <span>
             {posicion.lat.toFixed(6)}, {posicion.lng.toFixed(6)}
