@@ -455,7 +455,7 @@ const main = async () => {
 
   // Si la red sale por un proxy (HTTPS_PROXY), el navegador también lo usa
   const proxy = process.env.HTTPS_PROXY || process.env.https_proxy;
-  const browser = await chromium.launch(proxy ? { proxy: { server: proxy } } : {});
+  const browser = await chromium.launch(proxy ? { proxy: { server: proxy, bypass: "localhost,127.0.0.1" } } : {});
   const resultados = [];
 
   try {
