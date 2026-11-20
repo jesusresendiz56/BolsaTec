@@ -17,9 +17,10 @@
 |---|---|
 | Versión | **v1.1.0, commit `5205f81`** |
 | Fecha | 2026-11-20 |
-| Base de datos | PostgreSQL 16 local de pruebas (no producción) |
-| API | **14 de 14** casos aprobados — [`vacantes-propiedad-2026-11-20-09-37-07.md`](resultados/vacantes-propiedad-2026-11-20-09-37-07.md) |
+| Entorno | Producción: https://bolsa-tec.vercel.app y https://bolsatec.onrender.com |
+| API | **14 de 14** casos aprobados — [`vacantes-propiedad-2026-11-20-08-28-46.md`](resultados/vacantes-propiedad-2026-11-20-08-28-46.md) |
 | Navegador | **22 de 22** pasos aprobados (11 escritorio + 11 móvil) — [`evidencia/README.md`](evidencia/README.md) |
+| Repetición local | La misma versión contra una base de datos local también aprobó 14 de 14 — [`vacantes-propiedad-2026-11-20-09-37-07.md`](resultados/vacantes-propiedad-2026-11-20-09-37-07.md) |
 
 ## Pendiente (lo hace el equipo)
 
