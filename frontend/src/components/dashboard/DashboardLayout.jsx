@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 import { sessionDestroy } from "../../services/session";
-import ThemeToggle from "../ThemeToggle";
+import ControlesTema from "../ControlesTema";
 import { VERSION_TEXTO } from "../../services/version";
 
 import "./DashboardLayout.css";
@@ -182,7 +182,7 @@ function DashboardLayout({
           {/* BOTÓN DE TEMA Y USUARIO */}
 
           <div className="bt-dashboard-header-right">
-            <ThemeToggle />
+            <ControlesTema />
 
             <div className="bt-dashboard-user">
               <div className="bt-dashboard-avatar">

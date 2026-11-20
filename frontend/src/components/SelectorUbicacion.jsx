@@ -7,9 +7,20 @@ import {
   useMap,
   useMapEvents,
 } from "react-leaflet";
-import { LocateFixed, Search, Trash2 } from "lucide-react";
+import {
+  CheckCircle2,
+  LocateFixed,
+  MapPinned,
+  Search,
+  Trash2,
+  TriangleAlert,
+} from "lucide-react";
 
-import { buscarCoordenadas } from "../services/geocodificacion";
+import {
+  buscarCoordenadas,
+  buscarDireccionDePunto,
+  coincide,
+} from "../services/geocodificacion";
 import {
   iconoMarcador,
   ATRIBUCION_OSM,
@@ -53,23 +64,65 @@ function Recentrar({ destino }) {
   return null;
 }
 
-const mensajes = {
-  numero:
-    "Se encontró el número en OpenStreetMap. Revisa que el marcador esté en el lugar correcto; puedes arrastrarlo para ajustarlo.",
-  calle: (numero) =>
-    `Se encontró la calle${numero ? `, pero OpenStreetMap no tiene registrado el número ${numero}` : ""}. El marcador está en el centro de la calle (resaltada en el mapa): arrástralo al punto exacto.`,
-  zona: "No se encontró la calle; se marcó solo la zona (colonia, C.P. o municipio). Arrastra el marcador al punto exacto.",
+const redondear = (valor) => Number(Number(valor).toFixed(6));
+
+// Mensaje según qué tan precisa fue la búsqueda
+const avisoDeResultado = (resultado, numero) => {
+  const encontrado = resultado.referencia
+    ? `Encontrado: ${resultado.referencia}.`
+    : "";
+
+  if (resultado.precision === "numero") {
+    return {
+      tipo: "ok",
+      titulo: "Dirección encontrada",
+      detalle: `${encontrado} Revisa que el marcador esté en el lugar correcto.`,
+    };
+  }
+
+  if (resultado.precision === "calle") {
+    return {
+      tipo: "alerta",
+      titulo: numero
+        ? `Se encontró la calle, pero no el número ${numero}`
+        : "Se encontró la calle",
+      detalle: `${encontrado} OpenStreetMap no tiene registrado ese número; el marcador está en el centro de la calle (resaltada en naranja). Arrástralo al punto exacto.`,
+    };
+  }
+
+  return {
+    tipo: "alerta",
+    titulo: "Solo se encontró la zona",
+    detalle: `${encontrado} No se encontró la calle. Arrastra el marcador o haz clic en el mapa en el punto exacto.`,
+  };
 };
 
-const redondear = (valor) => Number(Number(valor).toFixed(6));
+const avisoAjusteManual = {
+  tipo: "ok",
+  titulo: "Ubicación ajustada",
+  detalle: "Se guardará el punto donde dejaste el marcador. Confirma abajo la dirección que tiene OpenStreetMap en ese punto.",
+};
+
+const iconos = {
+  ok: CheckCircle2,
+  alerta: TriangleAlert,
+  info: MapPinned,
+};
 
 function SelectorUbicacion({ texto, campos, posicion, onCambiar }) {
   const [buscando, setBuscando] = useState(false);
-  const [aviso, setAviso] = useState("");
+  const [aviso, setAviso] = useState(null);
   // Solo se recentra el mapa al buscar la dirección
   const [destino, setDestino] = useState(null);
   // Calle encontrada (cuando no está el número)
   const [linea, setLinea] = useState(null);
+  // Dirección con la que se hizo la última búsqueda
+  const [buscadoCon, setBuscadoCon] = useState("");
+  // Lo que OpenStreetMap tiene donde quedó el marcador
+  const [enElPunto, setEnElPunto] = useState({ clave: "", texto: "", calle: "" });
+
+  const claveDireccion = JSON.stringify({ texto, campos });
+  const desactualizado = Boolean(buscadoCon) && buscadoCon !== claveDireccion;
 
   const centroInicial = useMemo(
     () => posicion || CENTRO_MEXICO,
@@ -78,28 +131,63 @@ function SelectorUbicacion({ texto, campos, posicion, onCambiar }) {
     []
   );
 
-  const fijar = (latlng, mensaje = "") => {
+  // Consultar la dirección del punto donde quedó el marcador
+  // (espera a que la empresa deje de moverlo)
+  const clavePunto = posicion ? `${posicion.lat},${posicion.lng}` : "";
+
+  useEffect(() => {
+    if (!posicion) return;
+
+    const controlador = new AbortController();
+    const temporizador = setTimeout(() => {
+      buscarDireccionDePunto(posicion, controlador.signal)
+        .then((punto) =>
+          setEnElPunto({
+            clave: clavePunto,
+            texto: punto?.texto || "",
+            calle: punto?.calle || "",
+          })
+        )
+        .catch(() => {});
+    }, 700);
+
+    return () => {
+      clearTimeout(temporizador);
+      controlador.abort();
+    };
+    // `clavePunto` resume la posición
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clavePunto]);
+
+  const fijar = (latlng, nuevoAviso = null) => {
     onCambiar({ lat: redondear(latlng.lat), lng: redondear(latlng.lng) });
-    setAviso(mensaje);
+    setAviso(nuevoAviso);
   };
 
   const ubicarDireccion = async () => {
     if (!texto?.trim()) {
-      setAviso("Escribe la dirección antes de buscarla en el mapa.");
+      setAviso({
+        tipo: "alerta",
+        titulo: "Falta la dirección",
+        detalle: "Escribe la dirección antes de buscarla en el mapa.",
+      });
       return;
     }
 
     try {
       setBuscando(true);
-      setAviso("");
+      setAviso(null);
       setLinea(null);
 
       const resultado = await buscarCoordenadas({ texto, campos });
+      setBuscadoCon(claveDireccion);
 
       if (!resultado) {
-        setAviso(
-          "No se encontró la dirección. Haz clic en el mapa para marcar la ubicación manualmente."
-        );
+        setAviso({
+          tipo: "alerta",
+          titulo: "No se encontró la dirección",
+          detalle: "Revisa la calle, el municipio y el estado, o haz clic en el mapa para marcar la ubicación manualmente.",
+        });
         return;
       }
 
@@ -111,26 +199,45 @@ function SelectorUbicacion({ texto, campos, posicion, onCambiar }) {
       });
       setLinea(resultado.linea);
 
-      const mensaje =
-        resultado.precision === "calle"
-          ? mensajes.calle(campos?.direccion_numero?.trim())
-          : mensajes[resultado.precision] || mensajes.zona;
-
       fijar(
         resultado,
-        resultado.referencia
-          ? `${mensaje} Encontrado: ${resultado.referencia}.`
-          : mensaje
+        avisoDeResultado(resultado, campos?.direccion_numero?.trim())
       );
     } catch (err) {
       console.error("Error al buscar la dirección:", err);
-      setAviso(
-        "No se pudo buscar la dirección. Puedes marcar la ubicación haciendo clic en el mapa."
-      );
+      setAviso({
+        tipo: "alerta",
+        titulo: "No se pudo buscar la dirección",
+        detalle: "El servicio de mapas no respondió. Intenta de nuevo en unos segundos o marca la ubicación haciendo clic en el mapa.",
+      });
     } finally {
       setBuscando(false);
     }
   };
+
+  // Aviso que se muestra debajo del mapa
+  const avisoVisible = desactualizado
+    ? {
+        tipo: "info",
+        titulo: "La dirección cambió",
+        detalle: "Vuelve a presionar «Ubicar dirección en el mapa» o ajusta el marcador.",
+      }
+    : aviso || {
+        tipo: "info",
+        titulo: "",
+        detalle: posicion
+          ? "Arrastra el marcador o haz clic en el mapa para ajustar la ubicación."
+          : "Busca la dirección o haz clic en el mapa para marcar dónde está la vacante.",
+      };
+
+  const Icono = iconos[avisoVisible.tipo];
+
+  // ¿El marcador quedó en otra calle distinta a la escrita?
+  const puntoActual = enElPunto.clave === clavePunto ? enElPunto : null;
+  const otraCalle =
+    puntoActual?.calle &&
+    campos?.direccion_calle?.trim() &&
+    !coincide(puntoActual.calle, campos.direccion_calle);
 
   return (
     <div className="bt-selector-ubicacion">
@@ -150,8 +257,9 @@ function SelectorUbicacion({ texto, campos, posicion, onCambiar }) {
             className="secundario"
             onClick={() => {
               onCambiar(null);
-              setAviso("");
+              setAviso(null);
               setLinea(null);
+              setBuscadoCon("");
             }}
           >
             <Trash2 size={16} />
@@ -172,10 +280,10 @@ function SelectorUbicacion({ texto, campos, posicion, onCambiar }) {
           maxZoom={19}
         />
 
-        <ClicEnMapa onClic={(latlng) => fijar(latlng)} />
+        <ClicEnMapa onClic={(latlng) => fijar(latlng, avisoAjusteManual)} />
         <Recentrar destino={destino} />
 
-        {linea && (
+        {linea && !desactualizado && (
           <Polyline
             positions={linea}
             pathOptions={{ color: "#f59e0b", weight: 7, opacity: 0.75 }}
@@ -189,23 +297,44 @@ function SelectorUbicacion({ texto, campos, posicion, onCambiar }) {
             draggable
             eventHandlers={{
               dragend: (evento) =>
-                fijar(evento.target.getLatLng()),
+                fijar(evento.target.getLatLng(), avisoAjusteManual),
             }}
           />
         )}
       </MapContainer>
 
-      <p className="bt-mapa-nota">
-        {aviso ||
-          (posicion
-            ? "Arrastra el marcador o haz clic en el mapa para ajustar la ubicación."
-            : "Busca la dirección o haz clic en el mapa para marcar dónde está la vacante.")}
-      </p>
+      <div
+        className={`bt-selector-aviso ${avisoVisible.tipo}`}
+        role="status"
+        aria-live="polite"
+      >
+        <Icono size={16} aria-hidden="true" />
+        <p>
+          {avisoVisible.titulo && <strong>{avisoVisible.titulo}. </strong>}
+          {avisoVisible.detalle}
+        </p>
+      </div>
 
       {posicion && (
-        <p className="bt-selector-coordenadas">
+        <p className="bt-selector-coordenadas" translate="no">
           <LocateFixed size={14} />
-          {posicion.lat.toFixed(6)}, {posicion.lng.toFixed(6)}
+          <span>
+            {posicion.lat.toFixed(6)}, {posicion.lng.toFixed(6)}
+            {puntoActual?.texto && (
+              <span className="bt-selector-en-punto">
+                {" "}· Marcador en: {puntoActual.texto}
+              </span>
+            )}
+          </span>
+        </p>
+      )}
+
+      {posicion && otraCalle && (
+        <p className="bt-selector-otra-calle" role="status">
+          <TriangleAlert size={14} aria-hidden="true" />
+          El marcador está sobre «{puntoActual.calle}», no sobre «
+          {campos.direccion_calle.trim()}». Si la entrada está en esa
+          esquina, está bien; si no, muévelo a la calle correcta.
         </p>
       )}
     </div>
