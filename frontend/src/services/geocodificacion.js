@@ -63,7 +63,7 @@ const simplificar = (texto = "") =>
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 
-const coincide = (a, b) => {
+export const coincide = (a, b) => {
   const x = simplificar(a);
   const y = simplificar(b);
   return Boolean(x && y) && (x.includes(y) || y.includes(x));
@@ -408,5 +408,51 @@ export const buscarCoordenadas = async ({ texto, campos }, signal) => {
 
   // Los fallos de red no se guardan, para poder reintentar
   if (resultado || !nominatimFallo) cacheCoordenadas.set(clave, resultado);
+  return resultado;
+};
+
+// ---------- Geocodificación inversa ----------
+
+const cacheInversa = new Map();
+
+/**
+ * Dirección aproximada que OpenStreetMap tiene en un punto,
+ * para que la empresa confirme dónde quedó el marcador.
+ * @returns {Promise<{texto: string, calle: string}|null>}
+ */
+export const buscarDireccionDePunto = async ({ lat, lng }, signal) => {
+  const clave = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+  if (cacheInversa.has(clave)) return cacheInversa.get(clave);
+
+  const parametros = new URLSearchParams({
+    lat: String(lat),
+    lon: String(lng),
+    format: "jsonv2",
+    zoom: "18",
+    addressdetails: "1",
+    "accept-language": "es",
+  });
+
+  await esperarTurno(signal);
+
+  const respuesta = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?${parametros}`,
+    { signal, headers: { Accept: "application/json" } }
+  );
+
+  if (!respuesta.ok) throw new Error(`Nominatim ${respuesta.status}`);
+
+  const a = (await respuesta.json())?.address || {};
+  const texto = [
+    [a.road, a.house_number].filter(Boolean).join(" "),
+    a.suburb || a.neighbourhood || a.quarter,
+    a.postcode,
+    a.city || a.town || a.village || a.municipality,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const resultado = texto ? { texto, calle: a.road || "" } : null;
+  cacheInversa.set(clave, resultado);
   return resultado;
 };

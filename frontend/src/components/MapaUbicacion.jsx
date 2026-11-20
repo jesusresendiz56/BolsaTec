@@ -134,8 +134,9 @@ function MapaUbicacion({ direccion, latitud, longitud, campos }) {
 
       {actual.posicion?.aproximada && (
         <p className="bt-mapa-nota">
-          Ubicación aproximada: no se encontró la dirección exacta,
-          se muestra la zona de «{actual.posicion.referencia}».
+          {actual.posicion.precision === "calle"
+            ? `Ubicación aproximada: se muestra el centro de la calle «${actual.posicion.referencia}»; el número exacto no está en el mapa.`
+            : `Ubicación aproximada: no se encontró la dirección exacta, se muestra la zona de «${actual.posicion.referencia}».`}
         </p>
       )}
 
