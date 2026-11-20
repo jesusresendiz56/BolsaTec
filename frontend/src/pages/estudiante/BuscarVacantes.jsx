@@ -15,8 +15,11 @@ import {
 } from "lucide-react";
 
 import { sessionGet } from "../../services/session";
+import { esReciente, fechaCorta, tiempoRelativo } from "../../services/fechas";
+import { ESTADOS_POSTULACION } from "../../services/postulaciones";
 import MapaUbicacion from "../../components/MapaUbicacion";
 import "./BuscarVacantes.css";
+import "./MisPostulaciones.css";
 
 const API_URL = (
   import.meta.env.VITE_API_URL ||
@@ -113,7 +116,7 @@ const ubicacionCorta = (vacante) =>
     .join(", ") ||
   "No especificada";
 
-function BuscarVacantes() {
+function BuscarVacantes({ onActualizar, onIr }) {
   const [vacantes, setVacantes] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [modalidad, setModalidad] = useState("");
@@ -136,6 +139,7 @@ function BuscarVacantes() {
   const [postuladas, setPostuladas] = useState({});
   const idsPostulados = Object.keys(postuladas).map(Number);
   const [cancelando, setCancelando] = useState(false);
+  const [confirmarCancelacion, setConfirmarCancelacion] = useState(false);
   const [enviandoPostulacion, setEnviandoPostulacion] =
     useState(false);
 
@@ -245,9 +249,12 @@ function BuscarVacantes() {
   };
 
   useEffect(() => {
+    // La consulta inicial actualiza el estado al terminar
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     consultarVacantes();
     consultarPostulaciones();
   }, []);
+
 
   // ========================================
   // BUSCADOR Y FILTROS
@@ -325,6 +332,7 @@ function BuscarVacantes() {
 
   const abrirDetalles = (vacante) => {
     setVacanteSeleccionada(vacante);
+    setConfirmarCancelacion(false);
     setMensajePostulacion("");
     setErrorPostulacion("");
   };
@@ -336,6 +344,16 @@ function BuscarVacantes() {
     setMensajePostulacion("");
     setErrorPostulacion("");
   };
+
+  // Cerrar el detalle con la tecla Escape
+  useEffect(() => {
+    if (!vacanteSeleccionada) return;
+    const alTeclear = (evento) => {
+      if (evento.key === "Escape") cerrarDetalles();
+    };
+    document.addEventListener("keydown", alTeclear);
+    return () => document.removeEventListener("keydown", alTeclear);
+  });
 
   // ========================================
   // ENVIAR POSTULACIÓN
@@ -410,6 +428,7 @@ function BuscarVacantes() {
         datos.mensaje ||
           "Postulación enviada correctamente"
       );
+      onActualizar?.();
     } catch (err) {
       console.error(
         "Error al enviar postulación:",
@@ -433,12 +452,6 @@ function BuscarVacantes() {
     const postulacion = postuladas[idVacante];
 
     if (!postulacion?.id_postulacion) return;
-
-    const confirmar = window.confirm(
-      `¿Seguro que quieres cancelar tu postulación a "${vacanteSeleccionada.titulo}"?`
-    );
-
-    if (!confirmar) return;
 
     try {
       setCancelando(true);
@@ -478,6 +491,8 @@ function BuscarVacantes() {
       setMensajePostulacion(
         datos.mensaje || "Postulación cancelada correctamente"
       );
+      setConfirmarCancelacion(false);
+      onActualizar?.();
     } catch (err) {
       setErrorPostulacion(err.message);
     } finally {
@@ -494,6 +509,9 @@ function BuscarVacantes() {
     : null;
 
   const yaPostulado = Boolean(postulacionActual);
+  const estadoActual = postulacionActual
+    ? ESTADOS_POSTULACION[postulacionActual.estado] || ESTADOS_POSTULACION.enviada
+    : null;
 
   const puedeCancelar =
     yaPostulado &&
@@ -506,7 +524,7 @@ function BuscarVacantes() {
   return (
     <div className="bt-vacantes">
       <div className="bt-vacantes-intro">
-        <h3>Explorar oportunidades</h3>
+        <h2>Buscar vacantes</h2>
 
         <p>
           Encuentra empleos y prácticas profesionales
@@ -678,17 +696,34 @@ function BuscarVacantes() {
 
             <div className="bt-vacantes-grid">
               {vacantesFiltradas.map((vacante) => {
-                const postulada = idsPostulados.includes(
-                  Number(vacante.id_vacante)
-                );
+                const postulacion =
+                  postuladas[Number(vacante.id_vacante)];
+                const estado = postulacion
+                  ? ESTADOS_POSTULACION[postulacion.estado] ||
+                    ESTADOS_POSTULACION.enviada
+                  : null;
+                const IconoEstado = estado?.icono;
 
                 return (
                   <article
-                    className="bt-vacante-card"
+                    className={`bt-vacante-card ${postulacion ? "postulada" : ""}`}
                     key={vacante.id_vacante}
                   >
-                    <div className="bt-vacante-icono">
-                      <Building2 size={24} />
+                    <div className="bt-vacante-card-top">
+                      <div className="bt-vacante-icono">
+                        <Building2 size={24} />
+                      </div>
+
+                      {estado ? (
+                        <span className={`bt-postulacion-estado ${estado.clase}`}>
+                          <IconoEstado size={14} />
+                          {estado.nombre}
+                        </span>
+                      ) : (
+                        esReciente(vacante.fecha_publicacion) && (
+                          <span className="bt-vacante-nueva">Nueva</span>
+                        )
+                      )}
                     </div>
 
                     <h3>{vacante.titulo}</h3>
@@ -718,21 +753,19 @@ function BuscarVacantes() {
                       {mostrarSalario(vacante)}
                     </p>
 
-                    {postulada && (
-                      <p className="bt-postulacion-estado">
-                        <CheckCircle2 size={17} />
-                        Ya te postulaste
-                      </p>
-                    )}
+                    <p className="bt-vacante-fecha">
+                      <CalendarDays size={14} />
+                      Publicada {tiempoRelativo(vacante.fecha_publicacion)}
+                    </p>
 
                     <button
                       type="button"
-                      className="bt-vacante-detalles"
+                      className={`bt-vacante-detalles ${postulacion ? "secundario" : ""}`}
                       onClick={() =>
                         abrirDetalles(vacante)
                       }
                     >
-                      Ver detalles
+                      {postulacion ? "Ver mi postulación" : "Ver detalles y postularme"}
                     </button>
                   </article>
                 );
@@ -799,10 +832,8 @@ function BuscarVacantes() {
             {vacanteSeleccionada.fecha_publicacion && (
               <p className="bt-vacante-dato">
                 <CalendarDays size={17} />
-                Publicada:{" "}
-                {new Date(
-                  vacanteSeleccionada.fecha_publicacion
-                ).toLocaleDateString("es-MX")}
+                Publicada {tiempoRelativo(vacanteSeleccionada.fecha_publicacion)}{" "}
+                ({fechaCorta(vacanteSeleccionada.fecha_publicacion)})
               </p>
             )}
             </div>
@@ -835,7 +866,19 @@ function BuscarVacantes() {
                 role="status"
               >
                 <CheckCircle2 size={19} />
-                {mensajePostulacion}
+                <span>{mensajePostulacion}</span>
+                {onIr && yaPostulado && (
+                  <button
+                    type="button"
+                    className="bt-postulacion-exito-ir"
+                    onClick={() => {
+                      setVacanteSeleccionada(null);
+                      onIr("postulaciones");
+                    }}
+                  >
+                    Ver mis postulaciones
+                  </button>
+                )}
               </div>
             )}
 
@@ -850,23 +893,39 @@ function BuscarVacantes() {
 
             {yaPostulado ? (
               <div className="bt-vacante-acciones-postulado">
-                <p className="bt-postulacion-estado">
-                  <CheckCircle2 size={18} />
-                  Ya te postulaste
-                </p>
+                {estadoActual && (
+                  <div className="bt-vacante-estado-detalle">
+                    <span className={`bt-postulacion-estado ${estadoActual.clase}`}>
+                      <estadoActual.icono size={15} />
+                      {estadoActual.nombre}
+                    </span>
+                    <p>{estadoActual.ayuda}</p>
+                  </div>
+                )}
 
                 {puedeCancelar ? (
-                  <button
-                    type="button"
-                    className="bt-vacante-cancelar"
-                    onClick={cancelarPostulacion}
-                    disabled={cancelando}
-                  >
-                    <XCircle size={18} />
-                    {cancelando
-                      ? "Cancelando..."
-                      : "Cancelar postulación"}
-                  </button>
+                  confirmarCancelacion ? (
+                    <div className="bt-vacante-confirmar" role="alertdialog" aria-label="Confirmar cancelación">
+                      <span>¿Seguro? La empresa ya no verá tu solicitud.</span>
+                      <div>
+                        <button type="button" className="bt-vacante-btn" onClick={() => setConfirmarCancelacion(false)} disabled={cancelando}>
+                          No, conservar
+                        </button>
+                        <button type="button" className="bt-vacante-btn peligro" onClick={cancelarPostulacion} disabled={cancelando}>
+                          {cancelando ? "Cancelando..." : "Sí, cancelar"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="bt-vacante-cancelar"
+                      onClick={() => setConfirmarCancelacion(true)}
+                    >
+                      <XCircle size={18} />
+                      Cancelar postulación
+                    </button>
+                  )
                 ) : (
                   <p className="bt-vacante-nota">
                     La empresa ya respondió a tu postulación,

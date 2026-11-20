@@ -1,149 +1,116 @@
-
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
-  FileText,
+  AlertTriangle,
   Building2,
-  MapPin,
   CalendarDays,
+  Check,
+  FileText,
+  MapPin,
   RefreshCw,
+  Search,
   BriefcaseBusiness,
-  CheckCircle2,
-  Clock3,
-  Eye,
-  CalendarCheck,
   XCircle,
 } from "lucide-react";
 
 import { sessionGet } from "../../services/session";
+import { tiempoRelativo, fechaCorta } from "../../services/fechas";
+import {
+  ESTADOS_POSTULACION,
+  PASOS_PROCESO,
+  pasoActual,
+} from "../../services/postulaciones";
 import "./MisPostulaciones.css";
 
 const API_URL = (
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:3000"
+  import.meta.env.VITE_API_URL || "http://localhost:3000"
 ).replace(/\/$/, "");
 
-const estados = {
-  enviada: {
-    nombre: "Enviada",
-    icono: Clock3,
-    clase: "enviada",
-  },
-  vista: {
-    nombre: "Vista",
-    icono: Eye,
-    clase: "vista",
-  },
-  entrevista: {
-    nombre: "Entrevista",
-    icono: CalendarCheck,
-    clase: "entrevista",
-  },
-  aceptada: {
-    nombre: "Aceptada",
-    icono: CheckCircle2,
-    clase: "aceptada",
-  },
-  rechazada: {
-    nombre: "Rechazada",
-    icono: XCircle,
-    clase: "rechazada",
-  },
-};
-
-const modalidades = {
+const MODALIDADES = {
   presencial: "Presencial",
   hibrida: "Híbrida",
   remota: "Remota",
 };
 
-const tipos = {
+const TIPOS = {
   practicas: "Prácticas profesionales",
   medio_tiempo: "Medio tiempo",
   tiempo_completo: "Tiempo completo",
 };
 
-const formatearFecha = (fecha) => {
-  if (!fecha) return "Fecha no disponible";
+const CANCELABLES = ["enviada", "vista", "entrevista"];
 
-  const valor = new Date(fecha);
-
-  if (Number.isNaN(valor.getTime())) {
-    return "Fecha no disponible";
-  }
-
-  return valor.toLocaleDateString("es-MX", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  });
+const NOMBRES_PASOS = {
+  enviada: "Enviada",
+  vista: "Revisada",
+  entrevista: "Entrevista",
+  resultado: "Resultado",
 };
 
-function MisPostulaciones() {
+// Pestañas de filtro
+const FILTROS = [
+  { id: "todas", nombre: "Todas", incluye: () => true },
+  { id: "proceso", nombre: "En proceso", incluye: (e) => CANCELABLES.includes(e) },
+  { id: "entrevista", nombre: "Entrevistas", incluye: (e) => e === "entrevista" },
+  { id: "aceptada", nombre: "Aceptadas", incluye: (e) => e === "aceptada" },
+  { id: "rechazada", nombre: "No seleccionadas", incluye: (e) => e === "rechazada" },
+];
+
+function MisPostulaciones({ onActualizar, onIr }) {
   const [postulaciones, setPostulaciones] = useState([]);
-  const [filtroEstado, setFiltroEstado] = useState("");
+  const [filtro, setFiltro] = useState("todas");
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
+  const [confirmandoId, setConfirmandoId] = useState(null);
   const [cancelandoId, setCancelandoId] = useState(null);
 
   // ========================================
-  // CONSULTAR POSTULACIONES REALES
+  // CONSULTAR POSTULACIONES
   // ========================================
 
-  const consultarPostulaciones = async () => {
+  const consultarPostulaciones = useCallback(async () => {
     try {
       setCargando(true);
       setError("");
 
       const sesion = sessionGet("estudiante");
-
       if (!sesion?.token) {
-        throw new Error(
-          "Debes iniciar sesión como estudiante"
-        );
+        throw new Error("Debes iniciar sesión como estudiante");
       }
 
-      const respuesta = await fetch(
-        `${API_URL}/api/estudiante/postulaciones`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${sesion.token}`,
-          },
-        }
-      );
+      const respuesta = await fetch(`${API_URL}/api/estudiante/postulaciones`, {
+        headers: { Authorization: `Bearer ${sesion.token}` },
+      });
 
       const datos = await respuesta.json();
 
       if (!respuesta.ok) {
-        throw new Error(
-          datos.mensaje ||
-            "No se pudieron consultar las postulaciones"
-        );
+        throw new Error(datos.mensaje || "No se pudieron consultar las postulaciones");
       }
 
-      setPostulaciones(
-        Array.isArray(datos.postulaciones)
-          ? datos.postulaciones
-          : []
-      );
+      setPostulaciones(Array.isArray(datos.postulaciones) ? datos.postulaciones : []);
     } catch (err) {
-      console.error(
-        "Error al consultar postulaciones:",
-        err
-      );
-
+      console.error("Error al consultar postulaciones:", err);
       setError(err.message);
       setPostulaciones([]);
     } finally {
       setCargando(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    // La consulta inicial actualiza el estado al terminar
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     consultarPostulaciones();
-  }, []);
+  }, [consultarPostulaciones]);
+
+  // Ocultar el mensaje de éxito después de unos segundos
+  useEffect(() => {
+    if (!mensaje) return;
+    const temporizador = setTimeout(() => setMensaje(""), 5000);
+    return () => clearTimeout(temporizador);
+  }, [mensaje]);
 
   // ========================================
   // CANCELAR POSTULACIÓN
@@ -152,19 +119,12 @@ function MisPostulaciones() {
   const cancelarPostulacion = async (postulacion) => {
     if (cancelandoId) return;
 
-    const confirmar = window.confirm(
-      `¿Seguro que quieres cancelar tu postulación a "${postulacion.titulo}"?`
-    );
-
-    if (!confirmar) return;
-
     try {
       setCancelandoId(postulacion.id_postulacion);
       setError("");
       setMensaje("");
 
       const sesion = sessionGet("estudiante");
-
       if (!sesion?.token) {
         throw new Error("Debes iniciar sesión como estudiante");
       }
@@ -173,30 +133,22 @@ function MisPostulaciones() {
         `${API_URL}/api/estudiante/postulaciones/${postulacion.id_postulacion}`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${sesion.token}`,
-          },
+          headers: { Authorization: `Bearer ${sesion.token}` },
         }
       );
 
       const datos = await respuesta.json().catch(() => ({}));
 
       if (!respuesta.ok) {
-        throw new Error(
-          datos.mensaje || "No se pudo cancelar la postulación"
-        );
+        throw new Error(datos.mensaje || "No se pudo cancelar la postulación");
       }
 
       setPostulaciones((anteriores) =>
-        anteriores.filter(
-          (item) =>
-            item.id_postulacion !== postulacion.id_postulacion
-        )
+        anteriores.filter((item) => item.id_postulacion !== postulacion.id_postulacion)
       );
-
-      setMensaje(
-        `Cancelaste tu postulación a "${postulacion.titulo}".`
-      );
+      setConfirmandoId(null);
+      setMensaje(`Cancelaste tu postulación a "${postulacion.titulo}".`);
+      onActualizar?.();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -205,258 +157,205 @@ function MisPostulaciones() {
   };
 
   // ========================================
-  // FILTRAR POSTULACIONES
+  // CONTADORES Y FILTRO
   // ========================================
 
-  const postulacionesFiltradas = postulaciones.filter(
-    (postulacion) =>
-      !filtroEstado || postulacion.estado === filtroEstado
-  );
+  const conteos = useMemo(() => {
+    const resultado = {};
+    FILTROS.forEach((f) => {
+      resultado[f.id] = postulaciones.filter((p) => f.incluye(p.estado)).length;
+    });
+    return resultado;
+  }, [postulaciones]);
 
-  const totalEntrevistas = postulaciones.filter(
-    (postulacion) => postulacion.estado === "entrevista"
-  ).length;
+  const filtroActual = FILTROS.find((f) => f.id === filtro) || FILTROS[0];
+  const visibles = postulaciones.filter((p) => filtroActual.incluye(p.estado));
 
-  const totalAceptadas = postulaciones.filter(
-    (postulacion) => postulacion.estado === "aceptada"
-  ).length;
+  // ========================================
+  // INTERFAZ
+  // ========================================
 
   return (
-    <div className="bt-mis-postulaciones">
-      <div className="bt-postulaciones-intro">
+    <div className="bt-postulaciones">
+      <div className="bt-postulaciones-header">
         <div>
-          <h3>Seguimiento de mis postulaciones</h3>
-          <p>
-            Consulta las vacantes a las que te has
-            postulado y revisa el estado de cada
-            solicitud.
-          </p>
+          <h2>Mis postulaciones</h2>
+          <p>Da seguimiento al estado de cada solicitud que enviaste.</p>
         </div>
 
         <button
           type="button"
-          className="bt-postulaciones-actualizar"
+          className="bt-postulaciones-btn"
           onClick={consultarPostulaciones}
           disabled={cargando}
         >
-          <RefreshCw size={17} />
-          {cargando ? "Actualizando..." : "Actualizar"}
+          <RefreshCw size={17} className={cargando ? "girando" : ""} />
+          Actualizar
         </button>
       </div>
 
-      {/* ========================================
-          RESUMEN DE POSTULACIONES
-      ======================================== */}
-
-      <div className="bt-postulaciones-resumen">
-        <div className="bt-postulaciones-resumen-card">
-          <FileText size={23} />
-          <span>Total de postulaciones</span>
-          <strong>{postulaciones.length}</strong>
-        </div>
-
-        <div className="bt-postulaciones-resumen-card">
-          <CalendarCheck size={23} />
-          <span>Entrevistas</span>
-          <strong>{totalEntrevistas}</strong>
-        </div>
-
-        <div className="bt-postulaciones-resumen-card">
-          <CheckCircle2 size={23} />
-          <span>Aceptadas</span>
-          <strong>{totalAceptadas}</strong>
-        </div>
-      </div>
-
-      {/* ========================================
-          FILTRO DE ESTADOS
-      ======================================== */}
-
-      <div className="bt-postulaciones-filtros">
-        <div>
-          <h3>Historial de solicitudes</h3>
-          <p>
-            {postulacionesFiltradas.length} solicitud(es)
-            encontrada(s)
-          </p>
-        </div>
-
-        <select
-          value={filtroEstado}
-          onChange={(e) => setFiltroEstado(e.target.value)}
-          aria-label="Filtrar postulaciones por estado"
-        >
-          <option value="">Todos los estados</option>
-          <option value="enviada">Enviada</option>
-          <option value="vista">Vista</option>
-          <option value="entrevista">Entrevista</option>
-          <option value="aceptada">Aceptada</option>
-          <option value="rechazada">Rechazada</option>
-        </select>
-      </div>
-
-      {/* ========================================
-          CARGA Y ERRORES
-      ======================================== */}
-
-      {cargando && (
-        <div className="bt-postulaciones-mensaje">
-          Consultando tus postulaciones...
-        </div>
-      )}
-
       {error && (
-        <div
-          className="bt-postulaciones-error"
-          role="alert"
-        >
-          {error}
+        <div className="bt-postulaciones-aviso error" role="alert">
+          <AlertTriangle size={18} /> {error}
         </div>
       )}
-
-      {!cargando &&
-        !error &&
-        postulacionesFiltradas.length === 0 && (
-          <div className="bt-postulaciones-mensaje">
-            <BriefcaseBusiness size={35} />
-
-            <h4>
-              {postulaciones.length === 0
-                ? "Todavía no tienes postulaciones"
-                : "No hay postulaciones con este estado"}
-            </h4>
-
-            <p>
-              {postulaciones.length === 0
-                ? "Explora las vacantes disponibles y envía tu primera solicitud."
-                : "Selecciona otro estado para consultar tus solicitudes."}
-            </p>
-          </div>
-        )}
 
       {mensaje && (
-        <p className="bt-postulacion-mensaje" role="status">
-          <CheckCircle2 size={17} />
-          {mensaje}
-        </p>
+        <div className="bt-postulaciones-aviso exito" role="status">
+          <Check size={18} /> {mensaje}
+        </div>
       )}
 
-      {/* ========================================
-          LISTADO DE POSTULACIONES
-      ======================================== */}
+      {/* PESTAÑAS */}
+      <div className="bt-postulaciones-tabs" role="tablist" aria-label="Filtrar postulaciones">
+        {FILTROS.map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            role="tab"
+            aria-selected={filtro === f.id}
+            className={filtro === f.id ? "activo" : ""}
+            onClick={() => setFiltro(f.id)}
+          >
+            {f.nombre}
+            <span>{conteos[f.id] ?? 0}</span>
+          </button>
+        ))}
+      </div>
 
-      {!cargando &&
-        !error &&
-        postulacionesFiltradas.length > 0 && (
-          <div className="bt-postulaciones-lista">
-            {postulacionesFiltradas.map(
-              (postulacion) => {
-                const estado =
-                  estados[postulacion.estado] || {
-                    nombre:
-                      postulacion.estado ||
-                      "Sin estado",
-                    icono: Clock3,
-                    clase: "enviada",
-                  };
+      {/* LISTA */}
+      {cargando && postulaciones.length === 0 ? (
+        <div className="bt-postulaciones-lista">
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="bt-postulacion-card esqueleto" aria-hidden="true">
+              <span /> <span /> <span />
+            </div>
+          ))}
+        </div>
+      ) : visibles.length === 0 ? (
+        <div className="bt-postulaciones-vacio">
+          <FileText size={40} />
+          {postulaciones.length === 0 ? (
+            <>
+              <h3>Aún no te has postulado</h3>
+              <p>Explora las vacantes disponibles y envía tu primera solicitud.</p>
+              {onIr && (
+                <button type="button" className="bt-postulaciones-btn primario" onClick={() => onIr("vacantes")}>
+                  <Search size={17} /> Buscar vacantes
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <h3>Sin postulaciones en «{filtroActual.nombre}»</h3>
+              <button type="button" className="bt-postulaciones-btn" onClick={() => setFiltro("todas")}>
+                Ver todas
+              </button>
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="bt-postulaciones-lista">
+          {visibles.map((p) => {
+            const estado = ESTADOS_POSTULACION[p.estado] || ESTADOS_POSTULACION.enviada;
+            const IconoEstado = estado.icono;
+            const terminada = p.estado === "aceptada" || p.estado === "rechazada";
+            // Si ya hay resultado no sabemos si hubo entrevista: no se muestra ese paso
+            const pasos = terminada
+              ? PASOS_PROCESO.filter((id) => id !== "entrevista")
+              : PASOS_PROCESO;
+            const paso = terminada ? pasos.length - 1 : pasoActual(p.estado);
+            const confirmando = confirmandoId === p.id_postulacion;
 
-                const IconoEstado = estado.icono;
+            return (
+              <article key={p.id_postulacion} className={`bt-postulacion-card estado-${estado.clase}`}>
+                <div className="bt-postulacion-top">
+                  <div className="bt-postulacion-logo"><Building2 size={22} /></div>
 
-                return (
-                  <article
-                    key={postulacion.id_postulacion}
-                    className="bt-postulacion-card"
-                  >
-                    <div className="bt-postulacion-encabezado">
-                      <div className="bt-postulacion-titulo">
-                        <div className="bt-postulacion-icono">
-                          <Building2 size={23} />
-                        </div>
+                  <div className="bt-postulacion-titulo">
+                    <h3>{p.titulo}</h3>
+                    <p>{p.nombre_empresa}</p>
+                  </div>
 
-                        <div>
-                          <h3>{postulacion.titulo}</h3>
-                          <p>
-                            {postulacion.nombre_empresa}
-                          </p>
-                        </div>
-                      </div>
+                  <span className={`bt-postulacion-estado ${estado.clase}`}>
+                    <IconoEstado size={15} /> {estado.nombre}
+                  </span>
+                </div>
 
-                      <span
-                        className={`bt-postulacion-badge bt-postulacion-badge--${estado.clase}`}
+                <ul className="bt-postulacion-meta">
+                  <li><MapPin size={15} /> {p.ubicacion || "Sin ubicación"}</li>
+                  <li><BriefcaseBusiness size={15} /> {MODALIDADES[p.modalidad] || p.modalidad}</li>
+                  <li><FileText size={15} /> {TIPOS[p.tipo] || p.tipo}</li>
+                  <li title={fechaCorta(p.fecha_postulacion)}>
+                    <CalendarDays size={15} /> Te postulaste {tiempoRelativo(p.fecha_postulacion)}
+                  </li>
+                </ul>
+
+                {/* LÍNEA DE TIEMPO */}
+                <ol
+                  className="bt-postulacion-pasos"
+                  aria-label="Avance del proceso"
+                  style={{ gridTemplateColumns: `repeat(${pasos.length}, minmax(0, 1fr))` }}
+                >
+                  {pasos.map((id, i) => {
+                    const hecho = i < paso || (i === paso && terminada) || i === 0;
+                    const actual = i === paso && !terminada;
+                    const nombre =
+                      id === "resultado" && terminada ? estado.nombre : NOMBRES_PASOS[id];
+                    return (
+                      <li
+                        key={id}
+                        className={[
+                          hecho ? "hecho" : "",
+                          actual ? "actual" : "",
+                          id === "resultado" && p.estado === "rechazada" ? "negativo" : "",
+                        ].join(" ")}
+                        aria-current={actual ? "step" : undefined}
                       >
-                        <IconoEstado size={15} />
-                        {estado.nombre}
-                      </span>
-                    </div>
+                        <span className="punto">
+                          {hecho && !(id === "resultado" && p.estado === "rechazada") && <Check size={12} strokeWidth={3} />}
+                          {id === "resultado" && p.estado === "rechazada" && <XCircle size={12} strokeWidth={3} />}
+                        </span>
+                        <span className="nombre">{nombre}</span>
+                      </li>
+                    );
+                  })}
+                </ol>
 
-                    <div className="bt-postulacion-detalles">
-                      <span>
-                        <MapPin size={16} />
-                        {postulacion.ubicacion ||
-                          "Ubicación no especificada"}
-                      </span>
+                <p className={`bt-postulacion-ayuda ${estado.clase}`}>{estado.ayuda}</p>
 
-                      <span>
-                        <BriefcaseBusiness size={16} />
-                        {modalidades[
-                          postulacion.modalidad
-                        ] ||
-                          postulacion.modalidad ||
-                          "Sin modalidad"}
-                      </span>
+                {p.estado_vacante && p.estado_vacante !== "activa" && !terminada && (
+                  <p className="bt-postulacion-nota">
+                    <AlertTriangle size={15} /> La empresa {p.estado_vacante === "pausada" ? "pausó" : "cerró"} esta vacante.
+                  </p>
+                )}
 
-                      <span>
-                        <FileText size={16} />
-                        {tipos[postulacion.tipo] ||
-                          postulacion.tipo ||
-                          "Sin tipo"}
-                      </span>
-
-                      <span>
-                        <CalendarDays size={16} />
-                        Postulación:{" "}
-                        {formatearFecha(
-                          postulacion.fecha_postulacion
-                        )}
-                      </span>
-                    </div>
-
-                    {postulacion.estado_vacante !==
-                      "activa" && (
-                      <p className="bt-postulacion-aviso">
-                        Esta vacante actualmente está{" "}
-                        {postulacion.estado_vacante}.
-                        Tu historial de postulación
-                        permanece disponible.
-                      </p>
-                    )}
-
-                    {["enviada", "vista", "entrevista"].includes(
-                      postulacion.estado
-                    ) && (
-                      <div className="bt-postulacion-acciones">
-                        <button
-                          type="button"
-                          className="bt-postulacion-cancelar"
-                          onClick={() =>
-                            cancelarPostulacion(postulacion)
-                          }
-                          disabled={Boolean(cancelandoId)}
-                        >
-                          <XCircle size={16} />
-                          {cancelandoId ===
-                          postulacion.id_postulacion
-                            ? "Cancelando..."
-                            : "Cancelar postulación"}
-                        </button>
+                {CANCELABLES.includes(p.estado) && (
+                  <div className="bt-postulacion-acciones">
+                    {confirmando ? (
+                      <div className="bt-postulacion-confirmar" role="alertdialog" aria-label="Confirmar cancelación">
+                        <span>¿Cancelar tu postulación? La empresa ya no verá tu solicitud.</span>
+                        <div>
+                          <button type="button" className="bt-postulaciones-btn" onClick={() => setConfirmandoId(null)} disabled={Boolean(cancelandoId)}>
+                            No, conservar
+                          </button>
+                          <button type="button" className="bt-postulaciones-btn peligro" onClick={() => cancelarPostulacion(p)} disabled={Boolean(cancelandoId)}>
+                            {cancelandoId === p.id_postulacion ? "Cancelando..." : "Sí, cancelar"}
+                          </button>
+                        </div>
                       </div>
+                    ) : (
+                      <button type="button" className="bt-postulacion-cancelar" onClick={() => setConfirmandoId(p.id_postulacion)}>
+                        <XCircle size={16} /> Cancelar postulación
+                      </button>
                     )}
-                  </article>
-                );
-              }
-            )}
-          </div>
-        )}
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
