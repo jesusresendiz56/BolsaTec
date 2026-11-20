@@ -3,6 +3,7 @@ import {
   MapContainer,
   TileLayer,
   Marker,
+  Polyline,
   useMap,
   useMapEvents,
 } from "react-leaflet";
@@ -34,18 +35,31 @@ function ClicEnMapa({ onClic }) {
   return null;
 }
 
-// Centrar el mapa cuando cambia la posición desde fuera
-function Recentrar({ posicion, zoom }) {
+// Centrar el mapa al buscar la dirección. Si se encontró
+// solo la calle, se muestra la calle completa.
+function Recentrar({ destino }) {
   const mapa = useMap();
 
   useEffect(() => {
-    if (posicion) {
-      mapa.setView([posicion.lat, posicion.lng], zoom ?? mapa.getZoom());
+    if (!destino) return;
+
+    if (destino.linea?.length) {
+      mapa.fitBounds(destino.linea.flat(), { padding: [30, 30], maxZoom: 18 });
+    } else {
+      mapa.setView([destino.lat, destino.lng], destino.zoom ?? mapa.getZoom());
     }
-  }, [mapa, posicion, zoom]);
+  }, [mapa, destino]);
 
   return null;
 }
+
+const mensajes = {
+  numero:
+    "Se encontró el número en OpenStreetMap. Revisa que el marcador esté en el lugar correcto; puedes arrastrarlo para ajustarlo.",
+  calle: (numero) =>
+    `Se encontró la calle${numero ? `, pero OpenStreetMap no tiene registrado el número ${numero}` : ""}. El marcador está en el centro de la calle (resaltada en el mapa): arrástralo al punto exacto.`,
+  zona: "No se encontró la calle; se marcó solo la zona (colonia, C.P. o municipio). Arrastra el marcador al punto exacto.",
+};
 
 const redondear = (valor) => Number(Number(valor).toFixed(6));
 
@@ -54,6 +68,8 @@ function SelectorUbicacion({ texto, campos, posicion, onCambiar }) {
   const [aviso, setAviso] = useState("");
   // Solo se recentra el mapa al buscar la dirección
   const [destino, setDestino] = useState(null);
+  // Calle encontrada (cuando no está el número)
+  const [linea, setLinea] = useState(null);
 
   const centroInicial = useMemo(
     () => posicion || CENTRO_MEXICO,
@@ -76,6 +92,7 @@ function SelectorUbicacion({ texto, campos, posicion, onCambiar }) {
     try {
       setBuscando(true);
       setAviso("");
+      setLinea(null);
 
       const resultado = await buscarCoordenadas({ texto, campos });
 
@@ -89,13 +106,21 @@ function SelectorUbicacion({ texto, campos, posicion, onCambiar }) {
       setDestino({
         lat: resultado.lat,
         lng: resultado.lng,
-        zoom: resultado.aproximada ? 15 : 18,
+        zoom: resultado.precision === "numero" ? 18 : 16,
+        linea: resultado.linea,
       });
+      setLinea(resultado.linea);
+
+      const mensaje =
+        resultado.precision === "calle"
+          ? mensajes.calle(campos?.direccion_numero?.trim())
+          : mensajes[resultado.precision] || mensajes.zona;
+
       fijar(
         resultado,
-        resultado.aproximada
-          ? "Se encontró solo la zona aproximada. Arrastra el marcador al punto exacto."
-          : "Revisa que el marcador esté en el lugar correcto; puedes arrastrarlo para ajustarlo."
+        resultado.referencia
+          ? `${mensaje} Encontrado: ${resultado.referencia}.`
+          : mensaje
       );
     } catch (err) {
       console.error("Error al buscar la dirección:", err);
@@ -126,6 +151,7 @@ function SelectorUbicacion({ texto, campos, posicion, onCambiar }) {
             onClick={() => {
               onCambiar(null);
               setAviso("");
+              setLinea(null);
             }}
           >
             <Trash2 size={16} />
@@ -147,7 +173,14 @@ function SelectorUbicacion({ texto, campos, posicion, onCambiar }) {
         />
 
         <ClicEnMapa onClic={(latlng) => fijar(latlng)} />
-        <Recentrar posicion={destino} zoom={destino?.zoom} />
+        <Recentrar destino={destino} />
+
+        {linea && (
+          <Polyline
+            positions={linea}
+            pathOptions={{ color: "#f59e0b", weight: 7, opacity: 0.75 }}
+          />
+        )}
 
         {posicion && (
           <Marker
