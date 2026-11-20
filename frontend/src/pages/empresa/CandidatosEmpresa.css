@@ -185,13 +185,13 @@
 
 .bt-candidato-estado.estado-vista,
 .bt-candidato-estado.estado-revision {
-  background: #fef3c7;
-  color: #92400e;
+  background: #ede9fe;
+  color: #6d28d9;
 }
 
 .bt-candidato-estado.estado-entrevista {
-  background: #ede9fe;
-  color: #7c3aed;
+  background: #fef3c7;
+  color: #b45309;
 }
 
 .bt-candidato-estado.estado-aceptada,
@@ -321,3 +321,13 @@
     width: 100%;
   }
 }
+
+/* Estados en modo oscuro (mismos colores que en el panel del estudiante) */
+[data-theme="dark"] .bt-candidato-estado.estado-enviada { background: rgba(14, 165, 233, 0.16); color: #7dd3fc; }
+[data-theme="dark"] .bt-candidato-estado.estado-vista,
+[data-theme="dark"] .bt-candidato-estado.estado-revision { background: rgba(139, 92, 246, 0.18); color: #c4b5fd; }
+[data-theme="dark"] .bt-candidato-estado.estado-entrevista { background: rgba(245, 158, 11, 0.16); color: #fcd34d; }
+[data-theme="dark"] .bt-candidato-estado.estado-aceptada,
+[data-theme="dark"] .bt-candidato-estado.estado-seleccionado { background: rgba(22, 163, 74, 0.16); color: #86efac; }
+[data-theme="dark"] .bt-candidato-estado.estado-rechazada,
+[data-theme="dark"] .bt-candidato-estado.estado-rechazado { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }

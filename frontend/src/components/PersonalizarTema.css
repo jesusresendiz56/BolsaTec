@@ -406,7 +406,6 @@ html[data-color] .bt-dashboard {
 /* Botones principales */
 html[data-color] :is(
   .bt-dashboard-action,
-  .bt-adm-barra-fill,
   .bt-adm-chip.activo,
   .bt-em-primary,
   .bt-ea-primary,

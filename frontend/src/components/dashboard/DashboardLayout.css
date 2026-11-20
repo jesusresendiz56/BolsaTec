@@ -659,3 +659,17 @@
     font-size: 21px;
   }
 }
+
+/* Contador (p. ej. notificaciones sin leer) */
+.bt-sidebar-badge {
+  min-width: 20px;
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}

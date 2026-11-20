@@ -19,11 +19,12 @@ const vacio = {
   ubicacion: ""
 };
 
-function EmpresasAdmin() {
+function EmpresasAdmin({ filtroInicial = "todas" }) {
   const navigate = useNavigate();
 
   const [empresas, setEmpresas] = useState([]);
   const [busqueda, setBusqueda] = useState("");
+  const [verificacion, setVerificacion] = useState(filtroInicial);
   const [cargando, setCargando] = useState(true);
   const [procesando, setProcesando] = useState(false);
   const [error, setError] = useState("");
@@ -75,6 +76,8 @@ function EmpresasAdmin() {
     const texto = busqueda.trim().toLowerCase();
 
     return empresas.filter((empresa) =>
+      (verificacion === "todas" ||
+        (verificacion === "pendientes" ? !empresa.verificada : empresa.verificada)) &&
       [
         empresa.nombre_empresa,
         empresa.representante,
@@ -84,7 +87,9 @@ function EmpresasAdmin() {
         String(valor || "").toLowerCase().includes(texto)
       )
     );
-  }, [empresas, busqueda]);
+  }, [empresas, busqueda, verificacion]);
+
+  const pendientes = empresas.filter((e) => !e.verificada).length;
 
   const abrirCrear = () => {
     setEditando(null);
@@ -251,6 +256,25 @@ function EmpresasAdmin() {
         </button>
       </div>
 
+      <div className="bt-adm-tabs" role="tablist" aria-label="Filtrar por verificación">
+        {[
+          ["todas", "Todas", empresas.length],
+          ["pendientes", "Por verificar", pendientes],
+          ["verificadas", "Verificadas", empresas.length - pendientes],
+        ].map(([id, nombre, total]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={verificacion === id}
+            className={verificacion === id ? "activo" : ""}
+            onClick={() => setVerificacion(id)}
+          >
+            {nombre} <span>{total}</span>
+          </button>
+        ))}
+      </div>
+
       <div className="bt-em-toolbar">
         <div className="bt-em-search">
           <Search size={18} />
@@ -312,7 +336,7 @@ function EmpresasAdmin() {
                     <strong>{empresa.nombre_empresa}</strong>
                   </td>
                   <td>{empresa.representante}</td>
-                  <td>{empresa.correo}</td>
+                  <td className="bt-em-correo">{empresa.correo}</td>
                   <td>{empresa.ubicacion || "Sin registrar"}</td>
                   <td>
                     <span className={
