@@ -304,6 +304,15 @@
   margin: 0 auto;
 }
 
+/* Versión de la aplicación (evidencia de pruebas) */
+
+.bt-dashboard-version {
+  padding: 0 20px 20px;
+  font-size: 12px;
+  text-align: center;
+  color: var(--bt-text-2);
+}
+
 /* ========================================
    MENSAJE DE BIENVENIDA
 ======================================== */

@@ -1,5 +1,7 @@
 
 const express = require("express");
+const { execSync } = require("child_process");
+const { version } = require("./package.json");
 const cors = require("cors");
 require("dotenv").config();
 
@@ -36,6 +38,38 @@ app.get("/", (req, res) => {
   res.json({
     mensaje: "API de BolsaTec funcionando correctamente"
   });
+});
+
+// Versión desplegada (para identificar la versión en las pruebas)
+const obtenerCommit = () => {
+  const desdeEntorno =
+    process.env.RENDER_GIT_COMMIT ||
+    process.env.VERCEL_GIT_COMMIT_SHA ||
+    process.env.GIT_COMMIT;
+
+  if (desdeEntorno) {
+    return desdeEntorno.slice(0, 7);
+  }
+
+  try {
+    return execSync("git rev-parse --short HEAD", {
+      cwd: __dirname,
+      stdio: ["ignore", "pipe", "ignore"]
+    }).toString().trim();
+  } catch {
+    return "desconocido";
+  }
+};
+
+const informacionVersion = {
+  aplicacion: "BolsaTec API",
+  version,
+  commit: obtenerCommit(),
+  iniciado: new Date().toISOString()
+};
+
+app.get("/api/version", (req, res) => {
+  res.json(informacionVersion);
 });
 
 // Prueba de conexión con Supabase
