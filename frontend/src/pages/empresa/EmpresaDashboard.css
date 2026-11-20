@@ -1,0 +1,109 @@
+/* ========================================
+   DASHBOARD DE LA EMPRESA
+   (reutiliza los estilos del dashboard del estudiante)
+======================================== */
+
+/* Embudo de selección */
+.bt-emp-embudo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 4px 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.bt-emp-embudo li {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 10px;
+}
+
+.bt-emp-embudo-nombre {
+  color: var(--bt-text-soft, #334155);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.bt-emp-embudo-barra {
+  overflow: hidden;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--bt-surface-muted, #f1f5f9);
+}
+
+.bt-emp-embudo-barra .relleno {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.4s ease;
+}
+
+.bt-emp-embudo-barra .relleno.enviada { background: #0ea5e9; }
+.bt-emp-embudo-barra .relleno.vista { background: #8b5cf6; }
+.bt-emp-embudo-barra .relleno.entrevista { background: #f59e0b; }
+.bt-emp-embudo-barra .relleno.aceptada { background: #16a34a; }
+.bt-emp-embudo-barra .relleno.rechazada { background: #ef4444; }
+
+.bt-emp-embudo strong {
+  color: var(--bt-heading, #0b2b33);
+  text-align: right;
+}
+
+/* Vacantes en el dashboard */
+.bt-emp-vacante-estado {
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.bt-emp-vacante-estado.activa {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.bt-emp-vacante-estado.pausada {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.bt-emp-vacante-estado.cerrada {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+[data-theme="dark"] .bt-emp-vacante-estado.activa {
+  background: rgba(22, 163, 74, 0.16);
+  color: #86efac;
+}
+
+[data-theme="dark"] .bt-emp-vacante-estado.pausada {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fcd34d;
+}
+
+[data-theme="dark"] .bt-emp-vacante-estado.cerrada {
+  background: rgba(148, 163, 184, 0.16);
+  color: #cbd5e1;
+}
+
+.bt-emp-vacante-total {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  min-width: 46px;
+  justify-content: flex-end;
+  color: var(--bt-text-soft, #334155);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .bt-est-lista li .bt-emp-vacante-estado {
+    margin-left: 50px;
+  }
+}
