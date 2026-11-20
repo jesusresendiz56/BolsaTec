@@ -8,8 +8,8 @@ Cada ejecución queda ligada a una versión concreta del sistema:
 
 | Dónde | Qué muestra |
 |---|---|
-| `GET /api/version` | `{ "version": "1.1.0", "commit": "ff16a03", ... }` |
-| Pie de página de los paneles | `BolsaTec v1.1.0 · ff16a03 · 2026-11-19` (versión · commit · fecha de compilación) |
+| `GET /api/version` | `{ "version": "1.1.0", "commit": "5205f81", ... }` |
+| Pie de página de los paneles | `BolsaTec v1.1.0 · 5205f81 · 2026-11-20` (versión · commit · fecha de compilación) |
 
 La versión sale de `package.json` y el commit de git (o de `VERCEL_GIT_COMMIT_SHA` / `RENDER_GIT_COMMIT` al desplegar). Los reportes y las capturas incluyen ambos datos.
 
@@ -48,7 +48,7 @@ En los casos de bloqueo (CP-08 a CP-13), la prueba no solo revisa el código HTT
 | Navegador, **escritorio** (1366×768) | Recorrido completo en la interfaz | [`evidencia/README.md`](evidencia/README.md), capturas `escritorio-*.png` |
 | Navegador, **móvil** (Pixel 7, 412×915) | El mismo recorrido con el menú móvil | [`evidencia/README.md`](evidencia/README.md), capturas `movil-*.png` |
 
-Última ejecución: **v1.1.0, commit `ff16a03`, 2026-11-19**. API: 14 de 14 casos aprobados; navegador: 22 de 22 pasos aprobados (11 en escritorio y 11 en móvil).
+Última ejecución: **v1.1.0, commit `5205f81`, 2026-11-20** (reporte de API: [`vacantes-propiedad-2026-11-20-09-37-07.md`](resultados/vacantes-propiedad-2026-11-20-09-37-07.md)). La ejecución anterior (commit `ff16a03`, 2026-11-19) se conserva en `resultados/` como historial. API: 14 de 14 casos aprobados; navegador: 22 de 22 pasos aprobados (11 en escritorio y 11 en móvil).
 
 > El modo móvil es una emulación de Chromium (tamaño de pantalla, táctil y user agent de un Pixel 7). Para completar la evidencia en un **teléfono real**, usen la plantilla de la sección 6.
 
