@@ -79,7 +79,7 @@ function ExamenPostulacion({ vacante, onCerrar, onPostulado }) {
       );
 
       if (!datos.examen) {
-        // La empresa quitó la prueba: postular directo
+        // La empresa no tiene prueba para tu carrera: postular directo
         await postular(false);
         return;
       }
@@ -196,6 +196,11 @@ function ExamenPostulacion({ vacante, onCerrar, onPostulado }) {
             ) : (
               <>
                 <p className="bt-examen-instrucciones">
+                  {examen.carrera_nombre && (
+                    <>
+                      Prueba de <strong>{examen.carrera_nombre}</strong>.{" "}
+                    </>
+                  )}
                   Responde las {preguntas.length}{" "}
                   {preguntas.length === 1 ? "pregunta" : "preguntas"} para
                   enviar tu postulación.

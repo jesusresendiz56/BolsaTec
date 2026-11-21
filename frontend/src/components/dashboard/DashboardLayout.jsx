@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   ShieldCheck,
+  ClipboardList,
 } from "lucide-react";
 
 import { sessionDestroy } from "../../services/session";
@@ -34,6 +35,7 @@ const iconos = {
   notificaciones: Bell,
   configuracion: Settings,
   verificacion: ShieldCheck,
+  pruebas: ClipboardList,
 };
 
 function DashboardLayout({
