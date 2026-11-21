@@ -1,5 +1,11 @@
 
 const pool = require("../config/database");
+const {
+  SECTORES,
+  TAMANOS,
+  giroDeSector,
+  validarPerfil
+} = require("../services/perfilEmpresa");
 
 // ========================================
 // OBTENER EMPRESA AUTENTICADA
@@ -616,17 +622,26 @@ const eliminarVacante = async (req, res) => {
 // OBTENER PERFIL EMPRESARIAL
 // ========================================
 
+const CAMPOS_PERFIL = `
+  e.id_empresa,
+  e.nombre_empresa,
+  e.descripcion,
+  e.ubicacion,
+  e.telefono,
+  e.sector,
+  e.tamano,
+  e.rfc,
+  e.sitio_web,
+  e.linkedin,
+  e.contacto_nombre,
+  e.contacto_puesto,
+  e.verificada`;
+
 const obtenerPerfil = async (req, res) => {
   try {
     const resultado = await pool.query(
       `SELECT
-        e.id_empresa,
-        e.nombre_empresa,
-        e.descripcion,
-        e.ubicacion,
-        e.telefono,
-        e.sector,
-        e.verificada,
+        ${CAMPOS_PERFIL},
         u.nombre AS representante,
         u.correo
        FROM empresas e
@@ -643,7 +658,12 @@ const obtenerPerfil = async (req, res) => {
     }
 
     return res.json({
-      empresa: resultado.rows[0]
+      empresa: resultado.rows[0],
+      // Sector de la lista que corresponde al guardado
+      // (útil cuando se capturó como texto libre en el registro)
+      sector_sugerido: giroDeSector(resultado.rows[0].sector)?.nombre || null,
+      sectores: SECTORES,
+      tamanos: TAMANOS
     });
   } catch (error) {
     console.error("Error al obtener perfil:", error);
@@ -659,66 +679,55 @@ const obtenerPerfil = async (req, res) => {
 
 const actualizarPerfil = async (req, res) => {
   try {
-    const {
-      nombre_empresa,
-      descripcion,
-      ubicacion,
-      telefono,
-      sector
-    } = req.body;
-
-    if (
-      typeof nombre_empresa !== "string" ||
-      !nombre_empresa.trim()
-    ) {
-      return res.status(400).json({
-        mensaje: "El nombre de la empresa es obligatorio"
-      });
-    }
-
-    const opcionales = { descripcion, ubicacion, telefono, sector };
-
-    if (
-      Object.values(opcionales).some(
-        (valor) => valor != null && typeof valor !== "string"
-      )
-    ) {
-      return res.status(400).json({
-        mensaje: "Los campos del perfil deben contener texto"
-      });
-    }
-
-    const resultado = await pool.query(
-      `UPDATE empresas
-       SET nombre_empresa = $1,
-           descripcion = $2,
-           ubicacion = $3,
-           telefono = $4,
-           sector = $5
-       WHERE id_usuario = $6
-       RETURNING
-         id_empresa,
-         nombre_empresa,
-         descripcion,
-         ubicacion,
-         telefono,
-         sector,
-         verificada`,
-      [
-        nombre_empresa.trim(),
-        descripcion?.trim() || null,
-        ubicacion?.trim() || null,
-        telefono?.trim() || null,
-        sector?.trim() || null,
-        req.usuario.id_usuario
-      ]
+    const actual = await pool.query(
+      `SELECT sector FROM empresas WHERE id_usuario = $1`,
+      [req.usuario.id_usuario]
     );
 
-    if (resultado.rows.length === 0) {
+    if (actual.rows.length === 0) {
       return res.status(404).json({
         mensaje: "Perfil empresarial no encontrado"
       });
     }
+
+    const validacion = validarPerfil(req.body, actual.rows[0].sector);
+
+    if (validacion.error) {
+      return res.status(400).json({ mensaje: validacion.error });
+    }
+
+    const d = validacion.datos;
+
+    const resultado = await pool.query(
+      `UPDATE empresas e
+       SET nombre_empresa = $1,
+           descripcion = $2,
+           ubicacion = $3,
+           telefono = $4,
+           sector = $5,
+           tamano = $6,
+           rfc = $7,
+           sitio_web = $8,
+           linkedin = $9,
+           contacto_nombre = $10,
+           contacto_puesto = $11
+       WHERE e.id_usuario = $12
+       RETURNING ${CAMPOS_PERFIL}`,
+      [
+        d.nombre_empresa,
+        d.descripcion,
+        d.ubicacion,
+        d.telefono,
+        d.sector,
+        d.tamano,
+        d.rfc,
+        d.sitio_web,
+        d.linkedin,
+        d.contacto_nombre,
+        d.contacto_puesto,
+        req.usuario.id_usuario
+      ]
+    );
 
     return res.json({
       mensaje: "Perfil empresarial actualizado correctamente",
