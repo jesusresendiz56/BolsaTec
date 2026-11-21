@@ -331,3 +331,18 @@
   color: var(--bt-text, #1e293b);
   font-size: 13px;
 }
+
+/* Botón de la prueba de conocimientos */
+.bt-vacantes-acciones .bt-vacantes-examen {
+  gap: 4px;
+}
+
+.bt-vacantes-acciones .bt-vacantes-examen.con-prueba {
+  border-color: var(--bt-primary, #0e7490);
+  color: var(--bt-primary, #0e7490);
+}
+
+.bt-vacantes-examen span {
+  font-size: 12px;
+  font-weight: 700;
+}

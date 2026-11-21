@@ -273,7 +273,12 @@ const obtenerVacantes = async (req, res) => {
         v.salario_min,
         v.salario_max,
         v.fecha_publicacion,
-        e.nombre_empresa
+        e.nombre_empresa,
+        EXISTS (
+          SELECT 1
+          FROM examen_preguntas ep
+          WHERE ep.id_vacante = v.id_vacante
+        ) AS tiene_examen
        FROM vacantes v
        INNER JOIN empresas e
          ON e.id_empresa = v.id_empresa

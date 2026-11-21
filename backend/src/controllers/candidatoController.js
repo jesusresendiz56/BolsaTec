@@ -139,7 +139,10 @@ const obtenerPostulacionesEmpresa = async (req, res) => {
            u.correo AS correo_estudiante,
            est.carrera,
            est.semestre,
-           (est.cv_url IS NOT NULL) AS tiene_curriculum
+           (est.cv_url IS NOT NULL) AS tiene_curriculum,
+           ex.aciertos AS examen_aciertos,
+           ex.total AS examen_total,
+           ex.calificacion::float AS examen_calificacion
          FROM postulaciones p
          INNER JOIN vacantes v
            ON v.id_vacante = p.id_vacante
@@ -149,6 +152,10 @@ const obtenerPostulacionesEmpresa = async (req, res) => {
            ON est.id_estudiante = p.id_estudiante
          INNER JOIN usuarios u
            ON u.id_usuario = est.id_usuario
+         LEFT JOIN examenes_vacante ex
+           ON ex.id_estudiante = p.id_estudiante
+          AND ex.id_vacante = p.id_vacante
+          AND ex.fecha_completado IS NOT NULL
          WHERE e.id_usuario = $1
          ORDER BY
            p.fecha_postulacion DESC,

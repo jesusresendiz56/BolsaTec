@@ -30,6 +30,10 @@ const {
   marcarTodasLeidas
 } = require("../controllers/notificacionController");
 
+const {
+  obtenerExamenVacante
+} = require("../controllers/examenController");
+
 const subirPDF = require("../middleware/uploadCurriculum");
 
 // ========================================
@@ -77,6 +81,10 @@ router.get("/curriculum", obtenerCurriculum);
 // ========================================
 
 router.get("/vacantes", obtenerVacantes);
+
+// Examen de conocimientos (según la carrera) que se presenta
+// antes de postularse a la vacante
+router.get("/vacantes/:id/examen", obtenerExamenVacante);
 
 // ========================================
 // POSTULACIONES DEL ESTUDIANTE

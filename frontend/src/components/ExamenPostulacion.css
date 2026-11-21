@@ -1,0 +1,454 @@
+/* ========================================
+   EXAMEN DE CONOCIMIENTOS (antes de postularse)
+======================================== */
+
+.bt-examen-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.bt-examen {
+  width: min(100%, 680px);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid var(--bt-border);
+  background: var(--bt-surface, #fff);
+  color: var(--bt-text, #1e293b);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  outline: none;
+}
+
+.bt-examen.aviso {
+  width: min(100%, 480px);
+}
+
+.bt-examen-aviso-texto {
+  margin: 0 0 12px;
+  color: var(--bt-text);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.bt-examen-aviso-lista {
+  margin: 0;
+  padding: 12px 14px 12px 32px;
+  border-radius: 10px;
+  background: var(--bt-surface-alt, #f8fafc);
+  color: var(--bt-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.bt-examen-acciones.centrado {
+  justify-content: center;
+}
+
+.bt-examen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.bt-examen-header h3 {
+  margin: 6px 0 2px;
+  color: var(--bt-heading);
+  font-size: 20px;
+}
+
+.bt-examen-empresa {
+  margin: 0;
+  color: var(--bt-muted);
+  font-size: 14px;
+}
+
+.bt-examen-header > button {
+  display: inline-flex;
+  padding: 7px;
+  border: 1px solid var(--bt-border-strong, var(--bt-border));
+  border-radius: 8px;
+  background: var(--bt-surface);
+  color: var(--bt-text);
+  cursor: pointer;
+}
+
+.bt-examen-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bt-highlight, #ecfeff);
+  color: var(--bt-primary, #0e7490);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.bt-examen-instrucciones,
+.bt-examen-previo p {
+  margin: 0 0 14px;
+  color: var(--bt-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.bt-examen-cargando {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--bt-muted);
+}
+
+.bt-examen-girando {
+  animation: bt-examen-girar 0.8s linear infinite;
+}
+
+@keyframes bt-examen-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* PREGUNTAS */
+
+.bt-examen-preguntas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.bt-examen-preguntas fieldset {
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--bt-border);
+  border-radius: 11px;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bt-examen-preguntas legend {
+  padding: 0;
+  margin-bottom: 4px;
+  color: var(--bt-heading);
+  font-weight: 600;
+  line-height: 1.45;
+  float: left;
+  width: 100%;
+}
+
+.bt-examen-preguntas legend span {
+  color: var(--bt-primary, #0e7490);
+}
+
+.bt-examen-preguntas label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--bt-border);
+  border-radius: 9px;
+  background: var(--bt-surface);
+  cursor: pointer;
+  line-height: 1.4;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.bt-examen-preguntas label:hover {
+  border-color: var(--bt-primary, #0e7490);
+}
+
+.bt-examen-preguntas label.elegida {
+  border-color: var(--bt-primary, #0e7490);
+  background: var(--bt-highlight, #ecfeff);
+}
+
+.bt-examen-preguntas input {
+  margin-top: 3px;
+  accent-color: var(--bt-primary, #0e7490);
+  flex-shrink: 0;
+}
+
+/* ACCIONES */
+
+.bt-examen-acciones {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.bt-examen-progreso {
+  margin-right: auto;
+  color: var(--bt-muted);
+  font-size: 13px;
+}
+
+.bt-examen-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 16px;
+  border: 1px solid var(--bt-border-strong, var(--bt-border));
+  border-radius: 9px;
+  background: var(--bt-surface);
+  color: var(--bt-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bt-examen-btn.primario {
+  border-color: var(--bt-primary, #0e7490);
+  background: var(--bt-primary, #0e7490);
+  color: #ffffff;
+}
+
+.bt-examen-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bt-examen-error {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+  font-size: 14px;
+}
+
+[data-theme="dark"] .bt-examen-error {
+  color: #f87171;
+}
+
+/* RESULTADO */
+
+.bt-examen-resultado {
+  text-align: center;
+}
+
+.bt-examen-calificacion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 132px;
+  height: 132px;
+  margin: 4px auto 14px;
+  border-radius: 50%;
+  border: 6px solid var(--bt-primary, #0e7490);
+  background: var(--bt-highlight, #ecfeff);
+}
+
+.bt-examen-calificacion strong {
+  color: var(--bt-heading);
+  font-size: 32px;
+  line-height: 1;
+}
+
+.bt-examen-calificacion span {
+  margin-top: 6px;
+  color: var(--bt-muted);
+  font-size: 12px;
+}
+
+.bt-examen-resultado h4 {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 6px;
+  color: #059669;
+  font-size: 17px;
+}
+
+.bt-examen-resultado > p {
+  margin: 0 0 16px;
+  color: var(--bt-muted);
+  line-height: 1.5;
+}
+
+/* Calificación en las listas de postulaciones */
+.bt-examen-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--bt-highlight, #ecfeff);
+  color: var(--bt-primary, #0e7490);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bt-examen-chip.bajo {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.bt-examen-chip.medio {
+  background: rgba(217, 119, 6, 0.12);
+  color: #b45309;
+}
+
+.bt-examen-chip.alto {
+  background: rgba(5, 150, 105, 0.12);
+  color: #047857;
+}
+
+[data-theme="dark"] .bt-examen-chip.bajo { color: #f87171; }
+[data-theme="dark"] .bt-examen-chip.medio { color: #fbbf24; }
+[data-theme="dark"] .bt-examen-chip.alto { color: #34d399; }
+
+@media (max-width: 600px) {
+  .bt-examen-fondo {
+    padding: 10px;
+    align-items: flex-end;
+  }
+
+  .bt-examen {
+    padding: 18px;
+    max-height: 94vh;
+  }
+
+  .bt-examen-acciones .bt-examen-btn {
+    flex: 1;
+  }
+
+  .bt-examen-progreso {
+    width: 100%;
+  }
+}
+
+/* ========================================
+   EDITOR DE LA PRUEBA (EMPRESA)
+======================================== */
+
+.bt-editor-examen {
+  width: min(100%, 720px);
+}
+
+.bt-editor-preguntas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.bt-editor-preguntas > li {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--bt-border);
+  border-radius: 11px;
+}
+
+.bt-editor-pregunta-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bt-editor-pregunta-top label {
+  color: var(--bt-heading);
+  font-weight: 700;
+}
+
+.bt-editor-examen textarea,
+.bt-editor-examen input {
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid var(--bt-border-strong, var(--bt-border));
+  border-radius: 8px;
+  background: var(--bt-input, #fff);
+  color: var(--bt-text);
+  font: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.bt-editor-opcion {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bt-editor-opcion > svg {
+  flex-shrink: 0;
+}
+
+.bt-editor-opcion.correcta > svg {
+  color: #059669;
+}
+
+.bt-editor-opcion.correcta input {
+  border-color: rgba(5, 150, 105, 0.55);
+}
+
+.bt-editor-opcion.incorrecta > svg {
+  color: #dc2626;
+}
+
+.bt-editor-icono {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding: 6px;
+  border: 1px solid var(--bt-border);
+  border-radius: 7px;
+  background: var(--bt-surface);
+  color: var(--bt-muted);
+  cursor: pointer;
+}
+
+.bt-editor-icono:hover {
+  color: #dc2626;
+}
+
+.bt-editor-agregar-opcion {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: var(--bt-primary, #0e7490);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bt-editor-agregar {
+  width: 100%;
+  margin-top: 14px;
+  border-style: dashed;
+}
+
+.bt-examen-btn.peligro {
+  margin-right: auto;
+  border-color: rgba(220, 38, 38, 0.5);
+  color: #dc2626;
+}
+
+[data-theme="dark"] .bt-examen-btn.peligro {
+  color: #f87171;
+}
