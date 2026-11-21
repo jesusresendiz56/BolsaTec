@@ -160,3 +160,72 @@
     flex-direction: column;
   }
 }
+
+/* ========================================
+   SECCIONES Y CAMPOS NUEVOS
+======================================== */
+
+.bt-perfil-seccion {
+  margin: 0 0 22px;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.bt-perfil-seccion legend {
+  width: 100%;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--bt-border);
+  color: var(--bt-heading);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.bt-perfil-empresa select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--bt-border, var(--bt-border-strong));
+  border-radius: 9px;
+  background: var(--bt-input, #fff);
+  color: var(--bt-text, #1e293b);
+  font: inherit;
+}
+
+.bt-perfil-empresa label small {
+  color: var(--bt-muted);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.bt-perfil-contador {
+  align-self: flex-end;
+}
+
+.bt-perfil-resumen {
+  margin: 4px 0 0;
+  color: var(--bt-muted);
+  font-size: 14px;
+}
+
+.bt-perfil-enlaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 8px 0 0;
+}
+
+.bt-perfil-enlaces a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--bt-primary, #0e7490);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.bt-perfil-enlaces a:hover {
+  text-decoration: underline;
+}
