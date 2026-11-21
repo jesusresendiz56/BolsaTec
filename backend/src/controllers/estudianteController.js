@@ -1,5 +1,6 @@
 
 const pool = require("../config/database");
+const { empresasConPrueba } = require("./examenController");
 
 // ========================================
 // OBTENER ESTUDIANTE AUTENTICADO
@@ -273,12 +274,8 @@ const obtenerVacantes = async (req, res) => {
         v.salario_min,
         v.salario_max,
         v.fecha_publicacion,
-        e.nombre_empresa,
-        EXISTS (
-          SELECT 1
-          FROM examen_preguntas ep
-          WHERE ep.id_vacante = v.id_vacante
-        ) AS tiene_examen
+        v.id_empresa,
+        e.nombre_empresa
        FROM vacantes v
        INNER JOIN empresas e
          ON e.id_empresa = v.id_empresa
@@ -295,8 +292,21 @@ const obtenerVacantes = async (req, res) => {
       [busqueda.trim(), modalidad, tipo]
     );
 
+    // ¿La empresa tiene prueba para la carrera del estudiante?
+    const estudiante = await pool.query(
+      `SELECT carrera FROM estudiantes WHERE id_usuario = $1`,
+      [req.usuario.id_usuario]
+    );
+
+    const conPrueba = await empresasConPrueba(
+      estudiante.rows[0]?.carrera
+    );
+
     return res.json({
-      vacantes: resultado.rows,
+      vacantes: resultado.rows.map(({ id_empresa, ...vacante }) => ({
+        ...vacante,
+        tiene_examen: conPrueba.has(id_empresa)
+      })),
       total: resultado.rowCount
     });
 
