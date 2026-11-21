@@ -1,6 +1,12 @@
-
 import { useEffect, useState } from "react";
-import { Building2, Save, RefreshCw, BadgeCheck } from "lucide-react";
+import {
+  BadgeCheck,
+  Building2,
+  Globe,
+  Link2,
+  RefreshCw,
+  Save,
+} from "lucide-react";
 import { sessionGet } from "../../services/session";
 import "./PerfilEmpresa.css";
 
@@ -10,14 +16,32 @@ const API_URL = (
 
 const perfilInicial = {
   nombre_empresa: "",
+  sector: "",
+  tamano: "",
+  rfc: "",
   descripcion: "",
   ubicacion: "",
   telefono: "",
-  sector: "",
+  contacto_nombre: "",
+  contacto_puesto: "",
+  sitio_web: "",
+  linkedin: "",
 };
+
+const MAX_DESCRIPCION = 1000;
+
+// Convierte lo que regresa la API en valores del formulario
+const aFormulario = (empresa) =>
+  Object.fromEntries(
+    Object.keys(perfilInicial).map((campo) => [campo, empresa?.[campo] || ""])
+  );
 
 function PerfilEmpresa({ onActualizar }) {
   const [perfil, setPerfil] = useState(perfilInicial);
+  // Giro guardado (puede no estar en la lista si se capturó en el registro)
+  const [sectorGuardado, setSectorGuardado] = useState("");
+  const [sectores, setSectores] = useState([]);
+  const [tamanos, setTamanos] = useState([]);
   const [representante, setRepresentante] = useState("");
   const [correo, setCorreo] = useState("");
   const [verificada, setVerificada] = useState(false);
@@ -26,6 +50,17 @@ function PerfilEmpresa({ onActualizar }) {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
+
+  // sugerido: sector de la lista que corresponde al guardado
+  // (cuando se capturó como texto libre, p. ej. "informatica")
+  const aplicarEmpresa = (empresa, sugerido = null) => {
+    setPerfil({
+      ...aFormulario(empresa),
+      sector: sugerido || empresa.sector || "",
+    });
+    setSectorGuardado(empresa.sector || "");
+    setVerificada(empresa.verificada === true);
+  };
 
   const obtenerPerfil = async () => {
     try {
@@ -50,19 +85,11 @@ function PerfilEmpresa({ onActualizar }) {
         throw new Error(datos.mensaje || "Error al consultar el perfil");
       }
 
-      const empresa = datos.empresa;
-
-      setPerfil({
-        nombre_empresa: empresa.nombre_empresa || "",
-        descripcion: empresa.descripcion || "",
-        ubicacion: empresa.ubicacion || "",
-        telefono: empresa.telefono || "",
-        sector: empresa.sector || "",
-      });
-
-      setRepresentante(empresa.representante || "");
-      setCorreo(empresa.correo || "");
-      setVerificada(empresa.verificada === true);
+      aplicarEmpresa(datos.empresa, datos.sector_sugerido);
+      setSectores(datos.sectores || []);
+      setTamanos(datos.tamanos || []);
+      setRepresentante(datos.empresa.representante || "");
+      setCorreo(datos.empresa.correo || "");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -79,7 +106,7 @@ function PerfilEmpresa({ onActualizar }) {
 
     setPerfil((anterior) => ({
       ...anterior,
-      [name]: value,
+      [name]: name === "rfc" ? value.toUpperCase() : value,
     }));
   };
 
@@ -113,7 +140,7 @@ function PerfilEmpresa({ onActualizar }) {
       }
 
       setMensaje(datos.mensaje || "Perfil actualizado correctamente");
-      await obtenerPerfil();
+      aplicarEmpresa(datos.empresa);
       onActualizar?.();
     } catch (err) {
       setError(err.message);
@@ -129,6 +156,11 @@ function PerfilEmpresa({ onActualizar }) {
       </div>
     );
   }
+
+  const sectorFueraDeLista =
+    sectorGuardado && !sectores.includes(sectorGuardado);
+
+  const tamanoNombre = tamanos.find((t) => t.clave === perfil.tamano)?.nombre;
 
   return (
     <div className="bt-perfil-empresa">
@@ -178,66 +210,207 @@ function PerfilEmpresa({ onActualizar }) {
                 "Empresa pendiente de verificación"
               )}
             </p>
+
+            {(sectorGuardado || tamanoNombre) && (
+              <p className="bt-perfil-resumen">
+                {[sectorGuardado, tamanoNombre].filter(Boolean).join(" · ")}
+              </p>
+            )}
+
+            {(perfil.sitio_web || perfil.linkedin) && (
+              <p className="bt-perfil-enlaces">
+                {perfil.sitio_web && (
+                  <a href={perfil.sitio_web} target="_blank" rel="noopener noreferrer">
+                    <Globe size={15} />
+                    Sitio web
+                  </a>
+                )}
+                {perfil.linkedin && (
+                  <a href={perfil.linkedin} target="_blank" rel="noopener noreferrer">
+                    <Link2 size={15} />
+                    LinkedIn
+                  </a>
+                )}
+              </p>
+            )}
           </div>
         </div>
 
         <form onSubmit={guardarPerfil}>
-          <div className="bt-perfil-campos">
-            <label>
-              Nombre de la empresa *
-              <input
-                type="text"
-                name="nombre_empresa"
-                value={perfil.nombre_empresa}
-                onChange={actualizarCampo}
-                required
-              />
-            </label>
+          {/* DATOS GENERALES */}
+          <fieldset className="bt-perfil-seccion">
+            <legend>Datos de la empresa</legend>
 
-            <label>
-              Sector
-              <input
-                type="text"
-                name="sector"
-                value={perfil.sector}
-                onChange={actualizarCampo}
-                placeholder="Ej. Tecnología"
-              />
-            </label>
+            <div className="bt-perfil-campos">
+              <label>
+                Nombre de la empresa *
+                <input
+                  type="text"
+                  name="nombre_empresa"
+                  value={perfil.nombre_empresa}
+                  onChange={actualizarCampo}
+                  maxLength={150}
+                  required
+                />
+              </label>
 
-            <label>
-              Ubicación
-              <input
-                type="text"
-                name="ubicacion"
-                value={perfil.ubicacion}
-                onChange={actualizarCampo}
-                placeholder="Ej. Ciudad de México"
-              />
-            </label>
+              <label>
+                Sector de la empresa
+                <select
+                  name="sector"
+                  value={perfil.sector}
+                  onChange={actualizarCampo}
+                >
+                  <option value="">Selecciona el sector</option>
+                  {sectorFueraDeLista && (
+                    <option value={sectorGuardado}>
+                      {sectorGuardado} (capturado en el registro)
+                    </option>
+                  )}
+                  {sectores.map((sector) => (
+                    <option key={sector} value={sector}>
+                      {sector}
+                    </option>
+                  ))}
+                </select>
+                <small>
+                  {sectorFueraDeLista && perfil.sector !== sectorGuardado
+                    ? `Relacionamos "${sectorGuardado}" con este sector. Guarda para confirmarlo.`
+                    : 'Define qué carreras aparecen en "Pruebas".'}
+                </small>
+              </label>
 
-            <label>
-              Teléfono
-              <input
-                type="tel"
-                name="telefono"
-                value={perfil.telefono}
-                onChange={actualizarCampo}
-                placeholder="Ej. 5512345678"
-              />
-            </label>
-          </div>
+              <label>
+                Tamaño
+                <select
+                  name="tamano"
+                  value={perfil.tamano}
+                  onChange={actualizarCampo}
+                >
+                  <option value="">Selecciona el tamaño</option>
+                  {tamanos.map((tamano) => (
+                    <option key={tamano.clave} value={tamano.clave}>
+                      {tamano.nombre}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-          <label className="bt-perfil-descripcion">
-            Descripción de la empresa
-            <textarea
-              name="descripcion"
-              value={perfil.descripcion}
-              onChange={actualizarCampo}
-              rows={5}
-              placeholder="Describe las actividades de tu empresa..."
-            />
-          </label>
+              <label>
+                RFC
+                <input
+                  type="text"
+                  name="rfc"
+                  value={perfil.rfc}
+                  onChange={actualizarCampo}
+                  maxLength={13}
+                  placeholder="Ej. ABC010101AB1"
+                  autoComplete="off"
+                />
+              </label>
+            </div>
+
+            <label className="bt-perfil-descripcion">
+              Descripción de la empresa
+              <textarea
+                name="descripcion"
+                value={perfil.descripcion}
+                onChange={actualizarCampo}
+                rows={5}
+                maxLength={MAX_DESCRIPCION}
+                placeholder="Describe las actividades de tu empresa..."
+              />
+              <small className="bt-perfil-contador">
+                {perfil.descripcion.length} / {MAX_DESCRIPCION}
+              </small>
+            </label>
+          </fieldset>
+
+          {/* CONTACTO */}
+          <fieldset className="bt-perfil-seccion">
+            <legend>Contacto</legend>
+
+            <div className="bt-perfil-campos">
+              <label>
+                Persona de contacto
+                <input
+                  type="text"
+                  name="contacto_nombre"
+                  value={perfil.contacto_nombre}
+                  onChange={actualizarCampo}
+                  maxLength={120}
+                  placeholder="Ej. Laura Martínez"
+                />
+              </label>
+
+              <label>
+                Puesto
+                <input
+                  type="text"
+                  name="contacto_puesto"
+                  value={perfil.contacto_puesto}
+                  onChange={actualizarCampo}
+                  maxLength={100}
+                  placeholder="Ej. Reclutamiento y selección"
+                />
+              </label>
+
+              <label>
+                Teléfono
+                <input
+                  type="tel"
+                  name="telefono"
+                  value={perfil.telefono}
+                  onChange={actualizarCampo}
+                  inputMode="numeric"
+                  placeholder="10 dígitos, ej. 5512345678"
+                />
+              </label>
+
+              <label>
+                Ubicación
+                <input
+                  type="text"
+                  name="ubicacion"
+                  value={perfil.ubicacion}
+                  onChange={actualizarCampo}
+                  maxLength={150}
+                  placeholder="Ej. Ciudad de México"
+                />
+              </label>
+            </div>
+          </fieldset>
+
+          {/* EN LÍNEA */}
+          <fieldset className="bt-perfil-seccion">
+            <legend>Presencia en línea</legend>
+
+            <div className="bt-perfil-campos">
+              <label>
+                Sitio web
+                <input
+                  type="text"
+                  name="sitio_web"
+                  value={perfil.sitio_web}
+                  onChange={actualizarCampo}
+                  inputMode="url"
+                  placeholder="Ej. www.miempresa.com"
+                />
+              </label>
+
+              <label>
+                LinkedIn
+                <input
+                  type="text"
+                  name="linkedin"
+                  value={perfil.linkedin}
+                  onChange={actualizarCampo}
+                  inputMode="url"
+                  placeholder="Ej. linkedin.com/company/miempresa"
+                />
+              </label>
+            </div>
+          </fieldset>
 
           <div className="bt-perfil-info">
             <h4>Información de la cuenta</h4>

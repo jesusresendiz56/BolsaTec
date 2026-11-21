@@ -329,7 +329,7 @@ function EmpresaDashboard() {
       case "postulaciones":
         return <PostulacionesEmpresa onActualizar={obtenerEstadisticas} />;
       case "pruebas":
-        return <PruebasEmpresa />;
+        return <PruebasEmpresa onIr={irA} />;
       case "notificaciones":
         return <NotificacionesEstudiante rol="empresa" onActualizar={obtenerEstadisticas} onIr={irA} />;
       default:
