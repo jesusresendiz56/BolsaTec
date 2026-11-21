@@ -26,6 +26,11 @@ const {
 } = require("../controllers/candidatoController");
 
 const {
+  obtenerExamenEmpresa,
+  guardarExamenEmpresa
+} = require("../controllers/examenController");
+
+const {
   obtenerNotificaciones,
   marcarNotificacionLeida,
   marcarTodasLeidas
@@ -73,6 +78,11 @@ router.post("/vacantes", crearVacante);
 router.put("/vacantes/:id", editarVacante);
 router.patch("/vacantes/:id/estado", cambiarEstadoVacante);
 router.delete("/vacantes/:id", eliminarVacante);
+
+// Prueba de conocimientos de la vacante
+// (el estudiante la presenta antes de postularse)
+router.get("/vacantes/:id/examen", obtenerExamenEmpresa);
+router.put("/vacantes/:id/examen", guardarExamenEmpresa);
 
 // ========================================
 // MÓDULO DE CANDIDATOS

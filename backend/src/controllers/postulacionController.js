@@ -3,15 +3,24 @@ const pool = require("../config/database");
 const { enviarCorreo } = require("../services/brevoService");
 const { crearNotificacion } = require("../services/notificacionService");
 const { generarCorreoCancelacion } = require("../services/correosPostulacion");
+const { calificarAntesDePostular } = require("./examenController");
 
 // ========================================
 // NOTIFICACIONES DE NUEVA POSTULACIÓN
 // ========================================
 
+const textoResultado = (examen) =>
+  examen
+    ? `Resultado de la prueba de conocimientos: ` +
+      `${examen.aciertos} de ${examen.total} correctas ` +
+      `(${Math.round(examen.calificacion)}%).`
+    : "";
+
 const notificarNuevaPostulacion = async ({
   idPostulacion,
   idVacante,
-  idEstudiante
+  idEstudiante,
+  examen = null
 }) => {
   try {
     // Obtener datos del estudiante, empresa y vacante
@@ -59,10 +68,13 @@ const notificarNuevaPostulacion = async ({
       `de la empresa "${datos.nombre_empresa}" ` +
       `se registró correctamente.`;
 
+    const resultadoPrueba = textoResultado(examen);
+
     const mensajeEmpresa =
       `Recibiste una nueva postulación de ` +
       `${datos.nombre_estudiante} para la vacante ` +
-      `"${datos.titulo_vacante}".`;
+      `"${datos.titulo_vacante}".` +
+      (resultadoPrueba ? ` ${resultadoPrueba}` : "");
 
     const tareas = [
       {
@@ -103,7 +115,9 @@ const notificarNuevaPostulacion = async ({
             `Hola ${datos.nombre_empresa},\n\n` +
             `Has recibido una nueva postulación para la vacante ` +
             `"${datos.titulo_vacante}".\n\n` +
-            `Candidato: ${datos.nombre_estudiante}\n\n` +
+            `Candidato: ${datos.nombre_estudiante}\n` +
+            (resultadoPrueba ? `${resultadoPrueba}\n` : "") +
+            `\n` +
             `Ingresa a BolsaTec para consultar la postulación.\n\n` +
             `BolsaTec - Tu futuro profesional comienza aquí.`
         })
@@ -175,31 +189,65 @@ const crearPostulacion = async (req, res) => {
     const idEstudiante =
       estudianteResultado.rows[0].id_estudiante;
 
-    // Registrar únicamente si la vacante está activa
-    // y evitar postulaciones duplicadas.
-    const resultado = await pool.query(
-      `INSERT INTO postulaciones (
-         id_vacante,
-         id_estudiante,
-         estado
-       )
-       SELECT
-         v.id_vacante,
-         $2,
-         'enviada'
-       FROM vacantes v
-       WHERE v.id_vacante = $1
-         AND v.estado = 'activa'
-       ON CONFLICT (id_vacante, id_estudiante)
-       DO NOTHING
-       RETURNING
-         id_postulacion,
-         id_vacante,
-         id_estudiante,
-         fecha_postulacion,
-         estado`,
-      [idVacante, idEstudiante]
-    );
+    // El examen de conocimientos se presenta ANTES de postularse:
+    // se califica y se registra la postulación en una sola transacción.
+    const client = await pool.connect();
+    let resultado;
+    let examen;
+
+    try {
+      await client.query("BEGIN");
+
+      const calificacion = await calificarAntesDePostular(
+        client,
+        idEstudiante,
+        idVacante,
+        req.body?.respuestas
+      );
+
+      if (calificacion.error) {
+        await client.query("ROLLBACK");
+        return res.status(calificacion.error.status).json({
+          mensaje: calificacion.error.mensaje
+        });
+      }
+
+      examen = calificacion.resultado;
+
+      // Registrar únicamente si la vacante está activa
+      // y evitar postulaciones duplicadas.
+      resultado = await client.query(
+        `INSERT INTO postulaciones (
+           id_vacante,
+           id_estudiante,
+           estado
+         )
+         SELECT
+           v.id_vacante,
+           $2,
+           'enviada'
+         FROM vacantes v
+         WHERE v.id_vacante = $1
+           AND v.estado = 'activa'
+         ON CONFLICT (id_vacante, id_estudiante)
+         DO NOTHING
+         RETURNING
+           id_postulacion,
+           id_vacante,
+           id_estudiante,
+           fecha_postulacion,
+           estado`,
+        [idVacante, idEstudiante]
+      );
+
+      // Si no se registró, no guardar el examen
+      await client.query(resultado.rows.length ? "COMMIT" : "ROLLBACK");
+    } catch (errorTransaccion) {
+      await client.query("ROLLBACK").catch(() => {});
+      throw errorTransaccion;
+    } finally {
+      client.release();
+    }
 
     if (!resultado.rows.length) {
       const vacanteResultado = await pool.query(
@@ -233,12 +281,14 @@ const crearPostulacion = async (req, res) => {
     void notificarNuevaPostulacion({
       idPostulacion: postulacion.id_postulacion,
       idVacante: postulacion.id_vacante,
-      idEstudiante: postulacion.id_estudiante
+      idEstudiante: postulacion.id_estudiante,
+      examen
     });
 
     return res.status(201).json({
       mensaje: "Postulación enviada correctamente",
-      postulacion
+      postulacion,
+      examen
     });
 
   } catch (error) {
@@ -267,7 +317,10 @@ const obtenerPostulaciones = async (req, res) => {
          v.tipo,
          v.ubicacion,
          v.estado AS estado_vacante,
-         e.nombre_empresa
+         e.nombre_empresa,
+         ex.aciertos AS examen_aciertos,
+         ex.total AS examen_total,
+         ex.calificacion::float AS examen_calificacion
        FROM postulaciones p
        INNER JOIN estudiantes est
          ON est.id_estudiante = p.id_estudiante
@@ -275,6 +328,10 @@ const obtenerPostulaciones = async (req, res) => {
          ON v.id_vacante = p.id_vacante
        INNER JOIN empresas e
          ON e.id_empresa = v.id_empresa
+       LEFT JOIN examenes_vacante ex
+         ON ex.id_estudiante = p.id_estudiante
+        AND ex.id_vacante = p.id_vacante
+        AND ex.fecha_completado IS NOT NULL
        WHERE est.id_usuario = $1
        ORDER BY
          p.fecha_postulacion DESC,
