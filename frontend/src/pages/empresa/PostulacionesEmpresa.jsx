@@ -484,6 +484,9 @@ function PostulacionesEmpresa({ onActualizar }) {
                         <span>
                           Prueba: {p.examen_aciertos} de {p.examen_total}{" "}
                           correctas
+                          {p.examen_carrera_nombre
+                            ? ` · ${p.examen_carrera_nombre}`
+                            : ""}
                         </span>
                       </p>
                     ) : null}

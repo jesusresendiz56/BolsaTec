@@ -9,12 +9,10 @@ import {
   XCircle,
   RefreshCw,
   X,
-  ClipboardList,
 } from "lucide-react";
 
 import { sessionGet } from "../../services/session";
 import SelectorUbicacion from "../../components/SelectorUbicacion";
-import EditorExamen from "../../components/EditorExamen";
 import "./VacantesEmpresa.css";
 
 const ESTADOS_MEXICO = [
@@ -109,8 +107,6 @@ function VacantesEmpresa({ onActualizar }) {
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
-  // Vacante cuya prueba de conocimientos se está editando
-  const [vacanteExamen, setVacanteExamen] = useState(null);
 
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [vacanteEditando, setVacanteEditando] = useState(null);
@@ -136,8 +132,6 @@ function VacantesEmpresa({ onActualizar }) {
   useEffect(() => {
     cargarVacantes();
   }, [cargarVacantes]);
-
-  const cerrarEditorExamen = useCallback(() => setVacanteExamen(null), []);
 
   const actualizarCampo = (evento) => {
     const { name, value } = evento.target;
@@ -402,27 +396,6 @@ function VacantesEmpresa({ onActualizar }) {
                         onClick={() => abrirEditar(vacante)}
                       >
                         <Pencil size={17} />
-                      </button>
-
-                      <button
-                        type="button"
-                        className={
-                          vacante.total_preguntas > 0
-                            ? "bt-vacantes-examen con-prueba"
-                            : "bt-vacantes-examen"
-                        }
-                        title={
-                          vacante.total_preguntas > 0
-                            ? `Prueba de conocimientos (${vacante.total_preguntas} preguntas)`
-                            : "Crear prueba de conocimientos"
-                        }
-                        aria-label={`Prueba de conocimientos de ${vacante.titulo}`}
-                        onClick={() => setVacanteExamen(vacante)}
-                      >
-                        <ClipboardList size={17} />
-                        {vacante.total_preguntas > 0 && (
-                          <span>{vacante.total_preguntas}</span>
-                        )}
                       </button>
 
                       {vacante.estado === "activa" ? (
@@ -734,17 +707,6 @@ function VacantesEmpresa({ onActualizar }) {
             </form>
           </div>
         </div>
-      )}
-
-      {vacanteExamen && (
-        <EditorExamen
-          vacante={vacanteExamen}
-          onCerrar={cerrarEditorExamen}
-          onGuardado={(texto) => {
-            setMensaje(texto);
-            cargarVacantes();
-          }}
-        />
       )}
     </div>
   );

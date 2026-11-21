@@ -96,11 +96,7 @@ const obtenerVacantes = async (req, res) => {
         (SELECT COUNT(*)
          FROM postulaciones p
          WHERE p.id_vacante = v.id_vacante
-        ) AS total_postulaciones,
-        (SELECT COUNT(*)::int
-         FROM examen_preguntas ep
-         WHERE ep.id_vacante = v.id_vacante
-        ) AS total_preguntas
+        ) AS total_postulaciones
        FROM vacantes v
        WHERE v.id_empresa = $1
        ORDER BY v.fecha_publicacion DESC, v.id_vacante DESC`,

@@ -21,6 +21,7 @@ import VacantesEmpresa from "./VacantesEmpresa";
 import PerfilEmpresa from "./PerfilEmpresa";
 import CandidatosEmpresa from "./CandidatosEmpresa";
 import PostulacionesEmpresa from "./PostulacionesEmpresa";
+import PruebasEmpresa from "./PruebasEmpresa";
 import NotificacionesEstudiante from "../estudiante/NotificacionesEstudiante";
 
 import "../estudiante/notificaciones.css";
@@ -123,6 +124,7 @@ function EmpresaDashboard() {
     { id: "vacantes", nombre: "Mis vacantes", icono: "vacantes" },
     { id: "candidatos", nombre: "Candidatos", icono: "usuarios" },
     { id: "postulaciones", nombre: "Postulaciones", icono: "postulaciones" },
+    { id: "pruebas", nombre: "Pruebas", icono: "pruebas" },
     {
       id: "notificaciones",
       nombre: "Notificaciones",
@@ -326,6 +328,8 @@ function EmpresaDashboard() {
         return <CandidatosEmpresa onActualizar={obtenerEstadisticas} />;
       case "postulaciones":
         return <PostulacionesEmpresa onActualizar={obtenerEstadisticas} />;
+      case "pruebas":
+        return <PruebasEmpresa />;
       case "notificaciones":
         return <NotificacionesEstudiante rol="empresa" onActualizar={obtenerEstadisticas} onIr={irA} />;
       default:

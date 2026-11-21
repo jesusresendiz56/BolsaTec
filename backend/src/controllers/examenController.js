@@ -1,10 +1,18 @@
 const pool = require("../config/database");
+const {
+  CATALOGO,
+  CLAVES,
+  nombreCarrera,
+  pruebasAplicables,
+} = require("../services/carreras");
 
 // ========================================
 // PRUEBA DE CONOCIMIENTOS ANTES DE POSTULARSE
-// La empresa define las preguntas de cada vacante.
-// El estudiante la responde antes de postularse y el
-// resultado se envía a la empresa con la postulación.
+// Cada empresa escribe una prueba general por carrera.
+// Al postularse a cualquier vacante de la empresa, el
+// estudiante presenta la prueba de su carrera (o la
+// "general" si su carrera no tiene una) y el resultado
+// se envía a la empresa con la postulación.
 // ========================================
 
 const MAX_PREGUNTAS = 10;
@@ -44,67 +52,116 @@ const preguntasParaEstudiante = (preguntas = []) =>
     opciones,
   }));
 
-// ========================================
-// EMPRESA: CONSULTAR PREGUNTAS DE UNA VACANTE
-// GET /api/empresa/vacantes/:id/examen
-// ========================================
-
-const vacanteDeEmpresa = async (idVacante, idUsuario) => {
+const buscarEmpresa = async (idUsuario) => {
   const resultado = await pool.query(
-    `SELECT v.id_vacante, v.titulo
-     FROM vacantes v
-     INNER JOIN empresas e
-       ON e.id_empresa = v.id_empresa
-     WHERE v.id_vacante = $1
-       AND e.id_usuario = $2`,
-    [idVacante, idUsuario]
+    `SELECT id_empresa FROM empresas WHERE id_usuario = $1`,
+    [idUsuario]
   );
 
-  return resultado.rows[0] || null;
+  return resultado.rows[0]?.id_empresa || null;
 };
 
-const consultarPreguntas = async (db, idVacante) => {
+const consultarPreguntas = async (db, idEmpresa, carrera) => {
   const resultado = await db.query(
     `SELECT id_pregunta, pregunta, correcta, incorrectas
-     FROM examen_preguntas
-     WHERE id_vacante = $1
+     FROM examen_preguntas_carrera
+     WHERE id_empresa = $1
+       AND carrera = $2
      ORDER BY orden, id_pregunta`,
-    [idVacante]
+    [idEmpresa, carrera]
   );
 
   return resultado.rows;
 };
 
-const obtenerExamenEmpresa = async (req, res) => {
-  try {
-    const idVacante = leerId(req.params.id);
+// Carrera de la prueba que le toca al estudiante con esta empresa
+// (la de su carrera o la general), o null si no hay ninguna.
+const pruebaParaEstudiante = async (db, idEmpresa, carreraEstudiante) => {
+  const aplicables = pruebasAplicables(carreraEstudiante);
 
-    if (!idVacante) {
-      return res.status(400).json({
-        mensaje: "Identificador de vacante no válido"
-      });
+  const resultado = await db.query(
+    `SELECT DISTINCT carrera
+     FROM examen_preguntas_carrera
+     WHERE id_empresa = $1
+       AND carrera = ANY($2::text[])`,
+    [idEmpresa, aplicables]
+  );
+
+  const disponibles = resultado.rows.map((fila) => fila.carrera);
+  return aplicables.find((clave) => disponibles.includes(clave)) || null;
+};
+
+// ========================================
+// EMPRESA: RESUMEN DE PRUEBAS POR CARRERA
+// GET /api/empresa/pruebas
+// ========================================
+
+const obtenerPruebasEmpresa = async (req, res) => {
+  try {
+    const idEmpresa = await buscarEmpresa(req.usuario.id_usuario);
+
+    if (!idEmpresa) {
+      return res.status(404).json({ mensaje: "Empresa no encontrada" });
     }
 
-    const vacante = await vacanteDeEmpresa(
-      idVacante,
-      req.usuario.id_usuario
+    const resultado = await pool.query(
+      `SELECT carrera, COUNT(*)::int AS total
+       FROM examen_preguntas_carrera
+       WHERE id_empresa = $1
+       GROUP BY carrera`,
+      [idEmpresa]
     );
 
-    if (!vacante) {
-      return res.status(404).json({
-        mensaje: "Vacante no encontrada"
-      });
-    }
+    const conteo = Object.fromEntries(
+      resultado.rows.map((fila) => [fila.carrera, fila.total])
+    );
 
     return res.json({
-      vacante,
-      preguntas: await consultarPreguntas(pool, idVacante),
+      carreras: CATALOGO.map((carrera) => ({
+        ...carrera,
+        total_preguntas: conteo[carrera.clave] || 0,
+      })),
       max_preguntas: MAX_PREGUNTAS,
       max_incorrectas: MAX_INCORRECTAS,
     });
 
   } catch (error) {
-    console.error("Error al consultar examen de la vacante:", error);
+    console.error("Error al consultar pruebas de la empresa:", error);
+
+    return res.status(500).json({
+      mensaje: "No se pudieron consultar las pruebas"
+    });
+  }
+};
+
+// ========================================
+// EMPRESA: PREGUNTAS DE LA PRUEBA DE UNA CARRERA
+// GET /api/empresa/pruebas/:carrera
+// ========================================
+
+const obtenerPruebaCarrera = async (req, res) => {
+  try {
+    const carrera = req.params.carrera;
+
+    if (!CLAVES.includes(carrera)) {
+      return res.status(400).json({ mensaje: "Carrera no válida" });
+    }
+
+    const idEmpresa = await buscarEmpresa(req.usuario.id_usuario);
+
+    if (!idEmpresa) {
+      return res.status(404).json({ mensaje: "Empresa no encontrada" });
+    }
+
+    return res.json({
+      carrera: { clave: carrera, nombre: nombreCarrera(carrera) },
+      preguntas: await consultarPreguntas(pool, idEmpresa, carrera),
+      max_preguntas: MAX_PREGUNTAS,
+      max_incorrectas: MAX_INCORRECTAS,
+    });
+
+  } catch (error) {
+    console.error("Error al consultar la prueba:", error);
 
     return res.status(500).json({
       mensaje: "No se pudo consultar la prueba"
@@ -113,11 +170,11 @@ const obtenerExamenEmpresa = async (req, res) => {
 };
 
 // ========================================
-// EMPRESA: GUARDAR PREGUNTAS DE UNA VACANTE
-// PUT /api/empresa/vacantes/:id/examen
+// EMPRESA: GUARDAR LA PRUEBA DE UNA CARRERA
+// PUT /api/empresa/pruebas/:carrera
 // body: { preguntas: [{ pregunta, correcta, incorrectas: [] }] }
 // Reemplaza todas las preguntas. Una lista vacía quita
-// el examen de la vacante.
+// la prueba de esa carrera.
 // ========================================
 
 const validarPreguntas = (preguntas) => {
@@ -126,7 +183,7 @@ const validarPreguntas = (preguntas) => {
   }
 
   if (preguntas.length > MAX_PREGUNTAS) {
-    return { error: `El examen puede tener máximo ${MAX_PREGUNTAS} preguntas` };
+    return { error: `La prueba puede tener máximo ${MAX_PREGUNTAS} preguntas` };
   }
 
   const limpias = [];
@@ -167,13 +224,11 @@ const validarPreguntas = (preguntas) => {
   return { preguntas: limpias };
 };
 
-const guardarExamenEmpresa = async (req, res) => {
-  const idVacante = leerId(req.params.id);
+const guardarPruebaCarrera = async (req, res) => {
+  const carrera = req.params.carrera;
 
-  if (!idVacante) {
-    return res.status(400).json({
-      mensaje: "Identificador de vacante no válido"
-    });
+  if (!CLAVES.includes(carrera)) {
+    return res.status(400).json({ mensaje: "Carrera no válida" });
   }
 
   const validacion = validarPreguntas(req.body?.preguntas);
@@ -182,35 +237,40 @@ const guardarExamenEmpresa = async (req, res) => {
     return res.status(400).json({ mensaje: validacion.error });
   }
 
+  let idEmpresa;
+
+  try {
+    idEmpresa = await buscarEmpresa(req.usuario.id_usuario);
+  } catch (error) {
+    console.error("Error al guardar la prueba:", error);
+    return res.status(500).json({ mensaje: "No se pudo guardar la prueba" });
+  }
+
+  if (!idEmpresa) {
+    return res.status(404).json({ mensaje: "Empresa no encontrada" });
+  }
+
   const client = await pool.connect();
 
   try {
-    const vacante = await vacanteDeEmpresa(
-      idVacante,
-      req.usuario.id_usuario
-    );
-
-    if (!vacante) {
-      return res.status(404).json({
-        mensaje: "Vacante no encontrada"
-      });
-    }
-
     await client.query("BEGIN");
 
     await client.query(
-      `DELETE FROM examen_preguntas WHERE id_vacante = $1`,
-      [idVacante]
+      `DELETE FROM examen_preguntas_carrera
+       WHERE id_empresa = $1
+         AND carrera = $2`,
+      [idEmpresa, carrera]
     );
 
     for (const [orden, item] of validacion.preguntas.entries()) {
       await client.query(
-        `INSERT INTO examen_preguntas (
-           id_vacante, orden, pregunta, correcta, incorrectas
+        `INSERT INTO examen_preguntas_carrera (
+           id_empresa, carrera, orden, pregunta, correcta, incorrectas
          )
-         VALUES ($1, $2, $3, $4, $5::jsonb)`,
+         VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
         [
-          idVacante,
+          idEmpresa,
+          carrera,
           orden,
           item.pregunta,
           item.correcta,
@@ -225,14 +285,14 @@ const guardarExamenEmpresa = async (req, res) => {
 
     return res.json({
       mensaje: total
-        ? `Prueba guardada (${total} ${total === 1 ? "pregunta" : "preguntas"})`
-        : "Se quitó la prueba de la vacante",
-      preguntas: await consultarPreguntas(pool, idVacante),
+        ? `Prueba de ${nombreCarrera(carrera)} guardada (${total} ${total === 1 ? "pregunta" : "preguntas"})`
+        : `Se quitó la prueba de ${nombreCarrera(carrera)}`,
+      preguntas: await consultarPreguntas(pool, idEmpresa, carrera),
     });
 
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
-    console.error("Error al guardar examen de la vacante:", error);
+    console.error("Error al guardar la prueba:", error);
 
     return res.status(500).json({
       mensaje: "No se pudo guardar la prueba"
@@ -240,6 +300,23 @@ const guardarExamenEmpresa = async (req, res) => {
   } finally {
     client.release();
   }
+};
+
+// ========================================
+// ESTUDIANTE: ¿QUÉ VACANTES PIDEN PRUEBA?
+// Devuelve el conjunto de id_empresa que tienen una prueba
+// aplicable a la carrera del estudiante.
+// ========================================
+
+const empresasConPrueba = async (carreraEstudiante) => {
+  const resultado = await pool.query(
+    `SELECT DISTINCT id_empresa
+     FROM examen_preguntas_carrera
+     WHERE carrera = ANY($1::text[])`,
+    [pruebasAplicables(carreraEstudiante)]
+  );
+
+  return new Set(resultado.rows.map((fila) => fila.id_empresa));
 };
 
 // ========================================
@@ -275,6 +352,8 @@ const obtenerExamenVacante = async (req, res) => {
     const datos = await pool.query(
       `SELECT
          est.id_estudiante,
+         est.carrera AS carrera_estudiante,
+         v.id_empresa,
          v.titulo AS titulo_vacante,
          v.estado AS estado_vacante,
          e.nombre_empresa
@@ -303,12 +382,23 @@ const obtenerExamenVacante = async (req, res) => {
         });
       }
 
-      const preguntasEmpresa = await consultarPreguntas(pool, idVacante);
+      const carrera = await pruebaParaEstudiante(
+        pool,
+        info.id_empresa,
+        info.carrera_estudiante
+      );
 
-      // La vacante no tiene examen: se puede postular directo
-      if (!preguntasEmpresa.length) {
+      // La empresa no tiene prueba para esta carrera:
+      // se puede postular directo
+      if (!carrera) {
         return res.json({ examen: null });
       }
+
+      const preguntasEmpresa = await consultarPreguntas(
+        pool,
+        info.id_empresa,
+        carrera
+      );
 
       const copia = preguntasEmpresa.map((p) => {
         const opciones = revolver([p.correcta, ...p.incorrectas]);
@@ -323,11 +413,17 @@ const obtenerExamenVacante = async (req, res) => {
 
       await pool.query(
         `INSERT INTO examenes_vacante (
-           id_estudiante, id_vacante, preguntas, total
+           id_estudiante, id_vacante, carrera, preguntas, total
          )
-         VALUES ($1, $2, $3::jsonb, $4)
+         VALUES ($1, $2, $3, $4::jsonb, $5)
          ON CONFLICT (id_estudiante, id_vacante) DO NOTHING`,
-        [info.id_estudiante, idVacante, JSON.stringify(copia), copia.length]
+        [
+          info.id_estudiante,
+          idVacante,
+          carrera,
+          JSON.stringify(copia),
+          copia.length,
+        ]
       );
 
       examen = await buscarExamen(pool, info.id_estudiante, idVacante);
@@ -340,6 +436,8 @@ const obtenerExamenVacante = async (req, res) => {
         id_vacante: idVacante,
         titulo_vacante: info.titulo_vacante,
         nombre_empresa: info.nombre_empresa,
+        carrera: examen.carrera,
+        carrera_nombre: examen.carrera ? nombreCarrera(examen.carrera) : null,
         preguntas: preguntasParaEstudiante(examen.preguntas),
         completado,
         resultado: completado ? formatoResultado(examen) : null,
@@ -359,7 +457,7 @@ const obtenerExamenVacante = async (req, res) => {
 // CALIFICAR ANTES DE POSTULAR (dentro de la transacción
 // que registra la postulación)
 // Devuelve { error }, { resultado } o { resultado: null }
-// si la vacante no tiene examen.
+// si no hay prueba que presentar.
 // ========================================
 
 const calificarAntesDePostular = async (
@@ -371,12 +469,21 @@ const calificarAntesDePostular = async (
   const examen = await buscarExamen(client, idEstudiante, idVacante, true);
 
   if (!examen) {
-    const preguntas = await client.query(
-      `SELECT 1 FROM examen_preguntas WHERE id_vacante = $1 LIMIT 1`,
-      [idVacante]
+    const datos = await client.query(
+      `SELECT v.id_empresa, est.carrera
+       FROM vacantes v
+       CROSS JOIN estudiantes est
+       WHERE v.id_vacante = $1
+         AND est.id_estudiante = $2`,
+      [idVacante, idEstudiante]
     );
 
-    if (preguntas.rowCount) {
+    const fila = datos.rows[0];
+    const carrera = fila
+      ? await pruebaParaEstudiante(client, fila.id_empresa, fila.carrera)
+      : null;
+
+    if (carrera) {
       return {
         error: {
           status: 409,
@@ -451,8 +558,10 @@ const calificarAntesDePostular = async (
 };
 
 module.exports = {
-  obtenerExamenEmpresa,
-  guardarExamenEmpresa,
+  obtenerPruebasEmpresa,
+  obtenerPruebaCarrera,
+  guardarPruebaCarrera,
+  empresasConPrueba,
   obtenerExamenVacante,
   calificarAntesDePostular,
 };
