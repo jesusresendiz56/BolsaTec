@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   Search,
@@ -18,6 +18,9 @@ import { sessionGet } from "../../services/session";
 import { esReciente, fechaCorta, tiempoRelativo } from "../../services/fechas";
 import { ESTADOS_POSTULACION } from "../../services/postulaciones";
 import MapaUbicacion from "../../components/MapaUbicacion";
+import ExamenPostulacion from "../../components/ExamenPostulacion";
+import ChipExamen from "../../components/ChipExamen";
+import { enviarPostulacion } from "../../services/examen";
 import "./BuscarVacantes.css";
 import "./MisPostulaciones.css";
 
@@ -139,9 +142,10 @@ function BuscarVacantes({ onActualizar, onIr }) {
   const [postuladas, setPostuladas] = useState({});
   const idsPostulados = Object.keys(postuladas).map(Number);
   const [cancelando, setCancelando] = useState(false);
+  // Examen de conocimientos que se presenta antes de postularse
+  const [examenAbierto, setExamenAbierto] = useState(false);
+  const [enviandoPostulacion, setEnviandoPostulacion] = useState(false);
   const [confirmarCancelacion, setConfirmarCancelacion] = useState(false);
-  const [enviandoPostulacion, setEnviandoPostulacion] =
-    useState(false);
 
   const [mensajePostulacion, setMensajePostulacion] =
     useState("");
@@ -233,6 +237,9 @@ function BuscarVacantes({ onActualizar, onIr }) {
             {
               id_postulacion: item.id_postulacion,
               estado: item.estado,
+              examen_calificacion: item.examen_calificacion,
+              examen_aciertos: item.examen_aciertos,
+              examen_total: item.examen_total,
             },
           ])
         )
@@ -338,7 +345,7 @@ function BuscarVacantes({ onActualizar, onIr }) {
   };
 
   const cerrarDetalles = () => {
-    if (enviandoPostulacion || cancelando) return;
+    if (cancelando || examenAbierto || enviandoPostulacion) return;
 
     setVacanteSeleccionada(null);
     setMensajePostulacion("");
@@ -359,6 +366,9 @@ function BuscarVacantes({ onActualizar, onIr }) {
   // ENVIAR POSTULACIÓN
   // ========================================
 
+  // Si la empresa definió una prueba de conocimientos, primero
+  // se muestra el aviso y la prueba (ver ExamenPostulacion);
+  // al terminarla se registra la postulación.
   const postularme = async () => {
     if (!vacanteSeleccionada || enviandoPostulacion) return;
 
@@ -373,73 +383,54 @@ function BuscarVacantes({ onActualizar, onIr }) {
       return;
     }
 
+    setMensajePostulacion("");
+    setErrorPostulacion("");
+
+    if (vacanteSeleccionada.tiene_examen) {
+      setExamenAbierto(true);
+      return;
+    }
+
+    // Sin prueba: postular directo
     try {
       setEnviandoPostulacion(true);
-      setMensajePostulacion("");
-      setErrorPostulacion("");
-
-      const sesion = sessionGet("estudiante");
-
-      if (!sesion?.token) {
-        throw new Error(
-          "Debes iniciar sesión como estudiante"
-        );
-      }
-
-      const respuesta = await fetch(
-        `${API_URL}/api/estudiante/postulaciones`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${sesion.token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            id_vacante: idVacante,
-          }),
-        }
-      );
-
-      const datos = await respuesta.json();
-
-      if (!respuesta.ok) {
-        if (
-          respuesta.status === 409 &&
-          datos.mensaje ===
-            "Ya te postulaste a esta vacante"
-        ) {
-          consultarPostulaciones();
-        }
-
-        throw new Error(
-          datos.mensaje || "No se pudo enviar la postulación"
-        );
-      }
-
-      setPostuladas((anteriores) => ({
-        ...anteriores,
-        [idVacante]: {
-          id_postulacion: datos.postulacion?.id_postulacion,
-          estado: datos.postulacion?.estado || "enviada",
-        },
-      }));
-
-      setMensajePostulacion(
-        datos.mensaje ||
-          "Postulación enviada correctamente"
-      );
-      onActualizar?.();
+      alPostular(await enviarPostulacion(idVacante));
     } catch (err) {
-      console.error(
-        "Error al enviar postulación:",
-        err
-      );
+      if (err.status === 409 && /presentar la prueba/.test(err.message)) {
+        // La empresa agregó una prueba después de cargar la lista
+        setExamenAbierto(true);
+        return;
+      }
 
+      if (err.status === 409) consultarPostulaciones();
       setErrorPostulacion(err.message);
     } finally {
       setEnviandoPostulacion(false);
     }
   };
+
+  const alPostular = (datos) => {
+    const idVacante = Number(datos.postulacion?.id_vacante);
+
+    setPostuladas((anteriores) => ({
+      ...anteriores,
+      [idVacante]: {
+        id_postulacion: datos.postulacion?.id_postulacion,
+        estado: datos.postulacion?.estado || "enviada",
+        examen_calificacion: datos.examen?.calificacion ?? null,
+        examen_aciertos: datos.examen?.aciertos ?? null,
+        examen_total: datos.examen?.total ?? null,
+      },
+    }));
+
+    setMensajePostulacion(
+      datos.mensaje ||
+        "Postulación enviada correctamente"
+    );
+    onActualizar?.();
+  };
+
+  const cerrarExamen = useCallback(() => setExamenAbierto(false), []);
 
   // ========================================
   // CANCELAR POSTULACIÓN
@@ -790,7 +781,7 @@ function BuscarVacantes({ onActualizar, onIr }) {
               type="button"
               className="bt-vacante-cerrar"
               onClick={cerrarDetalles}
-              disabled={enviandoPostulacion || cancelando}
+              disabled={cancelando || enviandoPostulacion}
               aria-label="Cerrar detalles"
             >
               <X size={21} />
@@ -899,6 +890,11 @@ function BuscarVacantes({ onActualizar, onIr }) {
                       <estadoActual.icono size={15} />
                       {estadoActual.nombre}
                     </span>
+                    <ChipExamen
+                      calificacion={postulacionActual.examen_calificacion}
+                      aciertos={postulacionActual.examen_aciertos}
+                      total={postulacionActual.examen_total}
+                    />
                     <p>{estadoActual.ayuda}</p>
                   </div>
                 )}
@@ -952,6 +948,14 @@ function BuscarVacantes({ onActualizar, onIr }) {
             )}
           </div>
         </div>
+      )}
+
+      {examenAbierto && vacanteSeleccionada && (
+        <ExamenPostulacion
+          vacante={vacanteSeleccionada}
+          onCerrar={cerrarExamen}
+          onPostulado={alPostular}
+        />
       )}
     </div>
   );
