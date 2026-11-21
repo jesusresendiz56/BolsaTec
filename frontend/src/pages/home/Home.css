@@ -134,6 +134,22 @@
   display: none;
 }
 
+/* Idioma, paleta y sol/luna dentro del navbar (no flotantes) */
+.bt-nav-controles {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.bt-nav-controles .bt-tema-controles {
+  position: static;
+  z-index: auto;
+}
+
+.bt-nav-actions {
+  margin-left: auto;
+}
+
 /* HERO */
 
 .bt-hero {
@@ -769,10 +785,14 @@
   }
 }
 
-@media (max-width: 850px) {
+@media (max-width: 1100px) {
   .bt-nav-actions,
   .bt-nav-links {
     display: none;
+  }
+
+  .bt-nav-controles {
+    margin-left: auto;
   }
 
   .bt-menu-toggle {
@@ -823,7 +843,9 @@
     background: var(--bt-cian);
     color: #ffffff;
   }
+}
 
+@media (max-width: 850px) {
   .bt-hero-inner,
   .bt-companies-inner {
     grid-template-columns: 1fr;
@@ -865,6 +887,17 @@
 @media (max-width: 550px) {
   .bt-nav-container {
     padding: 0 18px;
+    gap: 12px;
+  }
+
+  .bt-nav-controles .bt-tema-controles {
+    gap: 6px;
+  }
+
+  .bt-nav-controles .bt-personalizar-boton,
+  .bt-nav-controles .bt-global-theme-toggle {
+    width: 36px;
+    height: 36px;
   }
 
   .bt-hero {
