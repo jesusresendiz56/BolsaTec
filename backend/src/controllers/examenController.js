@@ -5,6 +5,7 @@ const {
   nombreCarrera,
   pruebasAplicables,
 } = require("../services/carreras");
+const { giroDeSector } = require("../services/perfilEmpresa");
 
 // ========================================
 // PRUEBA DE CONOCIMIENTOS ANTES DE POSTULARSE
@@ -98,11 +99,19 @@ const pruebaParaEstudiante = async (db, idEmpresa, carreraEstudiante) => {
 
 const obtenerPruebasEmpresa = async (req, res) => {
   try {
-    const idEmpresa = await buscarEmpresa(req.usuario.id_usuario);
+    const empresa = await pool.query(
+      `SELECT id_empresa, sector FROM empresas WHERE id_usuario = $1`,
+      [req.usuario.id_usuario]
+    );
 
-    if (!idEmpresa) {
+    if (!empresa.rows.length) {
       return res.status(404).json({ mensaje: "Empresa no encontrada" });
     }
+
+    const { id_empresa: idEmpresa, sector } = empresa.rows[0];
+    // Carreras relacionadas con el sector de la empresa
+    const giro = giroDeSector(sector);
+    const afines = giro?.carreras || [];
 
     const resultado = await pool.query(
       `SELECT carrera, COUNT(*)::int AS total
@@ -117,9 +126,13 @@ const obtenerPruebasEmpresa = async (req, res) => {
     );
 
     return res.json({
+      sector,
+      giro: giro?.nombre || null,
       carreras: CATALOGO.map((carrera) => ({
         ...carrera,
         total_preguntas: conteo[carrera.clave] || 0,
+        recomendada: afines.includes(carrera.clave),
+        afinidad: afines.indexOf(carrera.clave),
       })),
       max_preguntas: MAX_PREGUNTAS,
       max_incorrectas: MAX_INCORRECTAS,
