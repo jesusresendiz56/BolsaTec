@@ -360,3 +360,14 @@
 [data-theme="dark"] .bt-postemp-badge.estado-entrevista { background: rgba(245, 158, 11, 0.16); color: #fcd34d; }
 [data-theme="dark"] .bt-postemp-badge.estado-aceptada { background: rgba(22, 163, 74, 0.16); color: #86efac; }
 [data-theme="dark"] .bt-postemp-badge.estado-rechazada { background: rgba(239, 68, 68, 0.16); color: #fca5a5; }
+
+/* Calificación del examen de conocimientos */
+.bt-postemp-examen {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bt-postemp-examen > span {
+  color: var(--bt-muted);
+  font-size: 13px;
+}

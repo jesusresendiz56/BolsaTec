@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { sessionGet } from "../../services/session";
+import ChipExamen from "../../components/ChipExamen";
 import "./PostulacionesEmpresa.css";
 
 const API_URL = (
@@ -472,6 +473,20 @@ function PostulacionesEmpresa({ onActualizar }) {
                       <CalendarDays size={15} />
                       {formatearFecha(p.fecha_postulacion)}
                     </p>
+                    {p.examen_calificacion !== null &&
+                    p.examen_calificacion !== undefined ? (
+                      <p className="bt-postemp-examen">
+                        <ChipExamen
+                          calificacion={p.examen_calificacion}
+                          aciertos={p.examen_aciertos}
+                          total={p.examen_total}
+                        />
+                        <span>
+                          Prueba: {p.examen_aciertos} de {p.examen_total}{" "}
+                          correctas
+                        </span>
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="bt-postemp-acciones">

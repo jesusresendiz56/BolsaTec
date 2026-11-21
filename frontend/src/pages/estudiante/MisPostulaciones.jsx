@@ -20,6 +20,7 @@ import {
   PASOS_PROCESO,
   pasoActual,
 } from "../../services/postulaciones";
+import ChipExamen from "../../components/ChipExamen";
 import "./MisPostulaciones.css";
 
 const API_URL = (
@@ -289,6 +290,15 @@ function MisPostulaciones({ onActualizar, onIr }) {
                   <li title={fechaCorta(p.fecha_postulacion)}>
                     <CalendarDays size={15} /> Te postulaste {tiempoRelativo(p.fecha_postulacion)}
                   </li>
+                  {p.examen_calificacion !== null && p.examen_calificacion !== undefined && (
+                    <li>
+                      <ChipExamen
+                        calificacion={p.examen_calificacion}
+                        aciertos={p.examen_aciertos}
+                        total={p.examen_total}
+                      />
+                    </li>
+                  )}
                 </ul>
 
                 {/* LÍNEA DE TIEMPO */}
