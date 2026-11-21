@@ -210,11 +210,18 @@ function VacantesEmpresa({ onActualizar }) {
         body: JSON.stringify(formulario),
       });
 
+      const eraNueva = !vacanteEditando;
+
       setMostrarFormulario(false);
       setVacanteEditando(null);
       setMensaje(datos.mensaje);
 
       await cargarVacantes();
+
+      // Vacante nueva: abrir de inmediato la prueba de conocimientos
+      if (eraNueva && datos.vacante?.id_vacante) {
+        setVacanteExamen({ ...datos.vacante, total_preguntas: 0 });
+      }
       onActualizar?.();
     } catch (err) {
       setError(err.message);
@@ -357,6 +364,7 @@ function VacantesEmpresa({ onActualizar }) {
               <th>Tipo</th>
               <th>Estado</th>
               <th>Postulaciones</th>
+              <th>Prueba</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -364,11 +372,11 @@ function VacantesEmpresa({ onActualizar }) {
           <tbody>
             {cargando ? (
               <tr>
-                <td colSpan="6">Cargando vacantes...</td>
+                <td colSpan="7">Cargando vacantes...</td>
               </tr>
             ) : vacantesFiltradas.length === 0 ? (
               <tr>
-                <td colSpan="6">
+                <td colSpan="7">
                   No se encontraron vacantes.
                 </td>
               </tr>
@@ -393,6 +401,28 @@ function VacantesEmpresa({ onActualizar }) {
 
                   <td data-label="Postulaciones">{vacante.total_postulaciones}</td>
 
+                  <td data-label="Prueba">
+                    <button
+                      type="button"
+                      className={
+                        vacante.total_preguntas > 0
+                          ? "bt-vacantes-prueba con-prueba"
+                          : "bt-vacantes-prueba"
+                      }
+                      onClick={() => setVacanteExamen(vacante)}
+                      aria-label={
+                        vacante.total_preguntas > 0
+                          ? `Editar prueba de conocimientos de ${vacante.titulo}`
+                          : `Crear prueba de conocimientos de ${vacante.titulo}`
+                      }
+                    >
+                      <ClipboardList size={16} />
+                      {vacante.total_preguntas > 0
+                        ? `${vacante.total_preguntas} ${vacante.total_preguntas === 1 ? "pregunta" : "preguntas"}`
+                        : "Crear prueba"}
+                    </button>
+                  </td>
+
                   <td data-label="Acciones">
                     <div className="bt-vacantes-acciones">
                       <button
@@ -402,27 +432,6 @@ function VacantesEmpresa({ onActualizar }) {
                         onClick={() => abrirEditar(vacante)}
                       >
                         <Pencil size={17} />
-                      </button>
-
-                      <button
-                        type="button"
-                        className={
-                          vacante.total_preguntas > 0
-                            ? "bt-vacantes-examen con-prueba"
-                            : "bt-vacantes-examen"
-                        }
-                        title={
-                          vacante.total_preguntas > 0
-                            ? `Prueba de conocimientos (${vacante.total_preguntas} preguntas)`
-                            : "Crear prueba de conocimientos"
-                        }
-                        aria-label={`Prueba de conocimientos de ${vacante.titulo}`}
-                        onClick={() => setVacanteExamen(vacante)}
-                      >
-                        <ClipboardList size={17} />
-                        {vacante.total_preguntas > 0 && (
-                          <span>{vacante.total_preguntas}</span>
-                        )}
                       </button>
 
                       {vacante.estado === "activa" ? (

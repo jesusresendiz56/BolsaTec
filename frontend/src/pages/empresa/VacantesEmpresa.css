@@ -90,7 +90,7 @@
 
 .bt-vacantes-tabla th,
 .bt-vacantes-tabla td {
-  padding: 15px;
+  padding: 15px 12px;
   border-bottom: 1px solid var(--bt-border, var(--bt-border));
 }
 
@@ -333,16 +333,27 @@
 }
 
 /* Botón de la prueba de conocimientos */
-.bt-vacantes-acciones .bt-vacantes-examen {
-  gap: 4px;
-}
-
-.bt-vacantes-acciones .bt-vacantes-examen.con-prueba {
-  border-color: var(--bt-primary, #0e7490);
+.bt-vacantes-prueba {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  border: 1px dashed var(--bt-primary, #0e7490);
+  border-radius: 8px;
+  background: transparent;
   color: var(--bt-primary, #0e7490);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
-.bt-vacantes-examen span {
-  font-size: 12px;
-  font-weight: 700;
+.bt-vacantes-prueba:hover {
+  background: var(--bt-highlight, #ecfeff);
+}
+
+.bt-vacantes-prueba.con-prueba {
+  border-style: solid;
+  background: var(--bt-highlight, #ecfeff);
 }
