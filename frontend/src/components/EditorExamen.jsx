@@ -15,8 +15,9 @@ import "./ExamenPostulacion.css";
 
 // ========================================
 // EDITOR DE LA PRUEBA DE CONOCIMIENTOS (EMPRESA)
-// Por cada pregunta: la respuesta correcta y de 1 a 3
-// incorrectas. Al estudiante se le muestran revueltas.
+// Una prueba general por carrera. Por cada pregunta: la
+// respuesta correcta y de 1 a 3 incorrectas. Al estudiante
+// se le muestran revueltas.
 // ========================================
 
 const preguntaVacia = () => ({
@@ -26,7 +27,7 @@ const preguntaVacia = () => ({
   incorrectas: ["", ""],
 });
 
-function EditorExamen({ vacante, onCerrar, onGuardado }) {
+function EditorExamen({ carrera, onCerrar, onGuardado }) {
   const [preguntas, setPreguntas] = useState([]);
   const [maxPreguntas, setMaxPreguntas] = useState(10);
   const [maxIncorrectas, setMaxIncorrectas] = useState(3);
@@ -35,12 +36,13 @@ function EditorExamen({ vacante, onCerrar, onGuardado }) {
   const [error, setError] = useState("");
   const dialogo = useRef(null);
 
-  const idVacante = Number(vacante?.id_vacante);
+  const clave = carrera?.clave;
+  const esGeneral = clave === "general";
 
   useEffect(() => {
     let activo = true;
 
-    solicitar("empresa", `/vacantes/${idVacante}/examen`)
+    solicitar("empresa", `/pruebas/${clave}`)
       .then((datos) => {
         if (!activo) return;
 
@@ -67,7 +69,7 @@ function EditorExamen({ vacante, onCerrar, onGuardado }) {
     return () => {
       activo = false;
     };
-  }, [idVacante]);
+  }, [clave]);
 
   useEffect(() => {
     dialogo.current?.focus();
@@ -106,7 +108,7 @@ function EditorExamen({ vacante, onCerrar, onGuardado }) {
       setGuardando(true);
       setError("");
 
-      const datos = await solicitar("empresa", `/vacantes/${idVacante}/examen`, {
+      const datos = await solicitar("empresa", `/pruebas/${clave}`, {
         method: "PUT",
         body: JSON.stringify({
           preguntas: lista.map(({ pregunta, correcta, incorrectas }) => ({
@@ -134,7 +136,9 @@ function EditorExamen({ vacante, onCerrar, onGuardado }) {
   const quitarExamen = () => {
     if (
       window.confirm(
-        "¿Quitar la prueba de esta vacante? Los estudiantes podrán postularse sin presentarla."
+        esGeneral
+          ? "¿Quitar la prueba general? Los estudiantes de otras carreras podrán postularse sin presentarla."
+          : "¿Quitar la prueba de esta carrera? Sus estudiantes presentarán la prueba general (si la tienes) o se postularán sin prueba."
       )
     ) {
       guardar([]);
@@ -158,10 +162,13 @@ function EditorExamen({ vacante, onCerrar, onGuardado }) {
               <ClipboardList size={15} />
               Prueba de conocimientos
             </span>
-            <h3 id="bt-editor-examen-titulo">{vacante?.titulo}</h3>
+            <h3 id="bt-editor-examen-titulo">{carrera?.nombre}</h3>
             <p className="bt-examen-empresa">
-              Los estudiantes la responden antes de postularse y tú recibes su
-              resultado. Las respuestas se les muestran en orden aleatorio.
+              {esGeneral
+                ? "La presentan los estudiantes de carreras que no tienen prueba propia."
+                : "La presentan los estudiantes de esta carrera antes de postularse a cualquiera de tus vacantes."}{" "}
+              Haz preguntas generales de la carrera relacionadas con el giro de
+              tu empresa. Las respuestas se muestran en orden aleatorio.
             </p>
           </div>
 
@@ -209,7 +216,7 @@ function EditorExamen({ vacante, onCerrar, onGuardado }) {
                   id={`pregunta-${p.clave}`}
                   value={p.pregunta}
                   onChange={(e) => actualizar(indice, { pregunta: e.target.value })}
-                  placeholder="Ej. ¿Qué instrucción de SQL se usa para consultar datos?"
+                  placeholder="Escribe la pregunta"
                   maxLength={300}
                   rows={2}
                   required
@@ -292,7 +299,7 @@ function EditorExamen({ vacante, onCerrar, onGuardado }) {
 
         {!cargando && !preguntas.length && (
           <p className="bt-examen-instrucciones">
-            Sin preguntas, los estudiantes se postulan sin presentar prueba.
+            Sin preguntas, esta carrera no tendrá prueba.
           </p>
         )}
 
@@ -303,7 +310,7 @@ function EditorExamen({ vacante, onCerrar, onGuardado }) {
         )}
 
         <div className="bt-examen-acciones">
-          {Number(vacante?.total_preguntas) > 0 && (
+          {Number(carrera?.total_preguntas) > 0 && (
             <button
               type="button"
               className="bt-examen-btn peligro"
