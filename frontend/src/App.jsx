@@ -51,7 +51,7 @@ function AppContent() {
       {/* Mostrar el botón global solamente
           fuera de los dashboards */}
 
-      {!esDashboard && <ControlesTema />}
+      {!esDashboard && location.pathname !== "/" && <ControlesTema />}
 
       <Routes>
         {/* PÁGINAS PÚBLICAS */}
