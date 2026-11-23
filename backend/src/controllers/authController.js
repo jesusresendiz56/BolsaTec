@@ -55,7 +55,9 @@ const registrarEstudiante = async (req, res) => {
       correo,
       password,
       carrera,
-      semestre
+      semestre,
+      telefono,
+      institucion
     } = req.body;
 
     // Validar datos obligatorios
@@ -80,6 +82,27 @@ const registrarEstudiante = async (req, res) => {
     ) {
       return res.status(400).json({
         mensaje: "Elige tu carrera de la lista"
+      });
+    }
+
+    // Validar teléfono (10 dígitos) e institución
+    const telefonoLimpio =
+      typeof telefono === "string" ? telefono.replace(/\D/g, "") : "";
+
+    if (telefonoLimpio.length !== 10) {
+      return res.status(400).json({
+        mensaje: "El teléfono debe tener 10 dígitos"
+      });
+    }
+
+    const institucionLimpia =
+      typeof institucion === "string"
+        ? institucion.trim().replace(/\s+/g, " ")
+        : "";
+
+    if (!institucionLimpia || institucionLimpia.length > 150) {
+      return res.status(400).json({
+        mensaje: "Escribe tu institución (máximo 150 caracteres)"
       });
     }
 
@@ -111,7 +134,9 @@ const registrarEstudiante = async (req, res) => {
       correo: correo.trim().toLowerCase(),
       password,
       carrera: carrera.trim(),
-      semestre: semestreNumero
+      semestre: semestreNumero,
+      telefono: telefonoLimpio,
+      institucion: institucionLimpia
     });
 
     return res.status(201).json(resultado);
