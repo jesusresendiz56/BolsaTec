@@ -643,7 +643,13 @@ const obtenerPerfil = async (req, res) => {
       `SELECT
         ${CAMPOS_PERFIL},
         u.nombre AS representante,
-        u.correo
+        u.correo,
+        EXISTS (
+          SELECT 1
+          FROM examen_preguntas_carrera pr
+          WHERE pr.id_empresa = e.id_empresa
+            AND pr.carrera = 'sector'
+        ) AS tiene_prueba
        FROM empresas e
        INNER JOIN usuarios u
          ON u.id_usuario = e.id_usuario
@@ -677,14 +683,21 @@ const obtenerPerfil = async (req, res) => {
 // ACTUALIZAR PERFIL EMPRESARIAL
 // ========================================
 
+// Si cambia el sector, se borra la prueba de conocimientos del
+// sector anterior (examen_preguntas_carrera con carrera = 'sector').
 const actualizarPerfil = async (req, res) => {
+  const client = await pool.connect();
+
   try {
-    const actual = await pool.query(
-      `SELECT sector FROM empresas WHERE id_usuario = $1`,
+    await client.query("BEGIN");
+
+    const actual = await client.query(
+      `SELECT id_empresa, sector FROM empresas WHERE id_usuario = $1 FOR UPDATE`,
       [req.usuario.id_usuario]
     );
 
     if (actual.rows.length === 0) {
+      await client.query("ROLLBACK");
       return res.status(404).json({
         mensaje: "Perfil empresarial no encontrado"
       });
@@ -693,12 +706,13 @@ const actualizarPerfil = async (req, res) => {
     const validacion = validarPerfil(req.body, actual.rows[0].sector);
 
     if (validacion.error) {
+      await client.query("ROLLBACK");
       return res.status(400).json({ mensaje: validacion.error });
     }
 
     const d = validacion.datos;
 
-    const resultado = await pool.query(
+    const resultado = await client.query(
       `UPDATE empresas e
        SET nombre_empresa = $1,
            descripcion = $2,
@@ -729,15 +743,36 @@ const actualizarPerfil = async (req, res) => {
       ]
     );
 
+    let pruebaBorrada = false;
+
+    if ((actual.rows[0].sector || null) !== (d.sector || null)) {
+      const borrado = await client.query(
+        `DELETE FROM examen_preguntas_carrera
+         WHERE id_empresa = $1
+           AND carrera = 'sector'`,
+        [actual.rows[0].id_empresa]
+      );
+
+      pruebaBorrada = borrado.rowCount > 0;
+    }
+
+    await client.query("COMMIT");
+
     return res.json({
-      mensaje: "Perfil empresarial actualizado correctamente",
-      empresa: resultado.rows[0]
+      mensaje: pruebaBorrada
+        ? "Perfil actualizado. Como cambiaste el sector, se borró tu prueba de conocimientos; crea la del nuevo sector en \"Pruebas\"."
+        : "Perfil empresarial actualizado correctamente",
+      empresa: resultado.rows[0],
+      prueba_borrada: pruebaBorrada
     });
   } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
     console.error("Error al actualizar perfil:", error);
     return res.status(500).json({
       mensaje: "Error al actualizar el perfil empresarial"
     });
+  } finally {
+    client.release();
   }
 };
 
