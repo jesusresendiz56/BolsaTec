@@ -18,7 +18,6 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 
-import ControlesTema from "../../components/ControlesTema";
 import "./Home.css";
 
 function Home() {
@@ -71,10 +70,6 @@ function Home() {
             <Link to="/registro" className="bt-btn-primary">
               Registrarse <ArrowRight size={17} />
             </Link>
-          </div>
-
-          <div className="bt-nav-controles">
-            <ControlesTema />
           </div>
 
           <button
