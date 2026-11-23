@@ -15,7 +15,7 @@ import "./ExamenPostulacion.css";
 
 // ========================================
 // EDITOR DE LA PRUEBA DE CONOCIMIENTOS (EMPRESA)
-// Una prueba general por carrera. Por cada pregunta: la
+// Una sola prueba, la del sector de la empresa. Por cada pregunta: la
 // respuesta correcta y de 1 a 3 incorrectas. Al estudiante
 // se le muestran revueltas.
 // ========================================
@@ -37,7 +37,6 @@ function EditorExamen({ carrera, onCerrar, onGuardado }) {
   const dialogo = useRef(null);
 
   const clave = carrera?.clave;
-  const esGeneral = clave === "general";
 
   useEffect(() => {
     let activo = true;
@@ -136,9 +135,7 @@ function EditorExamen({ carrera, onCerrar, onGuardado }) {
   const quitarExamen = () => {
     if (
       window.confirm(
-        esGeneral
-          ? "¿Quitar la prueba general? Los estudiantes de otras carreras podrán postularse sin presentarla."
-          : "¿Quitar la prueba de esta carrera? Sus estudiantes presentarán la prueba general (si la tienes) o se postularán sin prueba."
+        "¿Quitar la prueba del sector? Los estudiantes podrán postularse a tus vacantes sin presentarla."
       )
     ) {
       guardar([]);
@@ -164,11 +161,9 @@ function EditorExamen({ carrera, onCerrar, onGuardado }) {
             </span>
             <h3 id="bt-editor-examen-titulo">{carrera?.nombre}</h3>
             <p className="bt-examen-empresa">
-              {esGeneral
-                ? "La presentan los estudiantes de carreras que no tienen prueba propia."
-                : "La presentan los estudiantes de esta carrera antes de postularse a cualquiera de tus vacantes."}{" "}
-              Haz preguntas generales de la carrera relacionadas con el giro de
-              tu empresa. Las respuestas se muestran en orden aleatorio.
+              La presentan todos los estudiantes antes de postularse a
+              cualquiera de tus vacantes. Haz preguntas generales del sector
+              de tu empresa. Las respuestas se muestran en orden aleatorio.
             </p>
           </div>
 
@@ -299,7 +294,7 @@ function EditorExamen({ carrera, onCerrar, onGuardado }) {
 
         {!cargando && !preguntas.length && (
           <p className="bt-examen-instrucciones">
-            Sin preguntas, esta carrera no tendrá prueba.
+            Sin preguntas, tu empresa no tendrá prueba.
           </p>
         )}
 

@@ -45,6 +45,8 @@ function PerfilEmpresa({ onActualizar }) {
   const [representante, setRepresentante] = useState("");
   const [correo, setCorreo] = useState("");
   const [verificada, setVerificada] = useState(false);
+  // ¿La empresa tiene prueba de conocimientos? (se borra si cambia el sector)
+  const [tienePrueba, setTienePrueba] = useState(false);
 
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -90,6 +92,7 @@ function PerfilEmpresa({ onActualizar }) {
       setTamanos(datos.tamanos || []);
       setRepresentante(datos.empresa.representante || "");
       setCorreo(datos.empresa.correo || "");
+      setTienePrueba(Boolean(datos.empresa.tiene_prueba));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -112,6 +115,16 @@ function PerfilEmpresa({ onActualizar }) {
 
   const guardarPerfil = async (evento) => {
     evento.preventDefault();
+
+    if (
+      tienePrueba &&
+      (perfil.sector || "") !== (sectorGuardado || "") &&
+      !window.confirm(
+        "Si cambias el sector se borrará tu prueba de conocimientos y tendrás que crear la del nuevo sector. ¿Continuar?"
+      )
+    ) {
+      return;
+    }
 
     try {
       setGuardando(true);
@@ -140,6 +153,7 @@ function PerfilEmpresa({ onActualizar }) {
       }
 
       setMensaje(datos.mensaje || "Perfil actualizado correctamente");
+      if (datos.prueba_borrada) setTienePrueba(false);
       aplicarEmpresa(datos.empresa);
       onActualizar?.();
     } catch (err) {
@@ -276,7 +290,9 @@ function PerfilEmpresa({ onActualizar }) {
                 <small>
                   {sectorFueraDeLista && perfil.sector !== sectorGuardado
                     ? `Relacionamos "${sectorGuardado}" con este sector. Guarda para confirmarlo.`
-                    : 'Define qué carreras aparecen en "Pruebas".'}
+                    : tienePrueba
+                      ? 'Si cambias el sector se borrará tu prueba de "Pruebas".'
+                      : 'La prueba de "Pruebas" será de este sector.'}
                 </small>
               </label>
 
