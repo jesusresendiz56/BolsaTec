@@ -103,7 +103,32 @@ const pruebasAplicables = (texto) => {
   return clave ? [clave, GENERAL.clave] : [GENERAL.clave];
 };
 
+// Carreras que se eligen en el registro del estudiante (TecNM)
+const CARRERAS_TECNM = [
+  "Ingeniería en Sistemas Computacionales",
+  "Ingeniería Informática",
+  "Ingeniería en Tecnologías de la Información y Comunicaciones",
+  "Ingeniería Industrial",
+  "Ingeniería en Logística",
+  "Ingeniería en Gestión Empresarial",
+  "Ingeniería Mecatrónica",
+  "Ingeniería Electrónica",
+  "Ingeniería Eléctrica",
+  "Ingeniería Mecánica",
+  "Ingeniería en Materiales",
+  "Ingeniería Civil",
+  "Arquitectura",
+  "Ingeniería Química",
+  "Ingeniería Bioquímica",
+  "Ingeniería Ambiental",
+  "Ingeniería en Industrias Alimentarias",
+  "Contador Público",
+  "Licenciatura en Administración",
+  "Otra carrera",
+];
+
 module.exports = {
+  CARRERAS_TECNM,
   CATALOGO: TODAS.map(({ clave, nombre }) => ({ clave, nombre })),
   CLAVES,
   detectarCarrera,

@@ -32,9 +32,10 @@ function Registro() {
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
 
-  // Sectores (giros) para el registro de empresas
+  // Listas del registro: carreras (estudiante) y sectores (empresa)
+  const [carreras, setCarreras] = useState([]);
   const [sectores, setSectores] = useState([]);
-  const [errorSectores, setErrorSectores] = useState("");
+  const [errorListas, setErrorListas] = useState("");
 
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
@@ -47,13 +48,18 @@ function Registro() {
   useEffect(() => {
     let activo = true;
 
-    apiRequest("/auth/sectores")
-      .then((datos) => {
-        if (activo) setSectores(datos.sectores || []);
+    Promise.all([
+      apiRequest("/auth/carreras"),
+      apiRequest("/auth/sectores"),
+    ])
+      .then(([datosCarreras, datosSectores]) => {
+        if (!activo) return;
+        setCarreras(datosCarreras.carreras || []);
+        setSectores(datosSectores.sectores || []);
       })
       .catch(() => {
         if (activo) {
-          setErrorSectores("No se pudo cargar la lista de sectores. Recarga la página.");
+          setErrorListas("No se pudo cargar la lista. Recarga la página.");
         }
       });
 
@@ -61,6 +67,9 @@ function Registro() {
       activo = false;
     };
   }, []);
+
+  // Opciones del campo según el tipo de registro
+  const opciones = rol === "estudiante" ? carreras : sectores;
 
   const cambiarRol = (nuevoRol) => {
     if (nuevoRol !== rol) setCarrera("");
@@ -297,50 +306,39 @@ function Registro() {
             <div className="registro-field">
               <label htmlFor="registro-carrera">
                 {rol === "estudiante"
-                  ? "Carrera o especialidad"
+                  ? "Carrera"
                   : "Sector empresarial"}
               </label>
 
               <div className="registro-input">
                 <BriefcaseBusiness size={19} />
 
-                {rol === "estudiante" ? (
-                  <input
-                    id="registro-carrera"
-                    type="text"
-                    required
-                    placeholder="Ej. Ingeniería en sistemas"
-                    value={carrera}
-                    onChange={(e) =>
-                      setCarrera(e.target.value)
-                    }
-                  />
-                ) : (
-                  <select
-                    id="registro-carrera"
-                    required
-                    value={sectores.includes(carrera) ? carrera : ""}
-                    onChange={(e) =>
-                      setCarrera(e.target.value)
-                    }
-                  >
-                    <option value="" disabled>
-                      {sectores.length
-                        ? "Selecciona el sector"
-                        : "Cargando sectores..."}
+                <select
+                  id="registro-carrera"
+                  required
+                  value={opciones.includes(carrera) ? carrera : ""}
+                  onChange={(e) =>
+                    setCarrera(e.target.value)
+                  }
+                >
+                  <option value="" disabled>
+                    {opciones.length
+                      ? rol === "estudiante"
+                        ? "Selecciona tu carrera"
+                        : "Selecciona el sector"
+                      : "Cargando..."}
+                  </option>
+                  {opciones.map((opcion) => (
+                    <option key={opcion} value={opcion}>
+                      {opcion}
                     </option>
-                    {sectores.map((sector) => (
-                      <option key={sector} value={sector}>
-                        {sector}
-                      </option>
-                    ))}
-                  </select>
-                )}
+                  ))}
+                </select>
               </div>
 
-              {rol === "empresa" && errorSectores && (
+              {errorListas && (
                 <small className="registro-error-campo" role="alert">
-                  {errorSectores}
+                  {errorListas}
                 </small>
               )}
             </div>

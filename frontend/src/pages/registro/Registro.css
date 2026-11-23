@@ -121,6 +121,7 @@
   font: inherit;
   font-size: 13px;
   color: var(--bt-text);
+  text-overflow: ellipsis;
   cursor: pointer;
 }
 
