@@ -48,9 +48,11 @@ const MODALIDADES = {
 };
 
 const TIPOS = {
+  estadia: "Estadía",
   practicas: "Prácticas profesionales",
-  medio_tiempo: "Medio tiempo",
   tiempo_completo: "Tiempo completo",
+  medio_tiempo: "Medio tiempo",
+  servicio_social: "Servicio social",
 };
 
 const API_URL = (
@@ -557,9 +559,11 @@ function VacantesEmpresa({ onActualizar, onIr }) {
                     value={formulario.tipo}
                     onChange={actualizarCampo}
                   >
+                    <option value="estadia">Estadía</option>
                     <option value="practicas">Prácticas</option>
-                    <option value="medio_tiempo">Medio tiempo</option>
                     <option value="tiempo_completo">Tiempo completo</option>
+                    <option value="medio_tiempo">Medio tiempo</option>
+                    <option value="servicio_social">Servicio social</option>
                   </select>
                 </label>
               </div>

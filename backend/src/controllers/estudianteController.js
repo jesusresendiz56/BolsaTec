@@ -1,6 +1,7 @@
 
 const pool = require("../config/database");
 const { empresasConPrueba } = require("./examenController");
+const { TIPOS_VACANTE } = require("../services/tiposVacante");
 
 // ========================================
 // OBTENER ESTUDIANTE AUTENTICADO
@@ -237,11 +238,7 @@ const obtenerVacantes = async (req, res) => {
     const { busqueda = "", modalidad = "", tipo = "" } = req.query;
 
     const modalidades = ["presencial", "hibrida", "remota"];
-    const tipos = [
-      "practicas",
-      "medio_tiempo",
-      "tiempo_completo"
-    ];
+    const tipos = TIPOS_VACANTE;
 
     if (modalidad && !modalidades.includes(modalidad)) {
       return res.status(400).json({
