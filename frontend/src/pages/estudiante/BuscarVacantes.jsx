@@ -36,9 +36,11 @@ const modalidades = {
 };
 
 const tipos = {
+  estadia: "Estadía",
   practicas: "Prácticas profesionales",
-  medio_tiempo: "Medio tiempo",
   tiempo_completo: "Tiempo completo",
+  medio_tiempo: "Medio tiempo",
+  servicio_social: "Servicio social",
 };
 
 const formatoSalario = (valor) => {
