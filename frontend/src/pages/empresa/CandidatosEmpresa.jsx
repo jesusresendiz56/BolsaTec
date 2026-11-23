@@ -14,6 +14,9 @@ import {
   CheckCircle2,
   AlertCircle,
   FileText,
+  ClipboardCheck,
+  Layers,
+  UserRound,
 } from "lucide-react";
 
 import { sessionGet } from "../../services/session";
@@ -41,6 +44,24 @@ const nombresEstado = {
   aceptada: "Aceptada",
   rechazado: "Rechazado",
   rechazada: "Rechazada",
+};
+
+// Iniciales para el avatar (máximo 2 letras)
+const iniciales = (nombre = "") =>
+  nombre
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((parte) => parte[0]?.toUpperCase() || "")
+    .join("") || "?";
+
+const tienePrueba = (c) =>
+  c.examen_calificacion !== null && c.examen_calificacion !== undefined;
+
+// Mismos umbrales que ChipExamen
+const nivelPrueba = (calificacion) => {
+  const valor = Number(calificacion);
+  return valor >= 80 ? "alto" : valor >= 60 ? "medio" : "bajo";
 };
 
 const obtenerNombreEstado = (estado) =>
@@ -643,82 +664,131 @@ function CandidatosEmpresa({ onActualizar }) {
             {/* INFORMACIÓN */}
 
             <div className="bt-candidato-modal-contenido">
-              <h3>
-                {seleccionado.nombre_estudiante}
-              </h3>
+              <div className="bt-candidato-perfil">
+                <div className="bt-candidato-avatar" aria-hidden="true">
+                  {iniciales(seleccionado.nombre_estudiante)}
+                </div>
 
-              <p>
-                <strong>Correo:</strong>{" "}
-                {seleccionado.correo_estudiante}
-              </p>
+                <div className="bt-candidato-perfil-texto">
+                  <h3>{seleccionado.nombre_estudiante}</h3>
+                  <a href={`mailto:${seleccionado.correo_estudiante}`}>
+                    <Mail size={15} />
+                    {seleccionado.correo_estudiante}
+                  </a>
+                </div>
 
-              <p>
-                <strong>Carrera:</strong>{" "}
-                {seleccionado.carrera ||
-                  "Sin registrar"}
-              </p>
+                <span
+                  className={`bt-candidato-estado estado-${seleccionado.estado}`}
+                >
+                  {obtenerNombreEstado(seleccionado.estado)}
+                </span>
+              </div>
 
-              <p>
-                <strong>Semestre:</strong>{" "}
-                {seleccionado.semestre ??
-                  "Sin registrar"}
-              </p>
+              <dl className="bt-candidato-datos">
+                <div>
+                  <dt><GraduationCap size={16} /> Carrera</dt>
+                  <dd>{seleccionado.carrera || "Sin registrar"}</dd>
+                </div>
+                <div>
+                  <dt><Layers size={16} /> Semestre</dt>
+                  <dd>{seleccionado.semestre ?? "Sin registrar"}</dd>
+                </div>
+                <div>
+                  <dt><BriefcaseBusiness size={16} /> Vacante</dt>
+                  <dd>{seleccionado.titulo_vacante}</dd>
+                </div>
+                <div>
+                  <dt><CalendarDays size={16} /> Postulación</dt>
+                  <dd>{formatearFecha(seleccionado.fecha_postulacion)}</dd>
+                </div>
+              </dl>
 
-              <p>
-                <strong>Vacante:</strong>{" "}
-                {seleccionado.titulo_vacante}
-              </p>
+              {/* PRUEBA DE CONOCIMIENTOS */}
 
-              <p>
-                <strong>
-                  Fecha de postulación:
-                </strong>{" "}
-                {formatearFecha(
-                  seleccionado.fecha_postulacion
+              <section className="bt-candidato-seccion">
+                <h4><ClipboardCheck size={17} /> Prueba de conocimientos</h4>
+
+                {tienePrueba(seleccionado) ? (
+                  <div
+                    className={`bt-candidato-prueba nivel-${nivelPrueba(seleccionado.examen_calificacion)}`}
+                  >
+                    <div className="bt-candidato-prueba-cifra">
+                      {Math.round(Number(seleccionado.examen_calificacion))}%
+                    </div>
+
+                    <div className="bt-candidato-prueba-detalle">
+                      <strong>
+                        {seleccionado.examen_aciertos} de{" "}
+                        {seleccionado.examen_total} respuestas correctas
+                      </strong>
+                      <div
+                        className="bt-candidato-prueba-barra"
+                        role="progressbar"
+                        aria-valuenow={Math.round(Number(seleccionado.examen_calificacion))}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label="Calificación de la prueba"
+                      >
+                        <span
+                          style={{
+                            width: `${Math.min(100, Math.max(0, Number(seleccionado.examen_calificacion)))}%`,
+                          }}
+                        />
+                      </div>
+                      <small>
+                        {[
+                          seleccionado.examen_carrera_nombre,
+                          seleccionado.examen_fecha &&
+                            `Presentada el ${formatearFecha(seleccionado.examen_fecha)}`,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </small>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="bt-candidato-vacio">
+                    El estudiante se postuló sin presentar prueba.
+                  </p>
                 )}
-              </p>
+              </section>
 
               {/* DESCRIPCIÓN */}
 
-              <h4>
-                Descripción profesional
-              </h4>
-
-              <p>
-                {seleccionado.descripcion ||
-                  "El estudiante todavía no ha registrado una descripción."}
-              </p>
+              <section className="bt-candidato-seccion">
+                <h4><UserRound size={17} /> Descripción profesional</h4>
+                <p className={seleccionado.descripcion ? "" : "bt-candidato-vacio"}>
+                  {seleccionado.descripcion ||
+                    "El estudiante todavía no ha registrado una descripción."}
+                </p>
+              </section>
 
               {/* CURRÍCULUM */}
 
-              <h4>Currículum</h4>
+              <section className="bt-candidato-seccion">
+                <h4><FileText size={17} /> Currículum</h4>
 
-              {seleccionado.tiene_curriculum ? (
-                <div>
-                  <p>
-                    El estudiante tiene un
-                    currículum registrado.
+                {seleccionado.tiene_curriculum ? (
+                  <div className="bt-candidato-cv">
+                    <span>El estudiante tiene un currículum registrado.</span>
+                    <button
+                      type="button"
+                      className="bt-candidatos-btn principal"
+                      onClick={verCurriculum}
+                      disabled={abriendoCurriculum}
+                    >
+                      <FileText size={17} />
+                      {abriendoCurriculum
+                        ? "Abriendo PDF..."
+                        : "Ver currículum PDF"}
+                    </button>
+                  </div>
+                ) : (
+                  <p className="bt-candidato-vacio">
+                    El estudiante todavía no ha subido su currículum.
                   </p>
-
-                  <button
-                    type="button"
-                    className="bt-candidatos-btn principal"
-                    onClick={verCurriculum}
-                    disabled={abriendoCurriculum}
-                  >
-                    <FileText size={17} />
-
-                    {abriendoCurriculum
-                      ? "Abriendo PDF..."
-                      : "Ver currículum PDF"}
-                  </button>
-                </div>
-              ) : (
-                <p>
-                  El estudiante todavía no ha
-                  subido su currículum.
-                </p>
-              )}
+                )}
+              </section>
 
               {/* CAMBIAR ESTADO */}
 
