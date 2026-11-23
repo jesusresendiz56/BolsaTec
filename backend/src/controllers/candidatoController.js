@@ -334,6 +334,32 @@ const obtenerDetalleCandidato = async (req, res) => {
 
     const { sector_empresa: sectorEmpresa, ...candidato } = resultado.rows[0];
 
+    // Al abrir el candidato por primera vez, la postulación
+    // pasa de "enviada" a "vista" y se avisa al estudiante.
+    if (candidato.estado === "enviada") {
+      const marcada = await pool.query(
+        `UPDATE postulaciones
+         SET estado = 'vista'
+         WHERE id_postulacion = $1
+           AND estado = 'enviada'
+         RETURNING estado`,
+        [idPostulacion]
+      );
+
+      if (marcada.rows.length) {
+        candidato.estado = "vista";
+        candidato.marcada_vista = true;
+
+        // El aviso (notificación + correo) no detiene la respuesta
+        notificarCambioEstado(idPostulacion).catch((error) => {
+          console.error(
+            `Notificación de postulación vista: error (postulación ${idPostulacion}) -`,
+            error.message
+          );
+        });
+      }
+    }
+
     return res.json({
       candidato: {
         ...candidato,
