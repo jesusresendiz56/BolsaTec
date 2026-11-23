@@ -1,5 +1,6 @@
 
 const pool = require("../config/database");
+const { TIPOS_VACANTE } = require("../services/tiposVacante");
 const {
   SECTORES,
   TAMANOS,
@@ -248,7 +249,7 @@ const crearVacante = async (req, res) => {
       });
     }
 
-    if (!["practicas", "medio_tiempo", "tiempo_completo"].includes(tipo)) {
+    if (!TIPOS_VACANTE.includes(tipo)) {
       return res.status(400).json({
         mensaje: "Tipo de vacante no válido"
       });
@@ -384,7 +385,7 @@ const editarVacante = async (req, res) => {
       });
     }
 
-    if (!["practicas", "medio_tiempo", "tiempo_completo"].includes(tipo)) {
+    if (!TIPOS_VACANTE.includes(tipo)) {
       return res.status(400).json({
         mensaje: "Tipo de vacante no válido"
       });
