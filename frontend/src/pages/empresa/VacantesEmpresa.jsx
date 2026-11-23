@@ -1,6 +1,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
+  ClipboardList,
   PlusCircle,
   Pencil,
   Trash2,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { sessionGet } from "../../services/session";
+import { solicitar } from "../../services/examen";
 import SelectorUbicacion from "../../components/SelectorUbicacion";
 import "./VacantesEmpresa.css";
 
@@ -101,7 +103,26 @@ async function solicitarVacantes(endpoint, options = {}) {
   return datos;
 }
 
-function VacantesEmpresa({ onActualizar }) {
+function VacantesEmpresa({ onActualizar, onIr }) {
+  // Prueba de conocimientos del sector (una sola por empresa)
+  const [prueba, setPrueba] = useState(null);
+
+  useEffect(() => {
+    let activo = true;
+
+    solicitar("empresa", "/pruebas")
+      .then((datos) => {
+        if (activo) setPrueba(datos);
+      })
+      .catch(() => {
+        // Si falla, simplemente no se muestra el aviso
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
   const [vacantes, setVacantes] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -300,6 +321,29 @@ function VacantesEmpresa({ onActualizar }) {
           Nueva vacante
         </button>
       </div>
+
+      {prueba && (() => {
+        const total = prueba.prueba?.total_preguntas || 0;
+        const destino = prueba.giro ? "pruebas" : "perfil";
+
+        return (
+          <div className={`bt-vacantes-prueba-aviso ${total ? "con-prueba" : ""}`}>
+            <ClipboardList size={18} />
+            <span>
+              {!prueba.giro
+                ? "Elige el sector de tu empresa en el perfil para poder crear la prueba de conocimientos."
+                : total
+                  ? <>Prueba del sector <strong>{prueba.giro}</strong>: {total} {total === 1 ? "pregunta" : "preguntas"}. Todos los estudiantes la presentan al postularse a tus vacantes.</>
+                  : <>Aún no tienes la prueba del sector <strong>{prueba.giro}</strong>. Sin ella, los estudiantes se postulan a tus vacantes sin presentarla.</>}
+            </span>
+            {onIr && (
+              <button type="button" onClick={() => onIr(destino)}>
+                {!prueba.giro ? "Ir a mi perfil" : total ? "Ver prueba" : "Crear prueba"}
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {mensaje && (
         <div className="bt-vacantes-mensaje bt-vacantes-exito">
