@@ -4,7 +4,7 @@ const supabase = require("../config/supabase");
 const { enviarCorreo } = require("../services/brevoService");
 const { crearNotificacion } = require("../services/notificacionService");
 const { generarCorreoEstado } = require("../services/correosPostulacion");
-const { nombreCarrera } = require("../services/carreras");
+const { nombrePrueba } = require("./examenController");
 
 const ESTADOS_POSTULACION = [
   "enviada",
@@ -142,6 +142,7 @@ const obtenerPostulacionesEmpresa = async (req, res) => {
            est.semestre,
            (est.cv_url IS NOT NULL) AS tiene_curriculum,
            ex.carrera AS examen_carrera,
+           e.sector AS sector_empresa,
            ex.aciertos AS examen_aciertos,
            ex.total AS examen_total,
            ex.calificacion::float AS examen_calificacion
@@ -171,7 +172,7 @@ const obtenerPostulacionesEmpresa = async (req, res) => {
       postulaciones: postulaciones.rows.map((fila) => ({
         ...fila,
         examen_carrera_nombre: fila.examen_carrera
-          ? nombreCarrera(fila.examen_carrera)
+          ? nombrePrueba(fila.examen_carrera, fila.sector_empresa)
           : null
       })),
       total: postulaciones.rowCount

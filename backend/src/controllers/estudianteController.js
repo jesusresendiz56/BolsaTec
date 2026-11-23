@@ -292,15 +292,8 @@ const obtenerVacantes = async (req, res) => {
       [busqueda.trim(), modalidad, tipo]
     );
 
-    // ¿La empresa tiene prueba para la carrera del estudiante?
-    const estudiante = await pool.query(
-      `SELECT carrera FROM estudiantes WHERE id_usuario = $1`,
-      [req.usuario.id_usuario]
-    );
-
-    const conPrueba = await empresasConPrueba(
-      estudiante.rows[0]?.carrera
-    );
+    // ¿La empresa tiene prueba de su sector?
+    const conPrueba = await empresasConPrueba();
 
     return res.json({
       vacantes: resultado.rows.map(({ id_empresa, ...vacante }) => ({

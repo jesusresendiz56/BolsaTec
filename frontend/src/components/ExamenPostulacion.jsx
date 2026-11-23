@@ -79,7 +79,7 @@ function ExamenPostulacion({ vacante, onCerrar, onPostulado }) {
       );
 
       if (!datos.examen) {
-        // La empresa no tiene prueba para tu carrera: postular directo
+        // La empresa no tiene prueba: postular directo
         await postular(false);
         return;
       }

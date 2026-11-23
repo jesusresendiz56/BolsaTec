@@ -1,20 +1,30 @@
 const pool = require("../config/database");
-const {
-  CATALOGO,
-  CLAVES,
-  nombreCarrera,
-  pruebasAplicables,
-} = require("../services/carreras");
-const { giroDeSector } = require("../services/perfilEmpresa");
+const { nombreCarrera } = require("../services/carreras");
+const { SECTORES } = require("../services/perfilEmpresa");
 
 // ========================================
 // PRUEBA DE CONOCIMIENTOS ANTES DE POSTULARSE
-// Cada empresa escribe una prueba general por carrera.
-// Al postularse a cualquier vacante de la empresa, el
-// estudiante presenta la prueba de su carrera (o la
-// "general" si su carrera no tiene una) y el resultado
-// se envía a la empresa con la postulación.
+// Cada empresa escribe UNA prueba, la del sector (giro)
+// de su perfil. Al postularse a cualquier vacante de la
+// empresa, el estudiante presenta esa prueba (sin importar
+// su carrera) y el resultado se envía a la empresa con la
+// postulación.
+// Las preguntas se guardan en examen_preguntas_carrera con
+// carrera = "sector". Las pruebas por carrera anteriores
+// quedan guardadas pero ya no se usan.
 // ========================================
+
+const CLAVE_SECTOR = "sector";
+
+// Sector de la lista (sin "Otro"); null si no es válido para la prueba
+const sectorDePrueba = (sector) =>
+  sector && sector !== "Otro" && SECTORES.includes(sector) ? sector : null;
+
+// Nombre que se muestra de la prueba presentada
+const nombrePrueba = (clave, sectorEmpresa) =>
+  clave === CLAVE_SECTOR
+    ? sectorEmpresa || "Sector de la empresa"
+    : nombreCarrera(clave);
 
 const MAX_PREGUNTAS = 10;
 const MAX_INCORRECTAS = 3;
@@ -55,11 +65,11 @@ const preguntasParaEstudiante = (preguntas = []) =>
 
 const buscarEmpresa = async (idUsuario) => {
   const resultado = await pool.query(
-    `SELECT id_empresa FROM empresas WHERE id_usuario = $1`,
+    `SELECT id_empresa, sector FROM empresas WHERE id_usuario = $1`,
     [idUsuario]
   );
 
-  return resultado.rows[0]?.id_empresa || null;
+  return resultado.rows[0] || null;
 };
 
 const consultarPreguntas = async (db, idEmpresa, carrera) => {
@@ -75,65 +85,50 @@ const consultarPreguntas = async (db, idEmpresa, carrera) => {
   return resultado.rows;
 };
 
-// Carrera de la prueba que le toca al estudiante con esta empresa
-// (la de su carrera o la general), o null si no hay ninguna.
-const pruebaParaEstudiante = async (db, idEmpresa, carreraEstudiante) => {
-  const aplicables = pruebasAplicables(carreraEstudiante);
-
+// Clave de la prueba que le toca al estudiante con esta empresa
+// (la del sector), o null si la empresa no tiene prueba.
+const pruebaParaEstudiante = async (db, idEmpresa) => {
   const resultado = await db.query(
-    `SELECT DISTINCT carrera
+    `SELECT 1
      FROM examen_preguntas_carrera
      WHERE id_empresa = $1
-       AND carrera = ANY($2::text[])`,
-    [idEmpresa, aplicables]
+       AND carrera = $2
+     LIMIT 1`,
+    [idEmpresa, CLAVE_SECTOR]
   );
 
-  const disponibles = resultado.rows.map((fila) => fila.carrera);
-  return aplicables.find((clave) => disponibles.includes(clave)) || null;
+  return resultado.rows.length ? CLAVE_SECTOR : null;
 };
 
 // ========================================
-// EMPRESA: RESUMEN DE PRUEBAS POR CARRERA
+// EMPRESA: PRUEBA DEL SECTOR
 // GET /api/empresa/pruebas
 // ========================================
 
 const obtenerPruebasEmpresa = async (req, res) => {
   try {
-    const empresa = await pool.query(
-      `SELECT id_empresa, sector FROM empresas WHERE id_usuario = $1`,
-      [req.usuario.id_usuario]
-    );
+    const empresa = await buscarEmpresa(req.usuario.id_usuario);
 
-    if (!empresa.rows.length) {
+    if (!empresa) {
       return res.status(404).json({ mensaje: "Empresa no encontrada" });
     }
 
-    const { id_empresa: idEmpresa, sector } = empresa.rows[0];
-    // Carreras relacionadas con el sector de la empresa
-    const giro = giroDeSector(sector);
-    const afines = giro?.carreras || [];
-
     const resultado = await pool.query(
-      `SELECT carrera, COUNT(*)::int AS total
+      `SELECT COUNT(*)::int AS total
        FROM examen_preguntas_carrera
        WHERE id_empresa = $1
-       GROUP BY carrera`,
-      [idEmpresa]
-    );
-
-    const conteo = Object.fromEntries(
-      resultado.rows.map((fila) => [fila.carrera, fila.total])
+         AND carrera = $2`,
+      [empresa.id_empresa, CLAVE_SECTOR]
     );
 
     return res.json({
-      sector,
-      giro: giro?.nombre || null,
-      carreras: CATALOGO.map((carrera) => ({
-        ...carrera,
-        total_preguntas: conteo[carrera.clave] || 0,
-        recomendada: afines.includes(carrera.clave),
-        afinidad: afines.indexOf(carrera.clave),
-      })),
+      sector: empresa.sector,
+      giro: sectorDePrueba(empresa.sector),
+      prueba: {
+        clave: CLAVE_SECTOR,
+        nombre: sectorDePrueba(empresa.sector) || "Sector de la empresa",
+        total_preguntas: resultado.rows[0].total,
+      },
       max_preguntas: MAX_PREGUNTAS,
       max_incorrectas: MAX_INCORRECTAS,
     });
@@ -148,27 +143,31 @@ const obtenerPruebasEmpresa = async (req, res) => {
 };
 
 // ========================================
-// EMPRESA: PREGUNTAS DE LA PRUEBA DE UNA CARRERA
-// GET /api/empresa/pruebas/:carrera
+// EMPRESA: PREGUNTAS DE LA PRUEBA DEL SECTOR
+// GET /api/empresa/pruebas/sector
 // ========================================
 
 const obtenerPruebaCarrera = async (req, res) => {
   try {
-    const carrera = req.params.carrera;
-
-    if (!CLAVES.includes(carrera)) {
-      return res.status(400).json({ mensaje: "Carrera no válida" });
+    if (req.params.carrera !== CLAVE_SECTOR) {
+      return res.status(400).json({
+        mensaje: "La prueba debe ser del sector de la empresa"
+      });
     }
 
-    const idEmpresa = await buscarEmpresa(req.usuario.id_usuario);
+    const empresa = await buscarEmpresa(req.usuario.id_usuario);
 
-    if (!idEmpresa) {
+    if (!empresa) {
       return res.status(404).json({ mensaje: "Empresa no encontrada" });
     }
 
     return res.json({
-      carrera: { clave: carrera, nombre: nombreCarrera(carrera) },
-      preguntas: await consultarPreguntas(pool, idEmpresa, carrera),
+      carrera: {
+        clave: CLAVE_SECTOR,
+        nombre: sectorDePrueba(empresa.sector) || "Sector de la empresa",
+      },
+      giro: sectorDePrueba(empresa.sector),
+      preguntas: await consultarPreguntas(pool, empresa.id_empresa, CLAVE_SECTOR),
       max_preguntas: MAX_PREGUNTAS,
       max_incorrectas: MAX_INCORRECTAS,
     });
@@ -183,13 +182,13 @@ const obtenerPruebaCarrera = async (req, res) => {
 };
 
 // ========================================
-// EMPRESA: GUARDAR LA PRUEBA DE UNA CARRERA
-// PUT /api/empresa/pruebas/:carrera
+// EMPRESA: GUARDAR LA PRUEBA DEL SECTOR
+// PUT /api/empresa/pruebas/sector
 // body: { preguntas: [{ pregunta, correcta, incorrectas: [] }] }
 // Reemplaza todas las preguntas. Una lista vacía quita
-// la prueba de esa carrera.
+// la prueba. Solo se puede crear si la empresa eligió
+// un sector de la lista en su perfil.
 // ========================================
-
 const validarPreguntas = (preguntas) => {
   if (!Array.isArray(preguntas)) {
     return { error: "Debes enviar la lista de preguntas" };
@@ -238,10 +237,12 @@ const validarPreguntas = (preguntas) => {
 };
 
 const guardarPruebaCarrera = async (req, res) => {
-  const carrera = req.params.carrera;
+  const carrera = CLAVE_SECTOR;
 
-  if (!CLAVES.includes(carrera)) {
-    return res.status(400).json({ mensaje: "Carrera no válida" });
+  if (req.params.carrera !== CLAVE_SECTOR) {
+    return res.status(400).json({
+      mensaje: "La prueba debe ser del sector de la empresa"
+    });
   }
 
   const validacion = validarPreguntas(req.body?.preguntas);
@@ -250,17 +251,28 @@ const guardarPruebaCarrera = async (req, res) => {
     return res.status(400).json({ mensaje: validacion.error });
   }
 
-  let idEmpresa;
+  let empresa;
 
   try {
-    idEmpresa = await buscarEmpresa(req.usuario.id_usuario);
+    empresa = await buscarEmpresa(req.usuario.id_usuario);
   } catch (error) {
     console.error("Error al guardar la prueba:", error);
     return res.status(500).json({ mensaje: "No se pudo guardar la prueba" });
   }
 
-  if (!idEmpresa) {
+  if (!empresa) {
     return res.status(404).json({ mensaje: "Empresa no encontrada" });
+  }
+
+  const idEmpresa = empresa.id_empresa;
+  const giro = sectorDePrueba(empresa.sector);
+
+  // Para crear o editar la prueba se necesita un sector de la lista
+  // (quitarla siempre se permite)
+  if (!giro && validacion.preguntas.length) {
+    return res.status(400).json({
+      mensaje: "Primero elige el sector de tu empresa (de la lista) en tu perfil"
+    });
   }
 
   const client = await pool.connect();
@@ -298,8 +310,8 @@ const guardarPruebaCarrera = async (req, res) => {
 
     return res.json({
       mensaje: total
-        ? `Prueba de ${nombreCarrera(carrera)} guardada (${total} ${total === 1 ? "pregunta" : "preguntas"})`
-        : `Se quitó la prueba de ${nombreCarrera(carrera)}`,
+        ? `Prueba del sector ${giro} guardada (${total} ${total === 1 ? "pregunta" : "preguntas"})`
+        : "Se quitó la prueba del sector",
       preguntas: await consultarPreguntas(pool, idEmpresa, carrera),
     });
 
@@ -317,16 +329,16 @@ const guardarPruebaCarrera = async (req, res) => {
 
 // ========================================
 // ESTUDIANTE: ¿QUÉ VACANTES PIDEN PRUEBA?
-// Devuelve el conjunto de id_empresa que tienen una prueba
-// aplicable a la carrera del estudiante.
+// Devuelve el conjunto de id_empresa que tienen prueba
+// del sector (aplica a todos los estudiantes).
 // ========================================
 
-const empresasConPrueba = async (carreraEstudiante) => {
+const empresasConPrueba = async () => {
   const resultado = await pool.query(
     `SELECT DISTINCT id_empresa
      FROM examen_preguntas_carrera
-     WHERE carrera = ANY($1::text[])`,
-    [pruebasAplicables(carreraEstudiante)]
+     WHERE carrera = $1`,
+    [CLAVE_SECTOR]
   );
 
   return new Set(resultado.rows.map((fila) => fila.id_empresa));
@@ -365,8 +377,8 @@ const obtenerExamenVacante = async (req, res) => {
     const datos = await pool.query(
       `SELECT
          est.id_estudiante,
-         est.carrera AS carrera_estudiante,
          v.id_empresa,
+         e.sector AS sector_empresa,
          v.titulo AS titulo_vacante,
          v.estado AS estado_vacante,
          e.nombre_empresa
@@ -395,13 +407,9 @@ const obtenerExamenVacante = async (req, res) => {
         });
       }
 
-      const carrera = await pruebaParaEstudiante(
-        pool,
-        info.id_empresa,
-        info.carrera_estudiante
-      );
+      const carrera = await pruebaParaEstudiante(pool, info.id_empresa);
 
-      // La empresa no tiene prueba para esta carrera:
+      // La empresa no tiene prueba:
       // se puede postular directo
       if (!carrera) {
         return res.json({ examen: null });
@@ -450,7 +458,9 @@ const obtenerExamenVacante = async (req, res) => {
         titulo_vacante: info.titulo_vacante,
         nombre_empresa: info.nombre_empresa,
         carrera: examen.carrera,
-        carrera_nombre: examen.carrera ? nombreCarrera(examen.carrera) : null,
+        carrera_nombre: examen.carrera
+          ? nombrePrueba(examen.carrera, info.sector_empresa)
+          : null,
         preguntas: preguntasParaEstudiante(examen.preguntas),
         completado,
         resultado: completado ? formatoResultado(examen) : null,
@@ -483,17 +493,13 @@ const calificarAntesDePostular = async (
 
   if (!examen) {
     const datos = await client.query(
-      `SELECT v.id_empresa, est.carrera
-       FROM vacantes v
-       CROSS JOIN estudiantes est
-       WHERE v.id_vacante = $1
-         AND est.id_estudiante = $2`,
-      [idVacante, idEstudiante]
+      `SELECT id_empresa FROM vacantes WHERE id_vacante = $1`,
+      [idVacante]
     );
 
     const fila = datos.rows[0];
     const carrera = fila
-      ? await pruebaParaEstudiante(client, fila.id_empresa, fila.carrera)
+      ? await pruebaParaEstudiante(client, fila.id_empresa)
       : null;
 
     if (carrera) {
@@ -571,6 +577,7 @@ const calificarAntesDePostular = async (
 };
 
 module.exports = {
+  nombrePrueba,
   obtenerPruebasEmpresa,
   obtenerPruebaCarrera,
   guardarPruebaCarrera,

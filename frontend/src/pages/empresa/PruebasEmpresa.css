@@ -1,5 +1,5 @@
 /* ========================================
-   PRUEBAS DE CONOCIMIENTOS POR CARRERA
+   PRUEBA DE CONOCIMIENTOS DEL SECTOR
 ======================================== */
 
 .bt-pruebas-encabezado {
@@ -67,10 +67,6 @@
 
 .bt-pruebas-card.con-prueba {
   border-color: var(--bt-primary, #0e7490);
-}
-
-.bt-pruebas-card.general {
-  border-style: dashed;
 }
 
 .bt-pruebas-icono {
@@ -180,19 +176,5 @@
   color: var(--bt-primary, #0e7490);
   font: inherit;
   font-weight: 600;
-  cursor: pointer;
-}
-
-.bt-pruebas-ver-otras {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 18px 0 14px;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--bt-primary, #0e7490);
-  font: inherit;
-  font-weight: 700;
   cursor: pointer;
 }
