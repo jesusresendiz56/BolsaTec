@@ -69,7 +69,9 @@ const registrarEstudiante = async ({
   correo,
   password,
   carrera,
-  semestre
+  semestre,
+  telefono,
+  institucion
 }) => {
   const client = await pool.connect();
 
@@ -118,13 +120,15 @@ const registrarEstudiante = async ({
     // Crear perfil de estudiante
     const resultadoEstudiante = await client.query(
       `INSERT INTO estudiantes
-       (id_usuario, carrera, semestre)
-       VALUES ($1, $2, $3)
-       RETURNING id_estudiante, carrera, semestre`,
+       (id_usuario, carrera, semestre, telefono, institucion)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id_estudiante, carrera, semestre, telefono, institucion`,
       [
         usuario.id_usuario,
         carrera,
-        semestre
+        semestre,
+        telefono || null,
+        institucion || null
       ]
     );
 
