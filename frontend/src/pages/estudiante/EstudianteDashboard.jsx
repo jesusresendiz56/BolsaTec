@@ -42,9 +42,11 @@ const MODALIDADES = {
 };
 
 const TIPOS = {
+  estadia: "Estadía",
   practicas: "Prácticas",
-  medio_tiempo: "Medio tiempo",
   tiempo_completo: "Tiempo completo",
+  medio_tiempo: "Medio tiempo",
+  servicio_social: "Servicio social",
 };
 
 const pedir = async (ruta, token) => {
