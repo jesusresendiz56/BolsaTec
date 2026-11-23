@@ -1,5 +1,6 @@
 
 const authService = require("../services/authService");
+const { SECTORES } = require("../services/perfilEmpresa");
 
 // ======================================
 // INICIO DE SESIÓN
@@ -164,6 +165,12 @@ const registrarEmpresa = async (req, res) => {
       });
     }
 
+    if (!SECTORES.includes(sector.trim())) {
+      return res.status(400).json({
+        mensaje: "Elige un sector empresarial de la lista"
+      });
+    }
+
     const resultado = await authService.registrarEmpresa({
       nombre: nombre.trim(),
       correo: correo.trim(),
@@ -191,11 +198,19 @@ const registrarEmpresa = async (req, res) => {
 };
 
 // ======================================
+// SECTORES PARA EL REGISTRO DE EMPRESAS
+// GET /api/auth/sectores
+// ======================================
+
+const obtenerSectores = (req, res) => res.json({ sectores: SECTORES });
+
+// ======================================
 // EXPORTAR CONTROLADORES
 // ======================================
 
 module.exports = {
   login,
   registrarEstudiante,
-  registrarEmpresa
+  registrarEmpresa,
+  obtenerSectores
 };

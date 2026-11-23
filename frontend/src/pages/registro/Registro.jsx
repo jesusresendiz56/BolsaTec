@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiRequest } from "../../services/api";
 
@@ -32,6 +32,10 @@ function Registro() {
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
 
+  // Sectores (giros) para el registro de empresas
+  const [sectores, setSectores] = useState([]);
+  const [errorSectores, setErrorSectores] = useState("");
+
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [exito, setExito] = useState("");
@@ -40,7 +44,26 @@ function Registro() {
   // CAMBIAR TIPO DE REGISTRO
   // ========================================
 
+  useEffect(() => {
+    let activo = true;
+
+    apiRequest("/auth/sectores")
+      .then((datos) => {
+        if (activo) setSectores(datos.sectores || []);
+      })
+      .catch(() => {
+        if (activo) {
+          setErrorSectores("No se pudo cargar la lista de sectores. Recarga la página.");
+        }
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
   const cambiarRol = (nuevoRol) => {
+    if (nuevoRol !== rol) setCarrera("");
     setRol(nuevoRol);
     setError("");
     setExito("");
@@ -281,21 +304,45 @@ function Registro() {
               <div className="registro-input">
                 <BriefcaseBusiness size={19} />
 
-                <input
-                  id="registro-carrera"
-                  type="text"
-                  required
-                  placeholder={
-                    rol === "estudiante"
-                      ? "Ej. Ingeniería en sistemas"
-                      : "Ej. Tecnología"
-                  }
-                  value={carrera}
-                  onChange={(e) =>
-                    setCarrera(e.target.value)
-                  }
-                />
+                {rol === "estudiante" ? (
+                  <input
+                    id="registro-carrera"
+                    type="text"
+                    required
+                    placeholder="Ej. Ingeniería en sistemas"
+                    value={carrera}
+                    onChange={(e) =>
+                      setCarrera(e.target.value)
+                    }
+                  />
+                ) : (
+                  <select
+                    id="registro-carrera"
+                    required
+                    value={sectores.includes(carrera) ? carrera : ""}
+                    onChange={(e) =>
+                      setCarrera(e.target.value)
+                    }
+                  >
+                    <option value="" disabled>
+                      {sectores.length
+                        ? "Selecciona el sector"
+                        : "Cargando sectores..."}
+                    </option>
+                    {sectores.map((sector) => (
+                      <option key={sector} value={sector}>
+                        {sector}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
+
+              {rol === "empresa" && errorSectores && (
+                <small className="registro-error-campo" role="alert">
+                  {errorSectores}
+                </small>
+              )}
             </div>
           </div>
 

@@ -111,6 +111,29 @@
   color: var(--bt-text);
 }
 
+.registro-input select {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  color: var(--bt-text);
+  cursor: pointer;
+}
+
+.registro-input select option {
+  background: var(--bt-surface);
+  color: var(--bt-text);
+}
+
+.registro-error-campo {
+  color: #dc2626;
+  font-size: 12px;
+}
+
 .registro-input input::placeholder {
   color: #a0acbb;
 }
