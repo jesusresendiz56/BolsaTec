@@ -1,6 +1,7 @@
 
 const authService = require("../services/authService");
 const { SECTORES } = require("../services/perfilEmpresa");
+const { CARRERAS_TECNM } = require("../services/carreras");
 
 // ======================================
 // INICIO DE SESIÓN
@@ -72,14 +73,13 @@ const registrarEstudiante = async (req, res) => {
       });
     }
 
-    // Validar carrera
+    // Validar carrera (debe ser una de la lista)
     if (
-      carrera !== undefined &&
-      carrera !== null &&
-      typeof carrera !== "string"
+      typeof carrera !== "string" ||
+      !CARRERAS_TECNM.includes(carrera.trim())
     ) {
       return res.status(400).json({
-        mensaje: "La carrera debe ser un texto válido"
+        mensaje: "Elige tu carrera de la lista"
       });
     }
 
@@ -110,10 +110,7 @@ const registrarEstudiante = async (req, res) => {
       nombre: nombre.trim(),
       correo: correo.trim().toLowerCase(),
       password,
-      carrera:
-        typeof carrera === "string"
-          ? carrera.trim() || null
-          : null,
+      carrera: carrera.trim(),
       semestre: semestreNumero
     });
 
@@ -205,6 +202,13 @@ const registrarEmpresa = async (req, res) => {
 const obtenerSectores = (req, res) => res.json({ sectores: SECTORES });
 
 // ======================================
+// CARRERAS PARA EL REGISTRO DE ESTUDIANTES
+// GET /api/auth/carreras
+// ======================================
+
+const obtenerCarreras = (req, res) => res.json({ carreras: CARRERAS_TECNM });
+
+// ======================================
 // EXPORTAR CONTROLADORES
 // ======================================
 
@@ -212,5 +216,6 @@ module.exports = {
   login,
   registrarEstudiante,
   registrarEmpresa,
-  obtenerSectores
+  obtenerSectores,
+  obtenerCarreras
 };
