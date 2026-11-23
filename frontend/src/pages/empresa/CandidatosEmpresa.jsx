@@ -239,6 +239,18 @@ function CandidatosEmpresa({ onActualizar }) {
 
       setSeleccionado(datos.candidato);
       setEstadoNuevo(datos.candidato.estado);
+
+      // El backend la marcó como "vista": reflejarlo en la lista
+      if (datos.candidato.marcada_vista) {
+        setCandidatos((anteriores) =>
+          anteriores.map((c) =>
+            c.id_postulacion === idPostulacion
+              ? { ...c, estado: "vista" }
+              : c
+          )
+        );
+        onActualizar?.();
+      }
     } catch (err) {
       setError(err.message);
     } finally {
