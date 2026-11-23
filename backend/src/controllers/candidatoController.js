@@ -290,7 +290,14 @@ const obtenerDetalleCandidato = async (req, res) => {
         est.carrera,
         est.semestre,
         est.descripcion,
-        (est.cv_url IS NOT NULL) AS tiene_curriculum
+        (est.cv_url IS NOT NULL) AS tiene_curriculum,
+
+        e.sector AS sector_empresa,
+        ex.carrera AS examen_carrera,
+        ex.aciertos AS examen_aciertos,
+        ex.total AS examen_total,
+        ex.calificacion::float AS examen_calificacion,
+        ex.fecha_completado AS examen_fecha
 
        FROM postulaciones p
 
@@ -306,6 +313,11 @@ const obtenerDetalleCandidato = async (req, res) => {
        INNER JOIN usuarios u
          ON u.id_usuario = est.id_usuario
 
+       LEFT JOIN examenes_vacante ex
+         ON ex.id_estudiante = p.id_estudiante
+        AND ex.id_vacante = p.id_vacante
+        AND ex.fecha_completado IS NOT NULL
+
        WHERE p.id_postulacion = $1
          AND e.id_usuario = $2`,
       [
@@ -320,8 +332,15 @@ const obtenerDetalleCandidato = async (req, res) => {
       });
     }
 
+    const { sector_empresa: sectorEmpresa, ...candidato } = resultado.rows[0];
+
     return res.json({
-      candidato: resultado.rows[0]
+      candidato: {
+        ...candidato,
+        examen_carrera_nombre: candidato.examen_carrera
+          ? nombrePrueba(candidato.examen_carrera, sectorEmpresa)
+          : null
+      }
     });
 
   } catch (error) {

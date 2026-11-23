@@ -279,7 +279,10 @@
 }
 
 .bt-candidato-modal-contenido {
-  margin: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 20px 0;
   color: var(--bt-text-soft);
 }
 
@@ -288,11 +291,211 @@
   color: var(--bt-heading);
 }
 
+/* Cabecera del candidato */
+.bt-candidato-perfil {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.bt-candidato-avatar {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--bt-highlight, #ecfeff);
+  color: var(--bt-primary, #0e7490);
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.bt-candidato-perfil-texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.bt-candidato-perfil-texto h3 {
+  margin: 0 0 4px;
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.bt-candidato-perfil-texto a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  color: var(--bt-primary, #0e7490);
+  font-size: 14px;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.bt-candidato-perfil-texto a:hover {
+  text-decoration: underline;
+}
+
+.bt-candidato-perfil .bt-candidato-estado {
+  flex-shrink: 0;
+}
+
+/* Datos en mosaico */
+.bt-candidato-datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.bt-candidato-datos > div {
+  padding: 11px 13px;
+  border: 1px solid var(--bt-border);
+  border-radius: 12px;
+  background: var(--bt-surface-alt, var(--bt-surface));
+}
+
+.bt-candidato-datos dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  color: var(--bt-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.bt-candidato-datos dd {
+  margin: 0;
+  color: var(--bt-heading);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* Secciones */
+.bt-candidato-seccion h4 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.bt-candidato-seccion h4 svg {
+  color: var(--bt-primary, #0e7490);
+}
+
+.bt-candidato-seccion p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.bt-candidato-vacio {
+  color: var(--bt-muted);
+  font-style: italic;
+}
+
+/* Resultado de la prueba */
+.bt-candidato-prueba {
+  --nivel: #16a34a;
+  --nivel-fondo: rgba(22, 163, 74, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--nivel);
+  border-radius: 12px;
+  background: var(--nivel-fondo);
+}
+
+.bt-candidato-prueba.nivel-medio {
+  --nivel: #d97706;
+  --nivel-fondo: rgba(217, 119, 6, 0.1);
+}
+
+.bt-candidato-prueba.nivel-bajo {
+  --nivel: #dc2626;
+  --nivel-fondo: rgba(220, 38, 38, 0.08);
+}
+
+.bt-candidato-prueba-cifra {
+  flex-shrink: 0;
+  min-width: 72px;
+  color: var(--nivel);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+}
+
+.bt-candidato-prueba-detalle {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.bt-candidato-prueba-detalle strong {
+  color: var(--bt-heading);
+}
+
+.bt-candidato-prueba-detalle small {
+  color: var(--bt-muted);
+}
+
+.bt-candidato-prueba-barra {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bt-border);
+  overflow: hidden;
+}
+
+.bt-candidato-prueba-barra span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--nivel);
+}
+
+[data-theme="dark"] .bt-candidato-prueba { --nivel: #4ade80; }
+[data-theme="dark"] .bt-candidato-prueba.nivel-medio { --nivel: #fbbf24; }
+[data-theme="dark"] .bt-candidato-prueba.nivel-bajo { --nivel: #f87171; }
+
+/* Currículum */
+.bt-candidato-cv {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+@media (max-width: 520px) {
+  .bt-candidato-perfil {
+    flex-wrap: wrap;
+  }
+
+  .bt-candidato-datos {
+    grid-template-columns: 1fr;
+  }
+
+  .bt-candidato-prueba-cifra {
+    min-width: 0;
+    font-size: 26px;
+  }
+}
+
 .bt-candidato-cambio-estado {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 22px;
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--bt-border);
 }
 
 .bt-candidato-modal-acciones {
