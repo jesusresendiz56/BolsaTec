@@ -323,7 +323,7 @@ function EmpresaDashboard() {
       case "perfil":
         return <PerfilEmpresa onActualizar={obtenerEstadisticas} />;
       case "vacantes":
-        return <VacantesEmpresa onActualizar={obtenerEstadisticas} />;
+        return <VacantesEmpresa onActualizar={obtenerEstadisticas} onIr={irA} />;
       case "candidatos":
         return <CandidatosEmpresa onActualizar={obtenerEstadisticas} />;
       case "postulaciones":
