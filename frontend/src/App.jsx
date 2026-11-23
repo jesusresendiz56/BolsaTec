@@ -3,7 +3,6 @@ import {
   BrowserRouter,
   Routes,
   Route,
-  useLocation,
 } from "react-router-dom";
 
 // Páginas públicas
@@ -22,36 +21,17 @@ import EmpresaDashboard from "./pages/empresa/EmpresaDashboard";
 // Protección de rutas
 import ProtectedRoute from "./components/dashboard/ProtectedRoute";
 
-// Botón de modo oscuro
-import ControlesTema from "./components/ControlesTema";
 
 // ========================================
 // RUTAS Y BOTÓN DE MODO OSCURO
 // ========================================
 
 function AppContent() {
-  const location = useLocation();
-
-  // Rutas que ya tienen un botón de tema
-  // dentro de DashboardLayout.jsx
-  const rutasDashboard = [
-    "/dashboard/estudiante",
-    "/dashboard/empresa",
-    "/admin/dashboard",
-  ];
-
-  const esDashboard = rutasDashboard.some(
-    (ruta) =>
-      location.pathname === ruta ||
-      location.pathname.startsWith(`${ruta}/`)
-  );
-
   return (
     <>
-      {/* Mostrar el botón global solamente
-          fuera de los dashboards */}
-
-      {!esDashboard && location.pathname !== "/" && <ControlesTema />}
+      {/* Los controles de idioma, paleta y tema
+          solo se muestran dentro de los dashboards
+          (después de iniciar sesión) */}
 
       <Routes>
         {/* PÁGINAS PÚBLICAS */}
