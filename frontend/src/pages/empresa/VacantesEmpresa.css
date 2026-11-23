@@ -331,3 +331,45 @@
   color: var(--bt-text, #1e293b);
   font-size: 13px;
 }
+
+/* Aviso de la prueba de conocimientos del sector */
+.bt-vacantes-prueba-aviso {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 15px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(217, 119, 6, 0.12);
+  color: var(--bt-text);
+  line-height: 1.45;
+}
+
+.bt-vacantes-prueba-aviso > svg {
+  flex-shrink: 0;
+  color: #b45309;
+}
+
+.bt-vacantes-prueba-aviso.con-prueba {
+  background: var(--bt-highlight, #ecfeff);
+}
+
+.bt-vacantes-prueba-aviso.con-prueba > svg {
+  color: var(--bt-primary, #0e7490);
+}
+
+.bt-vacantes-prueba-aviso span {
+  flex: 1 1 260px;
+}
+
+.bt-vacantes-prueba-aviso button {
+  padding: 7px 12px;
+  border: 1px solid var(--bt-primary, #0e7490);
+  border-radius: 8px;
+  background: var(--bt-surface);
+  color: var(--bt-primary, #0e7490);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
