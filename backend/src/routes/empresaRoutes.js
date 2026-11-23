@@ -81,8 +81,8 @@ router.patch("/vacantes/:id/estado", cambiarEstadoVacante);
 router.delete("/vacantes/:id", eliminarVacante);
 
 // ========================================
-// PRUEBAS DE CONOCIMIENTOS POR CARRERA
-// (el estudiante presenta la de su carrera antes de postularse)
+// PRUEBA DE CONOCIMIENTOS DEL SECTOR DE LA EMPRESA
+// (el estudiante la presenta antes de postularse; :carrera = "sector")
 // ========================================
 
 router.get("/pruebas", obtenerPruebasEmpresa);

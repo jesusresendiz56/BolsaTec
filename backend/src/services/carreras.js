@@ -1,6 +1,7 @@
 // ========================================
 // CATÁLOGO DE CARRERAS PARA LAS PRUEBAS DE CONOCIMIENTOS
-// La empresa escribe una prueba general por carrera.
+// (Antes se usaba para pruebas por carrera; ahora la prueba es
+// por sector. Se conserva para nombrar resultados anteriores.)
 // La carrera del estudiante es texto libre, así que se
 // relaciona con el catálogo por palabras clave.
 // ========================================
